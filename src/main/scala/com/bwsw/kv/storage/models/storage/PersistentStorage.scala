@@ -7,6 +7,6 @@ import java.util.UUID
   * @param name Storage name
   * @param description Storage description
   */
-case class PersistentStorage(uUID: UUID, name: String, description: String) extends Storage{
+case class PersistentStorage(uUID: UUID, name: String, description: String) extends Storage {
 
 }

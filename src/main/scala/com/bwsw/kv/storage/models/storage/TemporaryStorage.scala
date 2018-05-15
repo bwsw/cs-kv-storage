@@ -6,6 +6,5 @@ import java.util.UUID
   * @param uUID Storage unique identifier
   * @param expirationTime timestamp of storage becoming inaccessible
   */
-case class TemporaryStorage(uUID: UUID, expirationTime: Long) extends Storage {
-
+case class TemporaryStorage(uUID: String, expirationTime: Long) extends Storage {
 }
