@@ -1,9 +1,9 @@
-# My Scalatra Web App #
+# Key-Value Storage #
 
 ## Build & Run ##
 
 ```sh
-$ cd my-scalatra-web-app
+$ cd cs-kv-storage
 $ sbt
 > jetty:start
 > browse
