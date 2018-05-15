@@ -1,10 +1,10 @@
 val ScalatraVersion = "2.6.3"
 
-organization := "com.example"
+organization := "com.bwsw"
 
-name := "My Scalatra Web App"
+name := "KV Storage"
 
-version := "com.bwsw"
+version := "0.1"
 
 scalaVersion := "2.12.6"
 
