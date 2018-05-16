@@ -15,7 +15,9 @@ libraryDependencies ++= Seq(
   "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
   "ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
   "org.eclipse.jetty" % "jetty-webapp" % "9.4.9.v20180320" % "container",
-  "javax.servlet" % "javax.servlet-api" % "3.1.0" % "provided"
+  "javax.servlet" % "javax.servlet-api" % "3.1.0" % "provided",
+  "org.elasticsearch.client" % "elasticsearch-rest-high-level-client" % "6.2.4",
+  "com.typesafe.akka" %% "akka-actor" % "2.5.12",
 )
 
 enablePlugins(SbtTwirl)
