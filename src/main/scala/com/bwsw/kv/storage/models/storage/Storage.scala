@@ -1,7 +1,5 @@
 package com.bwsw.kv.storage.models.storage
 
-import java.util.UUID
-
 /** Abstract Key-Value Storage with basic methods
   */
 abstract class Storage {
