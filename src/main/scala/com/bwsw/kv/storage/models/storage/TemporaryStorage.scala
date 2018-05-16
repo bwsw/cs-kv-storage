@@ -1,6 +1,5 @@
 package com.bwsw.kv.storage.models.storage
 
-import java.util.UUID
 
 /** Temporary storage with a limited lifetime
   * @param uUID Storage unique identifier
