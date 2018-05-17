@@ -1,0 +1,13 @@
+{
+  "template": "storage-*",
+  "mappings": {
+    "_doc": {
+      "properties": {
+        "value": {
+          "type": "keyword",
+          "index": false
+        }
+      }
+    }
+  }
+}

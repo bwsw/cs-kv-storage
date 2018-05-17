@@ -9,7 +9,7 @@ import akka.util.Timeout
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
-class KVStorageServlet extends ScalatraServlet { //with FutureSupport{
+class KvStorageServlet extends ScalatraServlet { //with FutureSupport{
 //  implicit val timeout = new Timeout(2 seconds)
 //  protected implicit def executor: ExecutionContext = system.dispatcher
 

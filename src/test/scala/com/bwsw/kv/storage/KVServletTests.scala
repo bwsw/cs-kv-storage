@@ -4,7 +4,7 @@ import org.scalatra.test.scalatest._
 
 class KVServletTests extends ScalatraFunSuite {
 
-  addServlet(classOf[KVStorageServlet], "/*")
+  addServlet(classOf[KvStorageServlet], "/*")
 
   test("GET / on KVServlet should return status 200") {
     get("/") {
