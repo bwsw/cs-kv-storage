@@ -18,6 +18,7 @@ libraryDependencies ++= Seq(
   "javax.servlet" % "javax.servlet-api" % "3.1.0" % "provided",
   "org.elasticsearch.client" % "elasticsearch-rest-high-level-client" % "6.2.4",
   "com.typesafe.akka" %% "akka-actor" % "2.5.12",
+  "org.scalamock" %% "scalamock" % "4.1.0" % Test
 )
 
 enablePlugins(SbtTwirl)
