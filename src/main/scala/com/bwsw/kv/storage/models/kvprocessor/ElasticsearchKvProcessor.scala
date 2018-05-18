@@ -2,11 +2,12 @@ package com.bwsw.kv.storage.models.kvprocessor
 
 import com.sksamuel.elastic4s.http.{HttpClient, RequestFailure, RequestSuccess}
 import com.sksamuel.elastic4s.http.bulk.BulkResponse
-import com.sksamuel.elastic4s.http.delete.DeleteResponse
+import com.sksamuel.elastic4s.http.delete.{DeleteByQueryResponse, DeleteResponse}
 import com.sksamuel.elastic4s.http.get.{GetResponse, MultiGetResponse}
 import com.sksamuel.elastic4s.http.index.IndexResponse
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.ElasticDsl
+import com.sksamuel.elastic4s.http.search.SearchResponse
 
 import scala.concurrent.{Future, Promise}
 import scala.util.{Failure, Success, Try}
@@ -46,21 +47,21 @@ class ElasticsearchKvProcessor(client: HttpClient) extends KvProcessor{
     val gets = keys.map{ ElasticDsl.get(_).from(storage / "_doc") }
     client.execute { multiget(gets) }
       .transformWith({
-      case Success(either: Either[RequestFailure, RequestSuccess[MultiGetResponse]]) =>
-        either match {
-          case Left(failure) => Future { throw new Exception(failure.body.getOrElse("Request failed")) }
-          case Right(success) => Future {
-            if (success.isError)
-              throw new Exception("Request failed")
-            else
-              success.result.docs.map( getResponse =>
-                if(getResponse.found)
-                  (getResponse.id, Some(getResponse.fields("value").toString))
-                else
-                  (getResponse.id, None) )
+        case Success(either: Either[RequestFailure, RequestSuccess[MultiGetResponse]]) =>
+          either match {
+            case Left(failure) => Future { throw new Exception(failure.body.getOrElse("Request failed")) }
+            case Right(success) => Future {
+              if (success.isError)
+                throw new Exception("Request failed")
+              else
+                success.result.docs.map( getResponse =>
+                  if(getResponse.found)
+                    (getResponse.id, Some(getResponse.fields("value").toString))
+                  else
+                    (getResponse.id, None) )
+            }
           }
-        }
-      case Failure(either) => Future { throw either.getCause}
+        case Failure(either) => Future { throw either.getCause}
     })
   }
 
@@ -172,14 +173,42 @@ class ElasticsearchKvProcessor(client: HttpClient) extends KvProcessor{
     * @return Collection of tuples key and value
     */
   def list(storage: String): Future[Iterable[(String, String)]] = {
-    Future(Set(("", "")))//TODO: Implementation
+    client.execute { search(storage) }
+      .transformWith({
+          case Success(either: Either[RequestFailure, RequestSuccess[SearchResponse]]) =>
+            either match {
+              case Left(failure) => Future { throw new Exception(failure.body.getOrElse("Request failed")) }
+              case Right(success) => Future {
+                if (success.isError)
+                  throw new Exception("Request failed")
+                else
+                  success.result.hits.hits.map( hit =>
+                    (hit.id, hit.fields("value").toString) )
+              }
+            }
+        case Failure(either) => Future { throw either.getCause}
+      })
   }
 
   /** Clears storage
     * @param storage target storage UUID
-    * @return true if clearing succeed and false otherwise
+    * @return true
     */
   def clear(storage: String): Future[Boolean] = {
-    Future(true)//TODO: Implementation
+    client.execute {
+      deleteByQuery(storage,"_doc", matchAllQuery).proceedOnConflicts(true)
+    }.transformWith({
+      case Success(either: Either[RequestFailure, RequestSuccess[DeleteByQueryResponse]]) =>
+        either match {
+          case Left(failure) => Future { throw new Exception(failure.body.getOrElse("Request failed")) }
+          case Right(success) => Future {
+            if (success.isError)
+              throw new Exception("Request failed")
+            else
+              true
+          }
+        }
+      case Failure(either) => Future { throw either.getCause}
+    })
   }
 }
