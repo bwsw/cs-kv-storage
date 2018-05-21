@@ -12,7 +12,7 @@ import com.sksamuel.elastic4s.http.search.SearchResponse
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
-class ElasticsearchKvProcessor(client: HttpClient) extends KvProcessor{
+class ElasticsearchKvProcessor(client: HttpClient) extends KvProcessor {
   import scala.concurrent.ExecutionContext.Implicits.global
 
   /** Gets value by given key
