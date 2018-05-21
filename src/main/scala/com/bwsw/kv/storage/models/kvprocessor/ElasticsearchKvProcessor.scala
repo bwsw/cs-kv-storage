@@ -22,14 +22,10 @@ class ElasticsearchKvProcessor(client: HttpClient) extends KvProcessor{
     */
   def get(storage: String, key: String): Future[String] = {
     client.execute {
-      ElasticDsl.get(key).from(storage / "_doc")
-    }.map{case Left(failure) => throw new RuntimeException(failure.error.reason)
-          case Right(success) =>
-            if (success.isError)
-              throw new Exception("Request failed")
-            else
-              success.result.fields("value").toString
-        }
+      ElasticDsl.get(key).from(storage / "_doc") }
+      .map{
+        case Left(failure) => throw new RuntimeException(failure.error.reason)
+        case Right(success) => success.result.fields("value").toString }
   }
 
   /** Gets value by given keys
@@ -47,9 +43,7 @@ class ElasticsearchKvProcessor(client: HttpClient) extends KvProcessor{
             if (getResponse.found)
               (getResponse.id, Some(getResponse.fields("value").toString))
             else
-              (getResponse.id, None))
-      }
-
+              (getResponse.id, None)) }
   }
 
   /** Sets value for given key
@@ -61,12 +55,10 @@ class ElasticsearchKvProcessor(client: HttpClient) extends KvProcessor{
   def set(storage: String, key: String, value: String): Future[Boolean] = {
     client.execute {
       indexInto(storage / "_doc") id key fields (
-        "value" -> value )
-    }.map {
-      case Left(failure) => throw new RuntimeException(failure.error.reason)
-      case Right(success) =>
-        true
-    }
+        "value" -> value ) }
+      .map {
+        case Left(failure) => throw new RuntimeException(failure.error.reason)
+        case Right(success) => true }
   }
 
   /** Sets values by given keys
@@ -84,8 +76,7 @@ class ElasticsearchKvProcessor(client: HttpClient) extends KvProcessor{
         case Left(failure) => throw new RuntimeException(failure.error.reason)
         case Right(success) =>
           success.result.items.map(bulkResponseItem =>
-            (bulkResponseItem.id, bulkResponseItem.error.isEmpty))
-      }
+            (bulkResponseItem.id, bulkResponseItem.error.isEmpty)) }
   }
 
   /** Deletes value of given key
@@ -97,13 +88,10 @@ class ElasticsearchKvProcessor(client: HttpClient) extends KvProcessor{
     import com.sksamuel.elastic4s.http.ElasticDsl._
 
     client.execute {
-      deleteById(storage,"_doc", key)
-    }.map {
-      case Left(failure) =>
-        throw new RuntimeException(failure.error.reason)
-      case Right(success) =>
-        true
-    }
+      deleteById(storage,"_doc", key) }
+      .map {
+        case Left(failure) => throw new RuntimeException(failure.error.reason)
+        case Right(success) => true }
   }
 
   /** Deletes values of given keys
@@ -120,8 +108,7 @@ class ElasticsearchKvProcessor(client: HttpClient) extends KvProcessor{
         case Left(failure) => throw new RuntimeException(failure.error.reason)
         case Right(success) =>
           success.result.items.map( bulkResponseItem =>
-            (bulkResponseItem.id, bulkResponseItem.error.isEmpty) )
-      }
+            (bulkResponseItem.id, bulkResponseItem.error.isEmpty) ) }
   }
 
   /** Returns a list of existing keys and values
@@ -134,8 +121,7 @@ class ElasticsearchKvProcessor(client: HttpClient) extends KvProcessor{
         case Left(failure) => throw new RuntimeException(failure.error.reason)
         case Right(success) =>
           success.result.hits.hits.map( hit =>
-            (hit.id, hit.fields("value").toString) )
-      }
+            (hit.id, hit.fields("value").toString) ) }
   }
 
   /** Clears storage
@@ -144,11 +130,9 @@ class ElasticsearchKvProcessor(client: HttpClient) extends KvProcessor{
     */
   def clear(storage: String): Future[Boolean] = {
     client.execute {
-      deleteByQuery(storage,"_doc", matchAllQuery).proceedOnConflicts(true)
-    }.map {
+      deleteByQuery(storage,"_doc", matchAllQuery).proceedOnConflicts(true) }
+      .map {
         case Left(failure) => throw new RuntimeException(failure.error.reason)
-        case Right(success) =>
-          true
-      }
+        case Right(success) => true }
   }
 }
