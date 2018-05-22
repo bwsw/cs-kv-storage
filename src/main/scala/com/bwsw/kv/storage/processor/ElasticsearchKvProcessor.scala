@@ -1,4 +1,4 @@
-package com.bwsw.kv.storage.models.kvprocessor
+package com.bwsw.kv.storage.processor
 
 import com.sksamuel.elastic4s.http.HttpClient
 import com.sksamuel.elastic4s.http.ElasticDsl._

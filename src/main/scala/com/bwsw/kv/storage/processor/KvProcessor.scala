@@ -1,4 +1,4 @@
-package com.bwsw.kv.storage.models.kvprocessor
+package com.bwsw.kv.storage.processor
 
 import scala.concurrent.Future
 

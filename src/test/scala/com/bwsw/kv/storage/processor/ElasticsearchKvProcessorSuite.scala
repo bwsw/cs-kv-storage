@@ -1,6 +1,6 @@
-package com.bwsw.kv.storage.kvprocessor
+package com.bwsw.kv.storage.processor
 
-import com.bwsw.kv.storage.models.kvprocessor.ElasticsearchKvProcessor
+import com.bwsw.kv.storage.processor.ElasticsearchKvProcessor
 import com.sksamuel.elastic4s.bulk.BulkDefinition
 import com.sksamuel.elastic4s.delete.{DeleteByIdDefinition, DeleteByQueryDefinition}
 import com.sksamuel.elastic4s.get.{GetDefinition, MultiGetDefinition}
@@ -21,7 +21,7 @@ import org.scalatest.RecoverMethods._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class ElasticsearchKvProcessorUnitTest extends FunSpec with MockFactory {
+class ElasticsearchKvProcessorSuite extends FunSpec with MockFactory {
   private def getRequestSuccessFuture[T](response: T): Future[Right[RequestFailure, RequestSuccess[T]]] = {
     Future(Right(RequestSuccess(200, Option.empty, Map.empty, response)))
   }
