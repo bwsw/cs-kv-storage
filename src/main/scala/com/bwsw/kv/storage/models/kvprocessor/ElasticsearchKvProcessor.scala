@@ -1,16 +1,10 @@
 package com.bwsw.kv.storage.models.kvprocessor
 
-import com.sksamuel.elastic4s.http.{HttpClient, RequestFailure, RequestSuccess}
-import com.sksamuel.elastic4s.http.bulk.BulkResponse
-import com.sksamuel.elastic4s.http.delete.{DeleteByQueryResponse, DeleteResponse}
-import com.sksamuel.elastic4s.http.get.{GetResponse, MultiGetResponse}
-import com.sksamuel.elastic4s.http.index.IndexResponse
+import com.sksamuel.elastic4s.http.HttpClient
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.ElasticDsl
-import com.sksamuel.elastic4s.http.search.SearchResponse
 
 import scala.concurrent.Future
-import scala.util.{Failure, Success}
 
 class ElasticsearchKvProcessor(client: HttpClient) extends KvProcessor {
   import scala.concurrent.ExecutionContext.Implicits.global

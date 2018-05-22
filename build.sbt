@@ -26,7 +26,6 @@ libraryDependencies ++= Seq(
   // for the http client
   "com.sksamuel.elastic4s" % "elastic4s-http_2.12" % elastic4sVersion,
 
-
   // testing
   "com.sksamuel.elastic4s" % "elastic4s-testkit_2.12" %  elastic4sVersion % "test",
   "com.sksamuel.elastic4s" % "elastic4s-tests_2.12" % elastic4sVersion % "test"
