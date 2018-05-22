@@ -1,0 +1,19 @@
+stages:
+  - build
+  - test
+
+build:
+  stage: build
+  script: sbt clean compile  
+  tags:
+    - build-in-docker
+    - cs-eco-builder
+
+test:
+  stage: test
+  script:
+    - sbt test
+  tags:
+    - build-in-docker
+    - cs-eco-builder
+
