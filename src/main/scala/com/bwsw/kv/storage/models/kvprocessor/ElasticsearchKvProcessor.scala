@@ -16,9 +16,11 @@ class ElasticsearchKvProcessor(client: HttpClient) extends KvProcessor {
   import scala.concurrent.ExecutionContext.Implicits.global
 
   /** Gets value by given key
-    * @param storage target storage UUID
+    *
+    * @param storage targeted storage UUID
     * @param key key of a value
     * @return Future of the value
+    *         or Future that fails with RuntimeException when request fails
     */
   def get(storage: String, key: String): Future[String] = {
     client.execute {
@@ -29,9 +31,10 @@ class ElasticsearchKvProcessor(client: HttpClient) extends KvProcessor {
   }
 
   /** Gets value by given keys
-    * @param storage target storage UUID
+    * @param storage targeted storage UUID
     * @param keys Collection of keys
     * @return Future of Collection of tuples key and Some(String) if value exists and None otherwise
+    *         or Future that fails with RuntimeException when request fails
     */
   def get(storage: String, keys: Iterable[String]): Future[Iterable[(String, Option[String])]] = {
     val gets = keys.map{ ElasticDsl.get(_).from(storage / "_doc") }
@@ -47,10 +50,11 @@ class ElasticsearchKvProcessor(client: HttpClient) extends KvProcessor {
   }
 
   /** Sets value for given key
-    * @param storage target storage UUID
+    * @param storage targeted storage UUID
     * @param key key of a value
     * @param value value to set
     * @return Future of true
+    *         or Future that fails with RuntimeException when request fails
     */
   def set(storage: String, key: String, value: String): Future[Boolean] = {
     client.execute {
@@ -62,9 +66,10 @@ class ElasticsearchKvProcessor(client: HttpClient) extends KvProcessor {
   }
 
   /** Sets values by given keys
-    * @param storage target storage UUID
+    * @param storage targeted storage UUID
     * @param kvs Collection of tuples key and value to set
     * @return Future of Collection of tuples key to true if value successfully set and false otherwise
+    *         or Future that fails with RuntimeException when request fails
     */
   def set(storage: String, kvs: Iterable[(String, String)]): Future[Iterable[(String, Boolean)]] = {
     import com.sksamuel.elastic4s.http.ElasticDsl._
@@ -80,9 +85,10 @@ class ElasticsearchKvProcessor(client: HttpClient) extends KvProcessor {
   }
 
   /** Deletes value of given key
-    * @param storage target storage UUID
+    * @param storage targeted storage UUID
     * @param key key of value to delete
     * @return Future of true
+    *         or Future that fails with RuntimeException when request fails
     */
   def delete(storage: String, key: String): Future[Boolean] = {
     import com.sksamuel.elastic4s.http.ElasticDsl._
@@ -95,9 +101,10 @@ class ElasticsearchKvProcessor(client: HttpClient) extends KvProcessor {
   }
 
   /** Deletes values of given keys
-    * @param storage target storage UUID
+    * @param storage targeted storage UUID
     * @param keys Collection of keys
     * @return Future of Collection of tuples key to true if deletion succeed or false otherwise
+    *         or Future that fails with RuntimeException when request fails
     */
   def delete(storage: String, keys: Iterable[String]): Future[Iterable[(String, Boolean)]] = {
     import com.sksamuel.elastic4s.http.ElasticDsl._
@@ -107,26 +114,28 @@ class ElasticsearchKvProcessor(client: HttpClient) extends KvProcessor {
       .map {
         case Left(failure) => throw new RuntimeException(failure.error.reason)
         case Right(success) =>
-          success.result.items.map( bulkResponseItem =>
-            (bulkResponseItem.id, bulkResponseItem.error.isEmpty) ) }
+          success.result.items.map(bulkResponseItem =>
+            (bulkResponseItem.id, bulkResponseItem.error.isEmpty)) }
   }
 
   /** Returns a list of existing keys and values
-    * @param storage target storage UUID
+    * @param storage targeted storage UUID
     * @return Future of Collection of tuples key and value
+    *         or Future that fails with RuntimeException when request fails
     */
   def list(storage: String): Future[Iterable[(String, String)]] = {
     client.execute { search(storage) }
       .map {
         case Left(failure) => throw new RuntimeException(failure.error.reason)
         case Right(success) =>
-          success.result.hits.hits.map( hit =>
-            (hit.id, hit.fields("value").toString) ) }
+          success.result.hits.hits.map(hit =>
+            (hit.id, hit.fields("value").toString)) }
   }
 
   /** Clears storage
-    * @param storage target storage UUID
+    * @param storage targeted storage UUID
     * @return Future of true
+    *         or Future that fails with RuntimeException when request fails
     */
   def clear(storage: String): Future[Boolean] = {
     client.execute {
