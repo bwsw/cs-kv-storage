@@ -4,14 +4,16 @@ import com.bwsw.kv.storage.error._
 import com.sksamuel.elastic4s.http.HttpClient
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.ElasticDsl
+import com.bwsw.kv.storage.app.Configuration
 
+import scala.annotation.tailrec
 import scala.concurrent.Future
 
 object ElasticsearchKvProcessor {
   private val basicType = "_doc"
 }
 
-class ElasticsearchKvProcessor(client: HttpClient) extends KvProcessor {
+class ElasticsearchKvProcessor(client: HttpClient, configuration: Configuration) extends KvProcessor {
   import scala.concurrent.ExecutionContext.Implicits.global
   import ElasticsearchKvProcessor._
 
@@ -131,14 +133,37 @@ class ElasticsearchKvProcessor(client: HttpClient) extends KvProcessor {
     *         or Future that fails with RuntimeException when request fails
     */
   def list(storage: String): Future[Either[StorageError, List[String]]] = {
-    client.execute { search("storage-" + storage)}
-      .map {
-        case Left(failure) => Left(InternalError(failure))
+    client.execute { search("storage-" + storage).size(configuration.getSearchPageSize)
+    .scroll(configuration.getSearchScrollKeepAlive)}
+      .flatMap {
+        case Left(failure) => Future(Left(InternalError(failure)))
         case Right(success) =>
-          Right(success.result.hits.hits.map(hit =>
-            hit.id).toList) }
+          if(success.result.scrollId.nonEmpty) {
+            scrollAll(success.result.scrollId.get, success.result.hits.hits.map(hit =>
+              hit.id).toList)
+          }
+          else {
+            Future(Right(success.result.hits.hits.map(hit => hit.id).toList)) }
+          }
   }
 
+  /** Recursively gets contents of all pages of the search query
+    * @param scrollId Scroll Id
+    * @param currentList List of currently hit keys
+    * @return Future of list containing keys hit by the query
+    */
+  private def scrollAll(scrollId: String, currentList: List[String]): Future[Either[StorageError, List[String]]]= {
+    client.execute(searchScroll(scrollId))
+      .flatMap {
+        case Left(failure) => Future(Left(InternalError(failure)))
+        case Right(success) =>
+          if(success.result.hits.hits.length == 0){
+            client.execute { clearScroll(scrollId)}
+            Future(Right(currentList))
+          }
+          else {
+            scrollAll(scrollId, currentList ++ success.result.hits.hits.map(hit => hit.id).toList) } }
+  }
   /** Clears storage
     * @param storage targeted storage UUID
     * @return Future of true

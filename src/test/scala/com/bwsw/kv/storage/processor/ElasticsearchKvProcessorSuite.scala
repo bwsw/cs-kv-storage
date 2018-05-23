@@ -1,5 +1,6 @@
 package com.bwsw.kv.storage.processor
 
+import com.bwsw.kv.storage.app.Configuration
 import com.bwsw.kv.storage.error._
 import com.sksamuel.elastic4s.bulk.BulkDefinition
 import com.sksamuel.elastic4s.delete.{DeleteByIdDefinition, DeleteByQueryDefinition}
@@ -10,9 +11,9 @@ import com.sksamuel.elastic4s.http._
 import com.sksamuel.elastic4s.http.bulk.{BulkResponse, BulkResponseItem, BulkResponseItems}
 import com.sksamuel.elastic4s.http.delete.{DeleteByQueryResponse, DeleteResponse}
 import com.sksamuel.elastic4s.http.index.IndexResponse
-import com.sksamuel.elastic4s.http.search.{SearchHit, SearchHits, SearchResponse}
+import com.sksamuel.elastic4s.http.search.{ClearScrollResponse, SearchHit, SearchHits, SearchResponse}
 import com.sksamuel.elastic4s.indexes.IndexDefinition
-import com.sksamuel.elastic4s.searches.SearchDefinition
+import com.sksamuel.elastic4s.searches.{ClearScrollDefinition, SearchDefinition, SearchScrollDefinition}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.FunSpec
 
@@ -60,25 +61,36 @@ class ElasticsearchKvProcessorSuite extends FunSpec with MockFactory {
     val deletes = Set(
       deleteById("storage-someStorage", "_doc", "key1"),
       deleteById("storage-someStorage", "_doc", "key2"),
-      deleteById("storage-someStorage", "_doc", "key3")
-    )
+      deleteById("storage-someStorage", "_doc", "key3"))
 
     (client.execute[BulkDefinition, BulkResponse] (_:BulkDefinition)(_:HttpExecutable[BulkDefinition, BulkResponse], _ : ExecutionContext))
       .expects(ElasticDsl.bulk(deletes), BulkExecutable, *)
 
   }
-  private def getSearchRequest(client: HttpClient) = {
+  private def getSearchRequest(client: HttpClient, conf: Configuration, size: Int) = {
+    (conf.getSearchPageSize _).expects().returning(size)
+    (conf.getSearchScrollKeepAlive _).expects().returning("1m")
     (client.execute[SearchDefinition, SearchResponse] (_:SearchDefinition)(_:HttpExecutable[SearchDefinition, SearchResponse], _ : ExecutionContext))
-      .expects(ElasticDsl.search("storage-someStorage"), SearchHttpExecutable, *)
+      .expects(ElasticDsl.search("storage-someStorage").size(size).keepAlive("1m"), SearchHttpExecutable, *)
+  }
+  private def getSearchScrollRequest(client: HttpClient, conf: Configuration) = {
+    (client.execute[SearchScrollDefinition, SearchResponse] (_:SearchScrollDefinition)(_:HttpExecutable[SearchScrollDefinition, SearchResponse], _ : ExecutionContext))
+      .expects(searchScroll("DXF1ZXJ5QW5kRmV0Y2gBAAAAAAAAAD4WYm9laVYtZndUQlNsdDcwakFMNjU1QQ=="), SearchScrollHttpExecutable, *)
   }
   private def getDeleteByQueryRequest(client: HttpClient) = {
     (client.execute[DeleteByQueryDefinition, DeleteByQueryResponse] (_:DeleteByQueryDefinition)(_:HttpExecutable[DeleteByQueryDefinition, DeleteByQueryResponse], _ : ExecutionContext))
       .expects(deleteByQuery("storage-someStorage","_doc", matchAllQuery).proceedOnConflicts(true) , DeleteByQueryExecutable, *)
   }
 
+  private def getClearScrollRequest(client: HttpClient) = {
+    (client.execute[ClearScrollDefinition, ClearScrollResponse] (_:ClearScrollDefinition)(_:HttpExecutable[ClearScrollDefinition, ClearScrollResponse], _ : ExecutionContext))
+      .expects(clearScroll("DXF1ZXJ5QW5kRmV0Y2gBAAAAAAAAAD4WYm9laVYtZndUQlNsdDcwakFMNjU1QQ==") , ClearScrollHttpExec, *)
+  }
+
   describe("A ElasticsearchKvProcessor") {
     val fakeClient = mock[HttpClient]
-    val elasticsearchKvProcessor = new ElasticsearchKvProcessor(fakeClient)
+    val fakeConf = mock[Configuration]
+    val elasticsearchKvProcessor = new ElasticsearchKvProcessor(fakeClient, fakeConf)
 
     //get(storage, key) test start
     it("should get existing value by key from Elasticsearch") {
@@ -87,7 +99,7 @@ class ElasticsearchKvProcessorSuite extends FunSpec with MockFactory {
 
       elasticsearchKvProcessor.get("someStorage", "someKey").map {
         case Right(value) => assert(value == "someValue")
-        case _ => fail }
+        case _ => fail }.await
     }
     it("get(key)should return NotFoundError if no value exists in Elasticsearch") {
       val getResponse = GetResponse("someKey", "storage-someStorage", "_doc", 1, found = false, Map.empty, Map.empty)
@@ -95,20 +107,19 @@ class ElasticsearchKvProcessorSuite extends FunSpec with MockFactory {
 
       elasticsearchKvProcessor.get("someStorage", "someKey").map {
         case failure: Left[NotFoundError, String] => succeed
-        case _ => fail }
+        case _ => fail }.await
     }
     it("get(key) should fail if execute method fails") {
       getGetRequest(fakeClient).throwing(new Exception())
       assertThrows[Exception] {
-        elasticsearchKvProcessor.get("someStorage", "someKey")
+        elasticsearchKvProcessor.get("someStorage", "someKey").await
       }
     }
     it("get(key) future should contain InternalError if request fails") {
       getGetRequest(fakeClient).returning(getRequestFailureFuture)
       elasticsearchKvProcessor.get("someStorage", "someKey").map {
         case Left(error: InternalError) => succeed
-        case _ => fail
-      }
+        case _ => fail }.await
     }
     //get(storage, key) test end
 
@@ -121,20 +132,22 @@ class ElasticsearchKvProcessorSuite extends FunSpec with MockFactory {
       getMultiGetRequest(fakeClient).returning(getRequestSuccessFuture(multiGetResponse))
 
       elasticsearchKvProcessor.get("someStorage", Set("key1", "key2", "key3"))
-        .map { values => assert(values == Map("key1" -> "value1", "key2" -> "value2", "key3" -> "value3")) }
+        .map {
+          case Right(values) =>
+            assert(values == Map("key1" -> Some("value1"), "key2" -> Some("value2"), "key3" -> Some("value3")))
+          case _ => fail }.await
     }
     it("get(keys) should fail if execute method fails") {
       getMultiGetRequest(fakeClient).throwing(new Exception())
       assertThrows[Exception] {
-        elasticsearchKvProcessor.get("someStorage", Set("key1", "key2", "key3"))
+        elasticsearchKvProcessor.get("someStorage", Set("key1", "key2", "key3")).await
       }
     }
     it("get(keys) future should contain InternalError if request fails") {
       getMultiGetRequest(fakeClient).returning(getRequestFailureFuture)
       elasticsearchKvProcessor.get("someStorage", Set("key1", "key2", "key3")).map {
         case Left(error: InternalError) => succeed
-        case _ => fail
-      }
+        case _ => fail }.await
     }
     //get(storage, keys) test end
 
@@ -143,23 +156,21 @@ class ElasticsearchKvProcessorSuite extends FunSpec with MockFactory {
       val indexResponse = IndexResponse("someKey", "storage-someStorage", "_doc", 1, "someResult", forcedRefresh = true, Shards(1, 1, 1))
       getIndexRequest(fakeClient).returning(getRequestSuccessFuture(indexResponse))
 
-      elasticsearchKvProcessor.set("someStorage", "someKey", "someValue")
-        .map {
-          case Right(unit) => succeed
-          case Left(error) => fail}
+      elasticsearchKvProcessor.set("someStorage", "someKey", "someValue").map {
+        case Right(unit) => succeed
+        case Left(error) => fail }.await
     }
     it("set(key, value) should fail if execute method fails") {
       getIndexRequest(fakeClient).throwing(new Exception())
       assertThrows[Exception] {
-        elasticsearchKvProcessor.set("someStorage", "someKey", "someValue")
+        elasticsearchKvProcessor.set("someStorage", "someKey", "someValue").await
       }
     }
     it("set(key, value) future should contain InternalError if request fails") {
       getIndexRequest(fakeClient).returning(getRequestFailureFuture)
       elasticsearchKvProcessor.set("someStorage", "someKey", "someValue").map {
         case Left(error: InternalError) => succeed
-        case _ => fail
-      }
+        case _ => fail }.await
     }
     //set(storage, key, value) test end
 
@@ -177,11 +188,10 @@ class ElasticsearchKvProcessorSuite extends FunSpec with MockFactory {
       elasticsearchKvProcessor.set("someStorage", Map(
         "key1" -> "value1",
         "key2" -> "value2",
-        "key3" -> "value3"
-      ))
+        "key3" -> "value3"))
         .map {
           case Right(map) => assert(map.forall(v => v._2))
-          case _ => fail}
+          case _ => fail }.await
     }
     it("set(kvs) should fail if execute method fails") {
       getBulkIndexRequest(fakeClient).throwing(new Exception())
@@ -190,7 +200,7 @@ class ElasticsearchKvProcessorSuite extends FunSpec with MockFactory {
           "key1" -> "value1",
           "key2" -> "value2",
           "key3" -> "value3"
-        ))
+        )).await
       }
     }
     it("set(kvs) future should contain InternalError if request fails") {
@@ -198,11 +208,10 @@ class ElasticsearchKvProcessorSuite extends FunSpec with MockFactory {
       elasticsearchKvProcessor.set("someStorage", Map(
         "key1" -> "value1",
         "key2" -> "value2",
-        "key3" -> "value3"
-      )).map {
-        case Left(error: InternalError) => succeed
-        case _ => fail
-      }
+        "key3" -> "value3"))
+        .map {
+          case Left(error: InternalError) => succeed
+          case _ => fail }.await
     }
     //set(storage, kvs) test end
 
@@ -213,20 +222,19 @@ class ElasticsearchKvProcessorSuite extends FunSpec with MockFactory {
 
       elasticsearchKvProcessor.delete("someStorage", "someKey").map {
         case Right(unit) => succeed
-        case _ => fail }
+        case _ => fail }.await
     }
     it("delete(key) should fail if execute method fails") {
       getDeleteRequest(fakeClient).throwing(new Exception())
       assertThrows[Exception] {
-        elasticsearchKvProcessor.delete("someStorage", "someKey")
+        elasticsearchKvProcessor.delete("someStorage", "someKey").await
       }
     }
     it("delete(key) future should contain InternalError if request fails") {
       getDeleteRequest(fakeClient).returning(getRequestFailureFuture)
       elasticsearchKvProcessor.delete("someStorage", "someKey").map {
         case Left(error: InternalError) => succeed
-        case _ => fail
-      }
+        case _ => fail }.await
     }
     //delete(storage, key) test end
 
@@ -241,51 +249,68 @@ class ElasticsearchKvProcessorSuite extends FunSpec with MockFactory {
           None, None)))
       getBulkDeleteRequest(fakeClient).returning(getRequestSuccessFuture(bulkResponse))
 
-      elasticsearchKvProcessor.delete("someStorage", Set("key1", "key2", "key3"))
-        .map {
-          case Right(map) => assert(map.forall(v => v._2))
-          case _ => fail}
+      elasticsearchKvProcessor.delete("someStorage", Set("key1", "key2", "key3")).map {
+        case Right(map) => assert(map.forall(v => v._2))
+        case _ => fail }.await
     }
     it("delete(keys) should fail if execute method fails") {
       getBulkDeleteRequest(fakeClient).throwing(new Exception())
       assertThrows[Exception] {
-        elasticsearchKvProcessor.delete("someStorage", Set("key1", "key2", "key3"))
+        elasticsearchKvProcessor.delete("someStorage", Set("key1", "key2", "key3")).await
       }
     }
     it("delete(keys) future should contain InternalError if request fails") {
       getBulkDeleteRequest(fakeClient).returning(getRequestFailureFuture)
       elasticsearchKvProcessor.delete("someStorage", Set("key1", "key2", "key3")).map {
         case Left(error: InternalError) => succeed
-        case _ => fail
-      }
+        case _ => fail }.await
     }
     //delete(storage, keys) test end
 
     //list(storage) test start
-    it("should list keys and values existing in Elasticsearch") {
+    it("should list keys existing in Elasticsearch") {
       val searchResponse = SearchResponse(1, isTimedOut = false, isTerminatedEarly = false, Map.empty, Shards(1, 0, 1), None, Map.empty, SearchHits(3, 1, Array(
         SearchHit("key1", "storage-someStorage", "_doc", 1, 1, None, None, None, None, None, None, Map("value" -> "value1"), Map("value" -> "value1"), Map.empty, Map.empty),
         SearchHit("key2", "storage-someStorage", "_doc", 1, 1, None, None, None, None, None, None, Map("value" -> "value2"), Map("value" -> "value2"), Map.empty, Map.empty),
-        SearchHit("key3", "storage-someStorage", "_doc", 1, 1, None, None, None, None, None, None, Map("value" -> "value3"), Map("value" -> "value3"), Map.empty, Map.empty)
-      )))
-      getSearchRequest(fakeClient).returning(getRequestSuccessFuture(searchResponse))
-      elasticsearchKvProcessor.list("someStorage")
-        .map {
-          case Right(values) => assert(List("key1", "key2", "key3").diff(values).isEmpty)
-          case _ => fail }
+        SearchHit("key3", "storage-someStorage", "_doc", 1, 1, None, None, None, None, None, None, Map("value" -> "value3"), Map("value" -> "value3"), Map.empty, Map.empty))))
+      getSearchRequest(fakeClient, fakeConf, 1000).returning(getRequestSuccessFuture(searchResponse))
+      elasticsearchKvProcessor.list("someStorage").map {
+        case Right(values) => assert(List("key1", "key2", "key3").diff(values).isEmpty)
+        case _ => fail }
+    }
+    it("should list keys existing in Elasticsearch using scrollApi") {
+
+      val searchResponse = SearchResponse(1, isTimedOut = false, isTerminatedEarly = false, Map.empty, Shards(1, 0, 1),
+        Some("DXF1ZXJ5QW5kRmV0Y2gBAAAAAAAAAD4WYm9laVYtZndUQlNsdDcwakFMNjU1QQ=="), Map.empty, SearchHits(2, 1, Array(
+          SearchHit("key1", "storage-someStorage", "_doc", 1, 1, None, None, None, None, None, None, Map("value" -> "value1"), Map("value" -> "value1"), Map.empty, Map.empty),
+          SearchHit("key2", "storage-someStorage", "_doc", 1, 1, None, None, None, None, None, None, Map("value" -> "value2"), Map("value" -> "value2"), Map.empty, Map.empty))))
+
+      val searchScrollResponse1 = SearchResponse(1, isTimedOut = false, isTerminatedEarly = false, Map.empty, Shards(1, 0, 1),
+        Some("DXF1ZXJ5QW5kRmV0Y2gBAAAAAAAAAD4WYm9laVYtZndUQlNsdDcwakFMNjU1QQ=="), Map.empty, SearchHits(1, 1, Array(
+          SearchHit("key3", "storage-someStorage", "_doc", 1, 1, None, None, None, None, None, None, Map("value" -> "value3"), Map("value" -> "value3"), Map.empty, Map.empty))))
+
+      val searchScrollResponse2 = SearchResponse(1, isTimedOut = false, isTerminatedEarly = false, Map.empty, Shards(1, 0, 1),
+        Some("DXF1ZXJ5QW5kRmV0Y2gBAAAAAAAAAD4WYm9laVYtZndUQlNsdDcwakFMNjU1QQ=="), Map.empty, SearchHits(0, 1, Array()))
+
+      getSearchRequest(fakeClient, fakeConf, 2).returning(getRequestSuccessFuture(searchResponse))
+      getSearchScrollRequest(fakeClient, fakeConf).returning(getRequestSuccessFuture(searchScrollResponse1))
+      getSearchScrollRequest(fakeClient, fakeConf).returning(getRequestSuccessFuture(searchScrollResponse2))
+      getClearScrollRequest(fakeClient).returning(getRequestSuccessFuture(ClearScrollResponse(succeeded = true, 1)))
+      elasticsearchKvProcessor.list("someStorage").map {
+        case Right(values) => assert(List("key1", "key2", "key3").diff(values).isEmpty)
+        case _ => fail }.await
     }
     it("list should fail if execute method fails") {
-      getSearchRequest(fakeClient).throwing(new Exception())
+      getSearchRequest(fakeClient, fakeConf, 1000).throwing(new Exception())
       assertThrows[Exception] {
-        elasticsearchKvProcessor.list("someStorage")
+        elasticsearchKvProcessor.list("someStorage").await
       }
     }
     it("list future should contain InternalError if request fails") {
-      getSearchRequest(fakeClient).returning(getRequestFailureFuture)
+      getSearchRequest(fakeClient, fakeConf, 1000).returning(getRequestFailureFuture)
       elasticsearchKvProcessor.list("someStorage").map {
         case Left(error: InternalError) => succeed
-        case _ => fail
-      }
+        case _ => fail }.await
     }
     //list(storage) test end
 
@@ -293,23 +318,21 @@ class ElasticsearchKvProcessorSuite extends FunSpec with MockFactory {
     it("should clear targeted storage in Elasticsearch") {
       val deleteByQueryResponse = DeleteByQueryResponse(1, timedOut = false, 3, 3, 1, 0, 0, 0, 3, 0)
       getDeleteByQueryRequest(fakeClient).returning(getRequestSuccessFuture(deleteByQueryResponse))
-      elasticsearchKvProcessor.clear("someStorage")
-        .map {
-          case Right(unit) => succeed
-          case _ => fail }
+      elasticsearchKvProcessor.clear("someStorage").map {
+        case Right(unit) => succeed
+        case _ => fail }.await
     }
     it("clear should fail if execute method fails") {
       getDeleteByQueryRequest(fakeClient).throwing(new Exception())
       assertThrows[Exception] {
-        elasticsearchKvProcessor.clear("someStorage")
+        elasticsearchKvProcessor.clear("someStorage").await
       }
     }
     it("clear future should contain InternalError if request fails") {
       getDeleteByQueryRequest(fakeClient).returning(getRequestFailureFuture)
       elasticsearchKvProcessor.clear("someStorage").map {
         case Left(error: InternalError) => succeed
-        case _ => fail
-      }
+        case _ => fail }.await
     }
     //clear(storage) test end
 
