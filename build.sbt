@@ -20,7 +20,10 @@ libraryDependencies ++= Seq(
   "javax.servlet" % "javax.servlet-api" % "3.1.0" % "provided",
   "org.scalamock" %% "scalamock" % "4.1.0" % Test,
   "com.sksamuel.elastic4s" % "elastic4s-http_2.12" % elastic4sVersion,
-  "com.typesafe" % "config" % "1.3.3"
+  "com.typesafe" % "config" % "1.3.3",
+  "com.typesafe.akka" %% "akka-actor" % "2.5.12",
+  "org.scalatra" %% "scalatra-json" % ScalatraVersion,
+  "org.json4s" %% "json4s-jackson" % "3.6.0-M4"
 )
 
 enablePlugins(SbtTwirl)
