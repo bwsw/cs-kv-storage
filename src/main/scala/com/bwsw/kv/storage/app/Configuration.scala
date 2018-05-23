@@ -1,4 +1,5 @@
-package com.bwsw.kv.storage.models
+package com.bwsw.kv.storage.app
+
 import com.typesafe.config._
 
 class Configuration {
