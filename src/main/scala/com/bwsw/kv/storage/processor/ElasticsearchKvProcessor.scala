@@ -131,7 +131,7 @@ class ElasticsearchKvProcessor(client: HttpClient) extends KvProcessor {
     *         or Future that fails with RuntimeException when request fails
     */
   def list(storage: String): Future[Either[StorageError, List[String]]] = {
-    client.execute { search("storage-" + storage) }
+    client.execute { search("storage-" + storage)}
       .map {
         case Left(failure) => Left(InternalError(failure))
         case Right(success) =>
@@ -150,6 +150,10 @@ class ElasticsearchKvProcessor(client: HttpClient) extends KvProcessor {
         .proceedOnConflicts(true) }
       .map {
         case Left(failure) => Left(InternalError(failure))
-        case Right(success) => Right(Unit) }
+        case Right(success) =>
+          if(success.result.versionConflicts > 0)
+            Left(ConflictError())
+          else
+            Right(Unit) }
   }
 }

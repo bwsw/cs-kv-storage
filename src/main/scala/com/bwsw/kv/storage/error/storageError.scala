@@ -7,3 +7,5 @@ sealed trait StorageError extends Exception
 case class InternalError(requestFailure: RequestFailure) extends StorageError
 
 case class NotFoundError() extends StorageError
+
+case class ConflictError() extends StorageError

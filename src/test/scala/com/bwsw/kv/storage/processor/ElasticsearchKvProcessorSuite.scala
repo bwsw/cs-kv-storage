@@ -270,7 +270,9 @@ class ElasticsearchKvProcessorSuite extends FunSpec with MockFactory {
       )))
       getSearchRequest(fakeClient).returning(getRequestSuccessFuture(searchResponse))
       elasticsearchKvProcessor.list("someStorage")
-        .map { values => assert(values == Map("key1" -> "value1", "key2" -> "value2", "key3" -> "value3")) }
+        .map {
+          case Right(values) => assert(List("key1", "key2", "key3").diff(values).isEmpty)
+          case _ => fail }
     }
     it("list should fail if execute method fails") {
       getSearchRequest(fakeClient).throwing(new Exception())
