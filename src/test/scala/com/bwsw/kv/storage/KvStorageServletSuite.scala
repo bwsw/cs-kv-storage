@@ -50,7 +50,7 @@ class KvStorageServletSuite
     it("should get multiple values from storage") {
       (processor.get (_: String,_: Iterable[String])).expects("someStorage", List("key1", "key2", "key3")).returning(Future(Right(Map(
         "key1" -> Some("value1"), "key2" -> Some("value2"), "key3" -> Some("value3"))))).once
-      post("/someStorage/", "{\"keys\": [\"key1\",\"key2\",\"key3\"]}") {
+      post("/someStorage/", "[\"key1\",\"key2\",\"key3\"]") {
         status should equal (200)
 //        body should include ("value1")
         body should equal ("{\"key1\":\"value1\",\"key2\":\"value2\",\"key3\":\"value3\"}")
@@ -58,7 +58,7 @@ class KvStorageServletSuite
     }
     it("get(keys) should return 500 Internal Server Error if request to Elasticsearch failed") {
       (processor.get (_: String,_: Iterable[String])).expects("someStorage", List("key1", "key2", "key3")).returning(Future(Left(InternalError(getRequestFailure)))).once
-      post("/someStorage/", "{\"keys\": [\"key1\",\"key2\",\"key3\"]}") {
+      post("/someStorage/", "[\"key1\",\"key2\",\"key3\"]") {
         status should equal (500)
       }
     }
@@ -67,13 +67,13 @@ class KvStorageServletSuite
     // put /:storage_uuid/:key start
     it("should set value by key into storage") {
       (processor.set (_: String,_: String, _: String)).expects("someStorage", "someKey", "someValue").returning(Future(Right(Unit))).once
-      put("/someStorage/someKey", "{\"value\": \"someValue\"}") {
+      put("/someStorage/someKey", "\"someValue\"") {
         status should equal (200)
       }
     }
     it("set(key) should return 500 Internal Server Error if request to Elasticsearch failed") {
       (processor.set (_: String,_: String, _: String)).expects("someStorage", "someKey", "someValue").returning(Future(Left(InternalError(getRequestFailure)))).once
-      put("/someStorage/someKey", "{\"value\": \"someValue\"}") {
+      put("/someStorage/someKey", "\"someValue\"") {
         status should equal (500)
       }
     }
@@ -84,14 +84,14 @@ class KvStorageServletSuite
       (processor.set (_: String,_: Iterable[(String, String)])).expects("someStorage",  Map(
         "key1" -> "value1", "key2" -> "value2", "key3" -> "value3")).returning(Future(Right(Map(
         "key1" -> true, "key2" -> true, "key3" -> true)))).once
-      put("/someStorage/", "{\"key1\":\"value1\",\"key2\":\"value2\",\"key3\":\"value3\"}") {
+      put("/someStorage/set", "{\"key1\":\"value1\",\"key2\":\"value2\",\"key3\":\"value3\"}") {
         status should equal (200)
       }
     }
     it("set(kvs) should return 500 Internal Server Error if request to Elasticsearch failed") {
       (processor.set (_: String,_: Iterable[(String, String)])).expects("someStorage", Map(
         "key1" -> "value1", "key2" -> "value2", "key3" -> "value3")).returning(Future(Left(InternalError(getRequestFailure)))).once
-      put("/someStorage/", "{\"key1\":\"value1\",\"key2\":\"value2\",\"key3\":\"value3\"}") {
+      put("/someStorage/set", "{\"key1\":\"value1\",\"key2\":\"value2\",\"key3\":\"value3\"}") {
         status should equal (500)
       }
     }
@@ -112,21 +112,21 @@ class KvStorageServletSuite
     }
     // delete /:storage_uuid/:key end
 
-//    // delete /:storage_uuid/ start
-//    it("should delete multiple values by keys from storage") {
-//      (processor.delete (_: String,_: Iterable[String])).expects("someStorage", List("key1", "key2", "key3")).returning(Future(Right(Map(
-//        "key1" -> true, "key2" -> true, "key3" -> true)))).once
-//      delete("/someStorage/", "{\"keys\": [\"key1\",\"key2\",\"key3\"]}") {
-//        status should equal (200)
-//      }
-//    }
-//    it("delete(keys) should return 500 Internal Server Error if request to Elasticsearch failed") {
-//      (processor.delete (_: String,_: String)).expects("someStorage", "someKey").returning(Future(Left(InternalError(getRequestFailure)))).once
-//      delete("/someStorage/") {
-//        status should equal (500)
-//      }
-//    }
-//    // delete /:storage_uuid/ end
+    // put /:storage_uuid/delete start
+    it("should delete multiple values by keys from storage") {
+      (processor.delete (_: String,_: Iterable[String])).expects("someStorage", List("key1", "key2", "key3")).returning(Future(Right(Map(
+        "key1" -> true, "key2" -> true, "key3" -> true)))).once
+      put("/someStorage/delete", "[\"key1\",\"key2\",\"key3\"]") {
+        status should equal (200)
+      }
+    }
+    it("delete(keys) should return 500 Internal Server Error if request to Elasticsearch failed") {
+      (processor.delete (_: String,_: Iterable[String])).expects("someStorage", List("key1", "key2", "key3")).returning(Future(Left(InternalError(getRequestFailure)))).once
+      put("/someStorage/delete", "[\"key1\",\"key2\",\"key3\"]") {
+        status should equal (500)
+      }
+    }
+    // put /:storage_uuid/delete end
 
     // get /:storage_uuid/list start
     it("should list keys existing in storage") {
@@ -147,19 +147,19 @@ class KvStorageServletSuite
     // post /:storage_uuid/clear start
     it("should clear storage") {
       (processor.clear (_: String)).expects("someStorage").returning(Future(Right(Unit))).once
-      post("/someStorage/clear") {
+      put("/someStorage/clear") {
         status should equal (200)
       }
     }
     it("clear should return 500 Internal Server Error if request to Elasticsearch failed") {
       (processor.clear (_: String)).expects("someStorage").returning(Future(Left(InternalError(getRequestFailure)))).once
-      post("/someStorage/clear") {
+      put("/someStorage/clear") {
         status should equal(500)
       }
     }
     it("clear should return 409 Conflict Error if version of any document changed during deletion") {
       (processor.clear (_: String)).expects("someStorage").returning(Future(Left(ConflictError()))).once
-      post("/someStorage/clear") {
+      put("/someStorage/clear") {
         status should equal(409)
       }
     }
