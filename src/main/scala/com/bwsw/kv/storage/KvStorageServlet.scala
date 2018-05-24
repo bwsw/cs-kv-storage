@@ -9,6 +9,10 @@ import org.scalatra.json.JacksonJsonSupport
 
 import scala.concurrent.{ExecutionContext, Future}
 
+case class SimpleValue(value: String)
+case class MapValue(map: Map[String, String])
+case class Keys(keys: List[String])
+
 class KvStorageServlet(system: ActorSystem, processor: KvProcessor)
   extends ScalatraServlet
   with FutureSupport
@@ -20,69 +24,85 @@ class KvStorageServlet(system: ActorSystem, processor: KvProcessor)
     contentType = formats("json")
   }
 
-  put("/:storage_uuid/set/:key"){
-    new AsyncResult() {
-      override val is: Future[_] = processor.set(params("storage_uuid").toString, params("key").toString, multiParams("value").toString)
-        .map {
-          case Left(error: InternalError) => InternalServerError
-          case Right(value) => Ok
-        }
-    }
-  }
-  put("/:storage_uuid/set/"){
-    new AsyncResult() {
-      override val is: Future[_] = processor.set(params("storage_uuid").toString, parsedBody.extract[Map[String, String]])
-        .map {
-          case Left(error: InternalError) => InternalServerError
-          case Right(value) => value
-        }
-    }
-  }
-  get("/:storage_uuid/get/:key"){
+  get("/:storage_uuid/:key") {
     new AsyncResult() {
       override val is: Future[_] = processor.get(params("storage_uuid").toString, params("key").toString)
         .map {
-          case Left(error: NotFoundError) => NotFound
-          case Left(error: InternalError) => InternalServerError
+          case Left(error: NotFoundError) => NotFound()
+          case Left(error: InternalError) => InternalServerError()
           case Right(value) => value
         }
     }
   }
-  get("/:storage_uuid/get/"){
+
+  post("/:storage_uuid/") {
     new AsyncResult() {
-      override val is: Future[_] = processor.get(params("storage_uuid").toString, parsedBody.extract[List[String]])
+      override val is: Future[_] = processor.get(params("storage_uuid").toString, parsedBody.extract[Keys].keys)
         .map {
-          case Left(error: InternalError) => InternalServerError
+          case Left(error: InternalError) => InternalServerError()
           case Right(value) => value
         }
     }
   }
-  delete("/:storage_uuid/delete/:key"){
+
+  put("/:storage_uuid/:key") {
+    new AsyncResult() {
+      override val is: Future[_] = processor.set(params("storage_uuid").toString, params("key").toString, parsedBody.extract[SimpleValue].value)
+        .map {
+          case Left(error: InternalError) => InternalServerError()
+          case Right(value) => Ok()
+          case _ => BadRequest
+        }
+    }
+  }
+
+  put("/:storage_uuid/") {
+    new AsyncResult() {
+      override val is: Future[_] = processor.set(params("storage_uuid").toString, parsedBody.extract[Map[String, String]])
+        .map {
+          case Left(error: InternalError) => InternalServerError()
+          case Right(value) => value
+        }
+    }
+  }
+
+  delete("/:storage_uuid/:key") {
     new AsyncResult() {
       override val is: Future[_] = processor.delete(params("storage_uuid").toString, params("key").toString)
         .map {
-          case Left(error: InternalError) => InternalServerError
-          case Right(value) => Ok
+          case Left(error: InternalError) => InternalServerError()
+          case Right(value) => Ok()
         }
     }
   }
 
-  get("/:storage_uuid/list"){
+  delete("/:storage_uuid/") {
+    new AsyncResult() {
+      override val is: Future[_] = processor.get(params("storage_uuid").toString, parsedBody.extract[Keys].keys)
+        .map {
+          case Left(error: InternalError) => InternalServerError()
+          case Right(value) => value
+        }
+    }
+  }
+
+  get("/:storage_uuid/list") {
     new AsyncResult() {
       override val is: Future[_] = processor.list(params("storage_uuid").toString)
         .map {
-          case Left(error: InternalError) => InternalServerError
+          case Left(error: InternalError) => InternalServerError()
           case Right(value) => value
         }
     }
 
   }
-  post("/:storage_uuid/clear"){
+  post("/:storage_uuid/clear") {
     new AsyncResult() {
       override val is: Future[_] = processor.clear(params("storage_uuid").toString)
         .map {
-          case Left(error: InternalError) => InternalServerError
-          case Right(value) => Ok
+          case Left(error: InternalError) => InternalServerError()
+          case Left(error: ConflictError) => Conflict()
+          case Right(value) => Ok()
         }
     }
   }

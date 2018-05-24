@@ -23,7 +23,8 @@ libraryDependencies ++= Seq(
   "com.typesafe" % "config" % "1.3.3",
   "com.typesafe.akka" %% "akka-actor" % "2.5.12",
   "org.scalatra" %% "scalatra-json" % ScalatraVersion,
-  "org.json4s" %% "json4s-jackson" % "3.6.0-M4"
+  "org.json4s" %% "json4s-jackson" % "3.6.0-M4",
+  "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test"
 )
 
 enablePlugins(SbtTwirl)

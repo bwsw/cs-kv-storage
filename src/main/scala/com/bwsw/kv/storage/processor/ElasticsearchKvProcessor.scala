@@ -6,7 +6,6 @@ import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.ElasticDsl
 import com.bwsw.kv.storage.app.Configuration
 
-import scala.annotation.tailrec
 import scala.concurrent.Future
 
 object ElasticsearchKvProcessor {
@@ -30,7 +29,7 @@ class ElasticsearchKvProcessor(client: HttpClient, configuration: Configuration)
         case Left(failure) => Left(InternalError(failure))
         case Right(success) =>
           if(success.result.found)
-            Right(success.result.fields("value").toString)
+            Right(success.result.source("value").toString)
           else
             Left(NotFoundError()) }
   }
@@ -50,7 +49,7 @@ class ElasticsearchKvProcessor(client: HttpClient, configuration: Configuration)
         case Right(success) =>
           Right(success.result.docs.map(getResponse =>
             if (getResponse.found)
-              (getResponse.id, Some(getResponse.fields("value").toString))
+              (getResponse.id, Some(getResponse.source("value").toString))
             else
               (getResponse.id, None)).toMap) }
   }
