@@ -18,6 +18,7 @@ class Configuration {
   def getSearchPageSize: Int = {
     conf.getInt("elasticsearch.search.pagesize")
   }
+
   def getSearchScrollKeepAlive: String = {
     conf.getString("elasticsearch.search.keepalive")
   }
