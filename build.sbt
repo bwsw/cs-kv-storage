@@ -4,7 +4,7 @@ organization := "com.bwsw"
 
 name := "cs-kv-storage"
 
-version := "0.1"
+version := "1.0.0-SNAPSHOT"
 
 scalaVersion := "2.12.6"
 
@@ -24,6 +24,9 @@ libraryDependencies ++= Seq(
   "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % Test,
   "org.scalamock" %% "scalamock" % "4.1.0" % Test
 )
+
+assemblyJarName := s"${name.value}-${version.value}-jar-with-dependencies.jar"
+mainClass in assembly := Some("com.bwsw.kv.storage.JettyLauncher")
 
 enablePlugins(SbtTwirl)
 enablePlugins(ScalatraPlugin)
