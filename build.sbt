@@ -2,7 +2,7 @@ val ScalatraVersion = "2.6.3"
 
 organization := "com.bwsw"
 
-name := "kv-storage"
+name := "cs-kv-storage"
 
 version := "0.1"
 
