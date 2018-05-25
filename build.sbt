@@ -2,7 +2,7 @@ val ScalatraVersion = "2.6.3"
 
 organization := "com.bwsw"
 
-name := "KV Storage"
+name := "kv-storage"
 
 version := "0.1"
 
@@ -15,7 +15,7 @@ val elastic4sVersion = "6.2.8"
 libraryDependencies ++= Seq(
   "org.scalatra" %% "scalatra" % ScalatraVersion,
   "ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
-  "org.eclipse.jetty" % "jetty-webapp" % "9.4.9.v20180320" % "container",
+  "org.eclipse.jetty" % "jetty-webapp" % "9.4.9.v20180320" % "container;compile",
   "javax.servlet" % "javax.servlet-api" % "3.1.0" % "provided",
   "com.sksamuel.elastic4s" % "elastic4s-http_2.12" % elastic4sVersion,
   "com.typesafe" % "config" % "1.3.3",
