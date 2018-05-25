@@ -14,4 +14,12 @@ class Configuration {
   def getElasticsearchPassword: String = {
     conf.getString("elasticsearch.auth.password")
   }
+
+  def getSearchPageSize: Int = {
+    conf.getInt("search.pagesize")
+  }
+
+  def getSearchScrollKeepAlive: String = {
+    conf.getString("search.scroll.keepalive")
+  }
 }

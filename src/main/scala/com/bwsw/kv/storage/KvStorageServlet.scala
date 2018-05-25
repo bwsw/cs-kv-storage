@@ -2,5 +2,5 @@ package com.bwsw.kv.storage
 
 import org.scalatra._
 
-class KVStorageServlet extends ScalatraServlet {
+class KvStorageServlet extends ScalatraServlet {
 }
