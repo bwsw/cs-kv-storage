@@ -2,7 +2,7 @@ val ScalatraVersion = "2.6.3"
 
 organization := "com.bwsw"
 
-name := "KV Storage"
+name := "kv-storage"
 
 version := "0.1"
 
@@ -27,3 +27,18 @@ libraryDependencies ++= Seq(
 
 enablePlugins(SbtTwirl)
 enablePlugins(ScalatraPlugin)
+enablePlugins(DockerPlugin)
+
+dockerfile in docker := {
+  val artifact: File = assembly.value
+  val artifactTargetPath = s"/app/${artifact.name}"
+
+  new Dockerfile {
+    from("openjdk:8-jre")
+    expose(8080)
+    add(artifact, artifactTargetPath)
+    entryPoint("java", "-jar", artifactTargetPath)
+  }
+}
+
+buildOptions in docker := BuildOptions(cache = false)
