@@ -13,7 +13,9 @@ class KvStorageServlet(system: ActorSystem, processor: KvProcessor)
   extends ScalatraServlet
   with FutureSupport
   with JacksonJsonSupport {
+
   protected implicit def executor: ExecutionContext = system.dispatcher
+
   protected implicit lazy val jsonFormats: Formats = DefaultFormats
 
   before() {
@@ -22,9 +24,9 @@ class KvStorageServlet(system: ActorSystem, processor: KvProcessor)
 
   get("/:storage_uuid/:key") {
     new AsyncResult() {
-      override val is: Future[_] = processor.get(params("storage_uuid").toString, params("key").toString)
+      val is: Future[_] = processor.get(params("storage_uuid"), params("key"))
         .map {
-          case Left(error: NotFoundError) => NotFound()
+          case Left(_: NotFoundError) => NotFound()
           case Right(value) => value
           case _ => InternalServerError()
         }
@@ -33,7 +35,7 @@ class KvStorageServlet(system: ActorSystem, processor: KvProcessor)
 
   post("/:storage_uuid/") {
     new AsyncResult() {
-      override val is: Future[_] = processor.get(params("storage_uuid").toString, parsedBody.extract[List[String]])
+      val is: Future[_] = processor.get(params("storage_uuid"), parsedBody.extract[List[String]])
         .map {
           case Right(value) => value
           case _ => InternalServerError()
@@ -43,9 +45,9 @@ class KvStorageServlet(system: ActorSystem, processor: KvProcessor)
 
   put("/:storage_uuid/:key") {
     new AsyncResult() {
-      override val is: Future[_] = processor.set(params("storage_uuid").toString, params("key").toString, parsedBody.extract[String])
+      val is: Future[_] = processor.set(params("storage_uuid"), params("key"), parsedBody.extract[String])
         .map {
-          case Right(value) => Ok()
+          case Right(_) => Ok()
           case _ => InternalServerError()
         }
     }
@@ -53,7 +55,7 @@ class KvStorageServlet(system: ActorSystem, processor: KvProcessor)
 
   put("/:storage_uuid/set") {
     new AsyncResult() {
-      override val is: Future[_] = processor.set(params("storage_uuid").toString, parsedBody.extract[Map[String, String]])
+      val is: Future[_] = processor.set(params("storage_uuid"), parsedBody.extract[Map[String, String]])
         .map {
           case Right(value) => value
           case _ => InternalServerError()
@@ -63,9 +65,9 @@ class KvStorageServlet(system: ActorSystem, processor: KvProcessor)
 
   delete("/:storage_uuid/:key") {
     new AsyncResult() {
-      override val is: Future[_] = processor.delete(params("storage_uuid").toString, params("key").toString)
+      val is: Future[_] = processor.delete(params("storage_uuid"), params("key"))
         .map {
-          case Right(value) => Ok()
+          case Right(_) => Ok()
           case _ => InternalServerError()
         }
     }
@@ -73,7 +75,7 @@ class KvStorageServlet(system: ActorSystem, processor: KvProcessor)
 
   put("/:storage_uuid/delete") {
     new AsyncResult() {
-      override val is: Future[_] = processor.delete(params("storage_uuid").toString, parsedBody.extract[List[String]])
+      val is: Future[_] = processor.delete(params("storage_uuid"), parsedBody.extract[List[String]])
         .map {
           case Right(value) => value
           case _ => InternalServerError()
@@ -83,7 +85,7 @@ class KvStorageServlet(system: ActorSystem, processor: KvProcessor)
 
   get("/:storage_uuid/list") {
     new AsyncResult() {
-      override val is: Future[_] = processor.list(params("storage_uuid").toString)
+      val is: Future[_] = processor.list(params("storage_uuid"))
         .map {
           case Right(value) => value
           case _ => InternalServerError()
@@ -91,12 +93,13 @@ class KvStorageServlet(system: ActorSystem, processor: KvProcessor)
     }
 
   }
+
   put("/:storage_uuid/clear") {
     new AsyncResult() {
-      override val is: Future[_] = processor.clear(params("storage_uuid").toString)
+      val is: Future[_] = processor.clear(params("storage_uuid"))
         .map {
-          case Left(error: ConflictError) => Conflict()
-          case Right(value) => Ok()
+          case Left(_: ConflictError) => Conflict()
+          case Right(_) => Ok()
           case _ => InternalServerError()
         }
     }

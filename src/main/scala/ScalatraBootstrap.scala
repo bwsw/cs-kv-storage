@@ -8,15 +8,16 @@ import org.scalatra._
 import javax.servlet.ServletContext
 
 class ScalatraBootstrap extends LifeCycle {
-  val conf = new Configuration
-  val client = HttpClient(ElasticsearchClientUri(conf.getElasticsearchUri))
-  val processor = new ElasticsearchKvProcessor(client, conf)
-  val system = ActorSystem()
+  val Conf = new Configuration
+  val Client = HttpClient(ElasticsearchClientUri(Conf.getElasticsearchUri))
+  val Processor = new ElasticsearchKvProcessor(Client, Conf)
+  val System = ActorSystem()
+
   override def init(context: ServletContext) {
-    context.mount(new KvStorageServlet(system, processor), "/*")
+    context.mount(new KvStorageServlet(System, Processor), "/*")
   }
 
   override def destroy(context:ServletContext) {
-    system.terminate
+    System.terminate
   }
 }
