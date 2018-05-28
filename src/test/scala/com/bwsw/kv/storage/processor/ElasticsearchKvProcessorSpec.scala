@@ -159,7 +159,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
         expectsMaxValueLength(fakeConf)
 
         elasticsearchKvProcessor.set(storage, key, tooLongValue).map {
-          case Left(error: BadRequest) => succeed
+          case Left(error: BadRequestError) => succeed
           case _ => fail
         }
       }

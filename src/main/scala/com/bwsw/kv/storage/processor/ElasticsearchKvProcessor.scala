@@ -47,7 +47,7 @@ class ElasticsearchKvProcessor(client: HttpClient, configuration: Configuration)
 
   def set(storage: String, key: String, value: String): Future[Either[StorageError, Unit]] = {
     if(value.length > configuration.getMaxValueLength){
-      return Future(Left(BadRequest()))
+      return Future(Left(BadRequestError()))
     }
     client.execute {
       indexInto(getIndex(storage) / Type) id key fields (ValueField -> value)

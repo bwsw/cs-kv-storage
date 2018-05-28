@@ -8,4 +8,4 @@ case class NotFoundError() extends StorageError
 
 case class ConflictError() extends StorageError
 
-case class BadRequest() extends StorageError
+case class BadRequestError() extends StorageError

@@ -60,6 +60,7 @@ class KvStorageServlet(system: ActorSystem, processor: KvProcessor)
           processor.set(params("storage_uuid"), params("key"), request.body)
           .map {
             case Right(_) => Ok()
+            case Left(_: BadRequestError) => BadRequest()
             case _ => InternalServerError()
           }
         else
@@ -76,6 +77,7 @@ class KvStorageServlet(system: ActorSystem, processor: KvProcessor)
               processor.set(params("storage_uuid"), json.extract[Map[String, String]])
                 .map {
                   case Right(value) => value
+                  case Left(_: BadRequestError) => BadRequest()
                   case _ => InternalServerError()
                 }
             case JNothing => Future(BadRequest())
