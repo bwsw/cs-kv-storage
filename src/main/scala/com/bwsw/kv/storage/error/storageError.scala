@@ -7,3 +7,5 @@ case class InternalError(message: String) extends StorageError
 case class NotFoundError() extends StorageError
 
 case class ConflictError() extends StorageError
+
+case class BadRequest() extends StorageError

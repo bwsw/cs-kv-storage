@@ -46,6 +46,9 @@ class ElasticsearchKvProcessor(client: HttpClient, configuration: Configuration)
   }
 
   def set(storage: String, key: String, value: String): Future[Either[StorageError, Unit]] = {
+    if(value.length > configuration.getMaxValueLength){
+      return Future(Left(BadRequest()))
+    }
     client.execute {
       indexInto(getIndex(storage) / Type) id key fields (ValueField -> value)
     }.map {
@@ -55,14 +58,16 @@ class ElasticsearchKvProcessor(client: HttpClient, configuration: Configuration)
   }
 
   def set(storage: String, kvs: Map[String, String]): Future[Either[StorageError, Map[String, Boolean]]] = {
-    val sets = kvs.map { case (key, value) => indexInto(getIndex(storage) / Type) id key fields ("value" -> value) }
+    val splitKvs = kvs.partition { case (_, value) =>  value.length > configuration.getMaxValueLength }
+    val bad = splitKvs._1.map { case (key, _) =>  (key, false) }
+    val sets = splitKvs._2.map { case (key, value) => indexInto(getIndex(storage) / Type) id key fields ("value" -> value) }
     client.execute {
       bulk(sets)
     }.map {
       case Left(failure) => Left(getError(failure))
       case Right(success) =>
         Right(success.result.items.map(bulkResponseItem =>
-          (bulkResponseItem.id, bulkResponseItem.error.isEmpty)).toMap)
+          (bulkResponseItem.id, bulkResponseItem.error.isEmpty)).toMap ++ bad)
     }
   }
 
