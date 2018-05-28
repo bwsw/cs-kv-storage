@@ -41,6 +41,7 @@ class KvStorageServletSuite
         get("/someStorage/" + someKey,Seq(), Map("Content-Type"-> "text/plain")) {
           status should equal(200)
           body should equal(someValue)
+          response.getContentType should include("text/plain")
         }
       }
       it("should return 404 Not Found if key is not present in storage") {
@@ -69,6 +70,7 @@ class KvStorageServletSuite
         post("/someStorage/", jsonKeyList, Map("Content-Type"-> "application/json")) {
           status should equal(200)
           body should equal(jsonKeyValueMap)
+          response.getContentType should include("application/json")
         }
       }
       it("get(keys) should return 400 Bad Request Error if Content-Type is not application/json") {
@@ -90,6 +92,7 @@ class KvStorageServletSuite
         (processor.set(_: String, _: String, _: String)).expects(storage, someKey, someValue).returning(Future(Right(Unit))).once
         put("/someStorage/" + someKey, someValue, Map("Content-Type"-> "text/plain")) {
           status should equal(200)
+          response.getContentType should include("text/plain")
         }
       }
       it("set(key) should return 400 Bad Request Error if Content-Type is not text/plain") {
@@ -111,6 +114,7 @@ class KvStorageServletSuite
         (processor.set(_: String, _: Map[String, String])).expects(storage, keyValueMap).returning(Future(Right(keyTrueMap))).once
         put("/someStorage/set", jsonKeyValueMap, Map("Content-Type"-> "application/json")) {
           status should equal(200)
+          response.getContentType should include("application/json")
         }
       }
       it("set(kvs) should return 400 Bad Request Error if Content-Type is not application/json") {
@@ -132,6 +136,7 @@ class KvStorageServletSuite
         (processor.delete(_: String, _: String)).expects(storage, someKey).returning(Future(Right(Unit))).once
         delete("/someStorage/" + someKey, Seq(), Map("Content-Type"-> "text/plain")) {
           status should equal(200)
+          response.getContentType should include("text/plain")
         }
       }
       it("delete(key) should return 400 Bad Request Error if Content-Type is not text/plain") {
@@ -153,6 +158,7 @@ class KvStorageServletSuite
         (processor.delete(_: String, _: Iterable[String])).expects(storage, keyList).returning(Future(Right(keyTrueMap))).once
         put("/someStorage/delete", jsonKeyList,  Map("Content-Type"-> "application/json")) {
           status should equal(200)
+          response.getContentType should include("application/json")
         }
       }
       it("delete(keys) should return 400 Bad Request Error if Content-Type is not application/json") {
@@ -175,6 +181,7 @@ class KvStorageServletSuite
         get("/someStorage/list",  Seq(), Map("Content-Type"-> "text/plain")) {
           status should equal(200)
           body should equal(jsonKeyList)
+          response.getContentType should include("application/json")
         }
       }
       it("list should return 400 Bad Request Error if Content-Type is not text/plain") {
@@ -196,6 +203,7 @@ class KvStorageServletSuite
         (processor.clear(_: String)).expects(storage).returning(Future(Right(Unit))).once
         put("/someStorage/clear",  Array[Byte](), Map("Content-Type"-> "text/plain")) {
           status should equal(200)
+          response.getContentType should include("text/plain")
         }
       }
       it("clear should return 500 Internal Server Error if request to Elasticsearch failed") {
