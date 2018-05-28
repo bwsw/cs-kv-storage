@@ -4,7 +4,9 @@ import org.scalatra._
 import akka.actor.ActorSystem
 import com.bwsw.kv.storage.error._
 import com.bwsw.kv.storage.processor.KvProcessor
-import org.json4s.{DefaultFormats, Formats}
+import javax.swing.JList
+import org.json4s.JsonAST.{JArray, JNothing}
+import org.json4s.{DefaultFormats, Formats, JObject, JSet}
 import org.scalatra.json.JacksonJsonSupport
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -14,9 +16,9 @@ class KvStorageServlet(system: ActorSystem, processor: KvProcessor)
   with FutureSupport
   with JacksonJsonSupport {
 
-  protected implicit def executor: ExecutionContext = system.dispatcher
-
   protected implicit lazy val jsonFormats: Formats = DefaultFormats
+
+  protected implicit def executor: ExecutionContext = system.dispatcher
 
   get("/:storage_uuid/:key") {
     new AsyncResult() {
@@ -37,11 +39,15 @@ class KvStorageServlet(system: ActorSystem, processor: KvProcessor)
     new AsyncResult() {
       val is: Future[_] =
         if(request.getHeader("Content-Type") == formats("json"))
-          processor.get(params("storage_uuid"), parsedBody.extract[List[String]])
-          .map {
-            case Right(value) => value
-            case _ => InternalServerError()
-          }
+          parsedBody match {
+            case json: JArray =>
+              processor.get(params("storage_uuid"), json.extract[List[String]])
+                .map {
+                  case Right(value) => value
+                  case _ => InternalServerError()
+                }
+            case JNothing => Future(BadRequest())
+            case _ => Future(InternalServerError()) }
         else
           Future(BadRequest())
     }
@@ -50,7 +56,7 @@ class KvStorageServlet(system: ActorSystem, processor: KvProcessor)
   put("/:storage_uuid/:key") {
     new AsyncResult() {
       val is: Future[_] =
-        if(request.getHeader("Content-Type") == "text/plain")
+        if(request.getHeader("Content-Type") == "text/plain" && request.body.nonEmpty)
           processor.set(params("storage_uuid"), params("key"), request.body)
           .map {
             case Right(_) => Ok()
@@ -65,11 +71,15 @@ class KvStorageServlet(system: ActorSystem, processor: KvProcessor)
     new AsyncResult() {
       val is: Future[_] =
         if(request.getHeader("Content-Type") == formats("json"))
-          processor.set(params("storage_uuid"), parsedBody.extract[Map[String, String]])
-          .map {
-            case Right(value) => value
-            case _ => InternalServerError()
-          }
+          parsedBody match {
+            case json: JObject =>
+              processor.set(params("storage_uuid"), json.extract[Map[String, String]])
+                .map {
+                  case Right(value) => value
+                  case _ => InternalServerError()
+                }
+            case JNothing => Future(BadRequest())
+            case _ => Future(InternalServerError()) }
         else
           Future(BadRequest())
     }
@@ -93,11 +103,15 @@ class KvStorageServlet(system: ActorSystem, processor: KvProcessor)
     new AsyncResult() {
       val is: Future[_] =
         if(request.getHeader("Content-Type") == formats("json"))
-          processor.delete(params("storage_uuid"), parsedBody.extract[List[String]])
-          .map {
-            case Right(value) => value
-            case _ => InternalServerError()
-          }
+          parsedBody match {
+            case json: JArray =>
+              processor.delete(params("storage_uuid"), json.extract[List[String]])
+                .map {
+                  case Right(value) => value
+                  case _ => InternalServerError()
+                }
+            case JNothing => Future(BadRequest())
+            case _ => Future(InternalServerError()) }
         else
           Future(BadRequest())
     }

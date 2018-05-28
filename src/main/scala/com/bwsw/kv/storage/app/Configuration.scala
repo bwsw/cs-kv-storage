@@ -8,6 +8,9 @@ class Configuration {
   def getElasticsearchUri: String = {
     conf.getString("elasticsearch.uri")
   }
+  def getMaxValueLength: String = {
+    conf.getString("elasticsearch.maxValueLength")
+  }
   def getElasticsearchUsername: String = {
     conf.getString("elasticsearch.auth.username")
   }

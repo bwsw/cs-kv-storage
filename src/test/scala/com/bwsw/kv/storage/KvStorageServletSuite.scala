@@ -29,7 +29,7 @@ class KvStorageServletSuite
   private val `type` = "_doc"
   private val valueField = "value"
   private val keyList = List("key1", "key2", "key3")
-  private val jsonKeyList = "[\"key1\",\"key2\",\"key3\"]"
+  private val jsonKeyList= "[\"key1\",\"key2\",\"key3\"]"
   private val failureReason = "Test message"
 
   describe("a KvStorageServlet") {
