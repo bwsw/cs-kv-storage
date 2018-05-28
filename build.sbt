@@ -34,14 +34,16 @@ enablePlugins(DockerPlugin)
 
 dockerfile in docker := {
   val artifact: File = assembly.value
-  val artifactTargetPath = s"/app/${artifact.name}"
+  val artifactTargetPath = s"/opt/cs-kv-storage/${artifact.name}"
 
   new Dockerfile {
     from("openjdk:8-jre")
     expose(8080)
+    run("mkdir", "-p", "/var/log/cs-kv-storage")
+    volume("/var/log/cs-kv-storage")
     add(artifact, artifactTargetPath)
     entryPoint("java", "-jar", artifactTargetPath)
   }
 }
-
+imageNames in docker := Seq(ImageName(s"git.bw-sw.com:5000/cloudstack-ecosystem/${name.value}:${version.value}"))
 buildOptions in docker := BuildOptions(cache = false)
