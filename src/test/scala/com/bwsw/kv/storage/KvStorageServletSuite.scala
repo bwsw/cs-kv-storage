@@ -38,20 +38,26 @@ class KvStorageServletSuite
     describe("(get by key)") {
       it("should get value from storage") {
         (processor.get(_: String, _: String)).expects(storage, someKey).returning(Future(Right(someValue))).once
-        get("/someStorage/" + someKey) {
+        get("/someStorage/" + someKey,Seq(), Map("Content-Type"-> "text/plain")) {
           status should equal(200)
           body should equal(someValue)
         }
       }
       it("should return 404 Not Found if key is not present in storage") {
         (processor.get(_: String, _: String)).expects(storage, someKey).returning(Future(Left(NotFoundError()))).once
-        get("/someStorage/" + someKey) {
+        get("/someStorage/" + someKey,Seq(), Map("Content-Type"-> "text/plain")) {
           status should equal(404)
+        }
+      }
+      it("get(keys) should return 400 Bad Request Error if Content-Type is not text/plain") {
+        (processor.get(_: String, _: String)).expects(storage, someKey).never
+        get("/someStorage/" + someKey,Seq(), Map("Content-Type"-> "application/json")) {
+          status should equal(400)
         }
       }
       it("should return 500 Internal Server Error if request to Elasticsearch failed") {
         (processor.get(_: String, _: String)).expects(storage, someKey).returning(Future(Left(InternalError(failureReason)))).once
-        get("/someStorage/" + someKey) {
+        get("/someStorage/" + someKey,Seq(), Map("Content-Type"-> "text/plain")) {
           status should equal(500)
         }
       }
@@ -60,15 +66,20 @@ class KvStorageServletSuite
     describe("(get by keys)") {
       it("should get multiple values from storage") {
         (processor.get(_: String, _: Iterable[String])).expects(storage, keyList).returning(Future(Right(keySomeValueMap))).once
-        post("/someStorage/", jsonKeyList) {
+        post("/someStorage/", jsonKeyList, Map("Content-Type"-> "application/json")) {
           status should equal(200)
-          //        body should include ("value1")
           body should equal(jsonKeyValueMap)
+        }
+      }
+      it("get(keys) should return 400 Bad Request Error if Content-Type is not application/json") {
+        (processor.get(_: String, _: Iterable[String])).expects(storage, keyList).never
+        post("/someStorage/", jsonKeyList, Map("Content-Type"-> "text/plain")) {
+          status should equal(400)
         }
       }
       it("get(keys) should return 500 Internal Server Error if request to Elasticsearch failed") {
         (processor.get(_: String, _: Iterable[String])).expects(storage, keyList).returning(Future(Left(InternalError(failureReason)))).once
-        post("/someStorage/", jsonKeyList) {
+        post("/someStorage/", jsonKeyList, Map("Content-Type"-> "application/json")) {
           status should equal(500)
         }
       }
@@ -77,13 +88,19 @@ class KvStorageServletSuite
     describe("(set the key/value)") {
       it("should set value by key into storage") {
         (processor.set(_: String, _: String, _: String)).expects(storage, someKey, someValue).returning(Future(Right(Unit))).once
-        put("/someStorage/" + someKey, "\"" + someValue + "\"") {
+        put("/someStorage/" + someKey, someValue, Map("Content-Type"-> "text/plain")) {
           status should equal(200)
+        }
+      }
+      it("set(key) should return 400 Bad Request Error if Content-Type is not text/plain") {
+        (processor.set(_: String, _: String, _: String)).expects(storage, someKey, someValue).never
+        put("/someStorage/" + someKey, someValue, Map("Content-Type"-> "application/json")) {
+          status should equal(400)
         }
       }
       it("set(key) should return 500 Internal Server Error if request to Elasticsearch failed") {
         (processor.set(_: String, _: String, _: String)).expects(storage, someKey, someValue).returning(Future(Left(InternalError(failureReason)))).once
-        put("/someStorage/" + someKey, "\"" + someValue + "\"") {
+        put("/someStorage/" + someKey, someValue, Map("Content-Type"-> "text/plain")) {
           status should equal(500)
         }
       }
@@ -92,13 +109,19 @@ class KvStorageServletSuite
     describe("(set key/value pairs)") {
       it("should set multiple values by keys into storage") {
         (processor.set(_: String, _: Map[String, String])).expects(storage, keyValueMap).returning(Future(Right(keyTrueMap))).once
-        put("/someStorage/set", jsonKeyValueMap) {
+        put("/someStorage/set", jsonKeyValueMap, Map("Content-Type"-> "application/json")) {
           status should equal(200)
+        }
+      }
+      it("set(kvs) should return 400 Bad Request Error if Content-Type is not application/json") {
+        (processor.set(_: String, _: Map[String, String])).expects(storage, keyValueMap).never
+        put("/someStorage/set", jsonKeyValueMap, Map("Content-Type"-> "text/plain")) {
+          status should equal(400)
         }
       }
       it("set(kvs) should return 500 Internal Server Error if request to Elasticsearch failed") {
         (processor.set(_: String, _: Map[String, String])).expects(storage, keyValueMap).returning(Future(Left(InternalError(failureReason)))).once
-        put("/someStorage/set", jsonKeyValueMap) {
+        put("/someStorage/set", jsonKeyValueMap, Map("Content-Type"-> "application/json")) {
           status should equal(500)
         }
       }
@@ -107,13 +130,19 @@ class KvStorageServletSuite
     describe("(delete by the key)") {
       it("should delete value by key from storage") {
         (processor.delete(_: String, _: String)).expects(storage, someKey).returning(Future(Right(Unit))).once
-        delete("/someStorage/" + someKey) {
+        delete("/someStorage/" + someKey, Seq(), Map("Content-Type"-> "text/plain")) {
           status should equal(200)
+        }
+      }
+      it("delete(key) should return 400 Bad Request Error if Content-Type is not text/plain") {
+        (processor.delete(_: String, _: String)).expects(storage, someKey).never
+        delete("/someStorage/" + someKey, Seq(), Map("Content-Type"-> "application/json")) {
+          status should equal(400)
         }
       }
       it("delete(key) should return 500 Internal Server Error if request to Elasticsearch failed") {
         (processor.delete(_: String, _: String)).expects(storage, someKey).returning(Future(Left(InternalError(failureReason)))).once
-        delete("/someStorage/" + someKey) {
+        delete("/someStorage/" + someKey, Seq(), Map("Content-Type"-> "text/plain")) {
           status should equal(500)
         }
       }
@@ -122,13 +151,19 @@ class KvStorageServletSuite
     describe("(delete by keys)") {
       it("should delete multiple values by keys from storage") {
         (processor.delete(_: String, _: Iterable[String])).expects(storage, keyList).returning(Future(Right(keyTrueMap))).once
-        put("/someStorage/delete", jsonKeyList) {
+        put("/someStorage/delete", jsonKeyList,  Map("Content-Type"-> "application/json")) {
           status should equal(200)
+        }
+      }
+      it("delete(keys) should return 400 Bad Request Error if Content-Type is not application/json") {
+        (processor.delete(_: String, _: Iterable[String])).expects(storage, keyList).never
+        put("/someStorage/delete", jsonKeyList, Map("Content-Type"-> "text/plain")) {
+          status should equal(400)
         }
       }
       it("delete(keys) should return 500 Internal Server Error if request to Elasticsearch failed") {
         (processor.delete(_: String, _: Iterable[String])).expects(storage, keyList).returning(Future(Left(InternalError(failureReason)))).once
-        put("/someStorage/delete", jsonKeyList) {
+        put("/someStorage/delete", jsonKeyList,  Map("Content-Type"-> "application/json")) {
           status should equal(500)
         }
       }
@@ -137,14 +172,20 @@ class KvStorageServletSuite
     describe("(list)") {
       it("should list keys existing in storage") {
         (processor.list(_: String)).expects(storage).returning(Future(Right(keyList))).once
-        get("/someStorage/list") {
+        get("/someStorage/list",  Seq(), Map("Content-Type"-> "text/plain")) {
           status should equal(200)
           body should equal(jsonKeyList)
         }
       }
+      it("list should return 400 Bad Request Error if Content-Type is not text/plain") {
+        (processor.list(_: String)).expects(storage).never
+        get("/someStorage/list",  Seq(), Map("Content-Type"-> "application/json")) {
+          status should equal(400)
+        }
+      }
       it("list should return 500 Internal Server Error if any request to Elasticsearch failed") {
         (processor.list(_: String)).expects(storage).returning(Future(Left(InternalError(failureReason)))).once
-        get("/someStorage/list") {
+        get("/someStorage/list",  Seq(), Map("Content-Type"-> "text/plain")) {
           status should equal(500)
         }
       }
@@ -153,19 +194,25 @@ class KvStorageServletSuite
     describe("(clear)") {
       it("should clear storage") {
         (processor.clear(_: String)).expects(storage).returning(Future(Right(Unit))).once
-        put("/someStorage/clear") {
+        put("/someStorage/clear",  Array[Byte](), Map("Content-Type"-> "text/plain")) {
           status should equal(200)
         }
       }
       it("clear should return 500 Internal Server Error if request to Elasticsearch failed") {
         (processor.clear(_: String)).expects(storage).returning(Future(Left(InternalError(failureReason)))).once
-        put("/someStorage/clear") {
+        put("/someStorage/clear",  Array[Byte](), Map("Content-Type"-> "text/plain")) {
           status should equal(500)
+        }
+      }
+      it("clear should return 400 Bad Request Error if Content-Type is not text/plain") {
+        (processor.clear(_: String)).expects(storage).never
+        put("/someStorage/clear",  Array[Byte](), Map("Content-Type"-> "application/json")) {
+          status should equal(400)
         }
       }
       it("clear should return 409 Conflict Error if version of any document changed during deletion") {
         (processor.clear(_: String)).expects(storage).returning(Future(Left(ConflictError()))).once
-        put("/someStorage/clear") {
+        put("/someStorage/clear",  Array[Byte](), Map("Content-Type"-> "text/plain")) {
           status should equal(409)
         }
       }

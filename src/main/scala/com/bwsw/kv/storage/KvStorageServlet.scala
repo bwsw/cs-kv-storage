@@ -18,90 +18,120 @@ class KvStorageServlet(system: ActorSystem, processor: KvProcessor)
 
   protected implicit lazy val jsonFormats: Formats = DefaultFormats
 
-  before() {
-    contentType = formats("json")
-  }
-
   get("/:storage_uuid/:key") {
     new AsyncResult() {
-      val is: Future[_] = processor.get(params("storage_uuid"), params("key"))
-        .map {
-          case Left(_: NotFoundError) => NotFound()
-          case Right(value) => value
-          case _ => InternalServerError()
-        }
+      val is: Future[_] =
+        if(request.getHeader("Content-Type") == "text/plain")
+          processor.get(params("storage_uuid"), params("key"))
+          .map {
+            case Left(_: NotFoundError) => NotFound()
+            case Right(value) => value
+            case _ => InternalServerError()
+          }
+        else
+          Future(BadRequest())
     }
   }
 
   post("/:storage_uuid/") {
     new AsyncResult() {
-      val is: Future[_] = processor.get(params("storage_uuid"), parsedBody.extract[List[String]])
-        .map {
-          case Right(value) => value
-          case _ => InternalServerError()
-        }
+      val is: Future[_] =
+        if(request.getHeader("Content-Type") == formats("json"))
+          processor.get(params("storage_uuid"), parsedBody.extract[List[String]])
+          .map {
+            case Right(value) => value
+            case _ => InternalServerError()
+          }
+        else
+          Future(BadRequest())
     }
   }
 
   put("/:storage_uuid/:key") {
     new AsyncResult() {
-      val is: Future[_] = processor.set(params("storage_uuid"), params("key"), parsedBody.extract[String])
-        .map {
-          case Right(_) => Ok()
-          case _ => InternalServerError()
-        }
+      val is: Future[_] =
+        if(request.getHeader("Content-Type") == "text/plain")
+          processor.set(params("storage_uuid"), params("key"), request.body)
+          .map {
+            case Right(_) => Ok()
+            case _ => InternalServerError()
+          }
+        else
+          Future(BadRequest())
     }
   }
 
   put("/:storage_uuid/set") {
     new AsyncResult() {
-      val is: Future[_] = processor.set(params("storage_uuid"), parsedBody.extract[Map[String, String]])
-        .map {
-          case Right(value) => value
-          case _ => InternalServerError()
-        }
+      val is: Future[_] =
+        if(request.getHeader("Content-Type") == formats("json"))
+          processor.set(params("storage_uuid"), parsedBody.extract[Map[String, String]])
+          .map {
+            case Right(value) => value
+            case _ => InternalServerError()
+          }
+        else
+          Future(BadRequest())
     }
   }
 
   delete("/:storage_uuid/:key") {
     new AsyncResult() {
-      val is: Future[_] = processor.delete(params("storage_uuid"), params("key"))
-        .map {
-          case Right(_) => Ok()
-          case _ => InternalServerError()
-        }
+      val is: Future[_] =
+        if(request.getHeader("Content-Type") == "text/plain")
+          processor.delete(params("storage_uuid"), params("key"))
+          .map {
+            case Right(_) => Ok()
+            case _ => InternalServerError()
+          }
+        else
+          Future(BadRequest())
     }
   }
 
   put("/:storage_uuid/delete") {
     new AsyncResult() {
-      val is: Future[_] = processor.delete(params("storage_uuid"), parsedBody.extract[List[String]])
-        .map {
-          case Right(value) => value
-          case _ => InternalServerError()
-        }
+      val is: Future[_] =
+        if(request.getHeader("Content-Type") == formats("json"))
+          processor.delete(params("storage_uuid"), parsedBody.extract[List[String]])
+          .map {
+            case Right(value) => value
+            case _ => InternalServerError()
+          }
+        else
+          Future(BadRequest())
     }
   }
 
   get("/:storage_uuid/list") {
     new AsyncResult() {
-      val is: Future[_] = processor.list(params("storage_uuid"))
-        .map {
-          case Right(value) => value
-          case _ => InternalServerError()
-        }
+      val is: Future[_] =
+        if(request.getHeader("Content-Type") == "text/plain")
+          processor.list(params("storage_uuid"))
+          .map {
+            case Right(value) =>
+              contentType = formats("json")
+              value
+            case _ => InternalServerError()
+          }
+        else
+          Future(BadRequest())
     }
 
   }
 
   put("/:storage_uuid/clear") {
     new AsyncResult() {
-      val is: Future[_] = processor.clear(params("storage_uuid"))
-        .map {
-          case Left(_: ConflictError) => Conflict()
-          case Right(_) => Ok()
-          case _ => InternalServerError()
-        }
+      val is: Future[_] =
+        if(request.getHeader("Content-Type") == "text/plain")
+          processor.clear(params("storage_uuid"))
+          .map {
+            case Left(_: ConflictError) => Conflict()
+            case Right(_) => Ok()
+            case _ => InternalServerError()
+          }
+        else
+          Future(BadRequest())
     }
   }
 
