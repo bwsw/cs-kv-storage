@@ -39,7 +39,6 @@ dockerfile in docker := {
   new Dockerfile {
     from("openjdk:8-jre")
     expose(8080)
-    run("mkdir", "-p", "/var/log/cs-kv-storage")
     volume("/var/log/cs-kv-storage")
     add(artifact, artifactTargetPath)
     entryPoint("java", "-jar", artifactTargetPath)
