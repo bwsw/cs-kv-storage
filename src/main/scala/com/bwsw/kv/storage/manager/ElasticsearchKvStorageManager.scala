@@ -1,11 +1,8 @@
 package com.bwsw.kv.storage.manager
 
 import com.bwsw.kv.storage.error.{BadRequestError, InternalError, NotFoundError, StorageError}
-import com.bwsw.kv.storage.processor.ElasticsearchKvProcessor.getError
 import com.sksamuel.elastic4s.http.ElasticDsl._
-import com.sksamuel.elastic4s.http.delete.DeleteResponse
 import com.sksamuel.elastic4s.http.get.GetResponse
-import com.sksamuel.elastic4s.http.index.admin.DeleteIndexResponse
 import com.sksamuel.elastic4s.http.{HttpClient, RequestFailure, RequestSuccess}
 
 import scala.concurrent.Future
@@ -21,18 +18,17 @@ class ElasticsearchKvStorageManager(client: HttpClient) extends KvStorageManager
 
   def updateTempStorageTtl(storage: String, ttl: Long): Future[Either[StorageError, Unit]] = {
     client.execute(update(storage) in Registry / Type
-      script "if (ctx._source.type == \"TEMP\"){ ctx._source.ttl = " + ttl + " } else { ctx.op=\"noop\"}") //TODO: test this
-      //      updateByQuery(Registry, Type, boolQuery.must(idsQuery(Seq(storage)), termQuery("type", "TEMP"))))
+      script "if (ctx._source.type == \"TEMP\"){ ctx._source.ttl = " + ttl + " } else { ctx.op=\"noop\"}")
       .map {
-      case Left(failure: RequestFailure) => failure.status match {
-        case 404 => Left(NotFoundError())
-        case _ => Left(getError(failure))
+        case Left(failure: RequestFailure) => failure.status match {
+          case 404 => Left(NotFoundError())
+          case _ => Left(getError(failure))
+        }
+        case Right(RequestSuccess(status, body, headers, updateRequest)) => updateRequest.result match {
+          case "updated" => Right(Unit)
+          case "noop" => Left(BadRequestError())
+        }
       }
-      case Right(RequestSuccess(status, body, headers, updateRequest)) => updateRequest.result match {
-        case "updated" => Right(Unit)
-        case "noop" => Left(BadRequestError())
-      }
-    }
   }
 
   def deleteTempStorage(storage: String): Future[Either[StorageError, Unit]] = {
@@ -40,10 +36,12 @@ class ElasticsearchKvStorageManager(client: HttpClient) extends KvStorageManager
       client.execute(get(Registry, Type, storage)).map {
         case Left(failure: RequestFailure) => Left(getError(failure))
         case Right(success: RequestSuccess[GetResponse]) =>
-          if (success.result.source("type") == Temporary)
-            Right()
-          else
-            Left(BadRequestError())
+          if (success.result.found)
+            if (success.result.source("type") == Temporary)
+              Right()
+            else
+              Left(BadRequestError())
+          else Left(NotFoundError())
       }
     }
 
