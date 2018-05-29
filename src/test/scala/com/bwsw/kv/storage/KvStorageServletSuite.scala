@@ -1,230 +1,298 @@
 package com.bwsw.kv.storage
 
 import akka.actor.ActorSystem
-import com.bwsw.kv.storage.error.{ConflictError, InternalError, NotFoundError}
-import com.bwsw.kv.storage.processor.ElasticsearchKvProcessor
-import org.scalatra.test.scalatest._
-import org.scalatest.FunSpecLike
+import com.bwsw.kv.storage.error._
+import com.bwsw.kv.storage.processor.KvProcessor
 import org.scalamock.scalatest.MockFactory
+import org.scalatest.FunSpecLike
+import org.scalatra.test.scalatest._
 
 import scala.concurrent.Future
 
 class KvStorageServletSuite
   extends ScalatraSuite
-  with FunSpecLike
-  with MockFactory {
+    with FunSpecLike
+    with MockFactory {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
   private val system = ActorSystem()
-  private val processor = mock[ElasticsearchKvProcessor]
+  private val processor = mock[KvProcessor]
   private val someKey = "someKey"
   private val someValue = "someValue"
-  private val keyValueMap = Map("key1" -> "value1", "key2" -> "value2", "key3" -> "value3")
-  private val keySomeValueMap = Map("key1" -> Some("value1"), "key2" -> Some("value2"), "key3" -> Some("value3"))
-  private val keyTrueMap = Map("key1" -> true, "key2" -> true, "key3" -> true)
-  private val jsonKeyValueMap = "{\"key1\":\"value1\",\"key2\":\"value2\",\"key3\":\"value3\"}"
-  private val index = "storage-someStorage"
+  private val keyValues = Map("key1" -> "value1", "key2" -> "value2", "key3" -> "value3")
+  private val keys = List("key1", "key2", "key3")
+  private val jsonKeys = "[\"key1\",\"key2\",\"key3\"]"
+  private val jsonKeyValues = "{\"key1\":\"value1\",\"key2\":\"value2\",\"key3\":\"value3\"}"
+  private val jsonNullValues = "{\"key1\":null,\"key2\":null,\"key3\":null}"
+  private val jsonKeyResult = "{\"key1\":true,\"key2\":true,\"key3\":true}"
   private val storage = "someStorage"
-  private val `type` = "_doc"
-  private val valueField = "value"
-  private val keyList = List("key1", "key2", "key3")
-  private val jsonKeyList= "[\"key1\",\"key2\",\"key3\"]"
-  private val failureReason = "Test message"
+  private val storagePath = "/" + storage + "/"
+  private val internalError = Future(Left(InternalError("some reason")))
+  private val jsonHeaders = Map("Content-Type" -> "application/json")
+  private val textHeaders = Map("Content-Type" -> "text/plain")
 
   describe("a KvStorageServlet") {
     addServlet(new KvStorageServlet(system, processor), "/*")
 
     describe("(get by key)") {
-      it("should get value from storage") {
+      it("should return the value if the key exists") {
         (processor.get(_: String, _: String)).expects(storage, someKey).returning(Future(Right(someValue))).once
-        get("/someStorage/" + someKey,Seq(), Map("Content-Type"-> "text/plain")) {
+        get(storagePath + someKey, Seq(), Map()) {
           status should equal(200)
           body should equal(someValue)
           response.getContentType should include("text/plain")
         }
       }
-      it("should return 404 Not Found if key is not present in storage") {
+
+      it("should return 404 Not Found if the key does not exist") {
         (processor.get(_: String, _: String)).expects(storage, someKey).returning(Future(Left(NotFoundError()))).once
-        get("/someStorage/" + someKey,Seq(), Map("Content-Type"-> "text/plain")) {
+        get(storagePath + someKey, Seq(), Map()) {
           status should equal(404)
         }
       }
-      it("get(keys) should return 400 Bad Request Error if Content-Type is not text/plain") {
-        (processor.get(_: String, _: String)).expects(storage, someKey).never
-        get("/someStorage/" + someKey,Seq(), Map("Content-Type"-> "application/json")) {
-          status should equal(400)
-        }
-      }
-      it("should return 500 Internal Server Error if request to Elasticsearch failed") {
-        (processor.get(_: String, _: String)).expects(storage, someKey).returning(Future(Left(InternalError(failureReason)))).once
-        get("/someStorage/" + someKey,Seq(), Map("Content-Type"-> "text/plain")) {
+
+      it("should return 500 Internal Server Error if request processing fails") {
+        (processor.get(_: String, _: String)).expects(storage, someKey).returning(internalError).once
+        get(storagePath + someKey, Seq(), Map()) {
           status should equal(500)
         }
       }
     }
 
     describe("(get by keys)") {
-      it("should get multiple values from storage") {
-        (processor.get(_: String, _: Iterable[String])).expects(storage, keyList).returning(Future(Right(keySomeValueMap))).once
-        post("/someStorage/", jsonKeyList, Map("Content-Type"-> "application/json")) {
+      def testSuccess(result: Map[String, Option[String]], expectedBody: String) = {
+        (processor.get(_: String, _: Iterable[String])).expects(storage, keys).returning(Future(Right(result))).once
+        post(storagePath, jsonKeys, jsonHeaders) {
           status should equal(200)
-          body should equal(jsonKeyValueMap)
+          body should equal(expectedBody)
           response.getContentType should include("application/json")
         }
       }
-      it("get(keys) should return 400 Bad Request Error if Content-Type is not application/json") {
-        (processor.get(_: String, _: Iterable[String])).expects(storage, keyList).never
-        post("/someStorage/", jsonKeyList, Map("Content-Type"-> "text/plain")) {
+
+      def testBadRequest(body: Array[Byte], headers: scala.Iterable[(String, String)]) = {
+        (processor.get(_: String, _: Iterable[String])).expects(storage, keys).never
+        post(storagePath, body, headers) {
+          println(status)
+          println(body.toString)
           status should equal(400)
         }
       }
-      it("get(keys) should return 500 Internal Server Error if request to Elasticsearch failed") {
-        (processor.get(_: String, _: Iterable[String])).expects(storage, keyList).returning(Future(Left(InternalError(failureReason)))).once
-        post("/someStorage/", jsonKeyList, Map("Content-Type"-> "application/json")) {
+
+      it("should get values by keys") {
+        testSuccess(keyValues.map(kv => (kv._1, Some(kv._2))), jsonKeyValues)
+      }
+
+      it("should return null for keys that do not exist") {
+        testSuccess(keyValues.map(kv => (kv._1, None)), jsonNullValues)
+      }
+
+      it("should return 400 Bad Request Error if Content-Type is not application/json") {
+        testBadRequest(jsonKeys, textHeaders)
+      }
+
+      it("should return 400 Bad Request Error if the body is invalid JSON") {
+        testBadRequest("[\"key\"", jsonHeaders)
+      }
+
+      it("should return 400 Bad Request Error if the body is invalid") {
+        testBadRequest("{\"field\":\"value\"}", jsonHeaders)
+      }
+
+      it("should return 500 Internal Server Error if request processing fails") {
+        (processor.get(_: String, _: Iterable[String])).expects(storage, keys).returning(internalError).once
+        post(storagePath, jsonKeys, jsonHeaders) {
           status should equal(500)
         }
       }
     }
 
     describe("(set the key/value)") {
-      it("should set value by key into storage") {
-        (processor.set(_: String, _: String, _: String)).expects(storage, someKey, someValue).returning(Future(Right(Unit))).once
-        put("/someStorage/" + someKey, someValue, Map("Content-Type"-> "text/plain")) {
+      val path = storagePath + someKey
+
+      it("should set the value by the key") {
+        (processor.set(_: String, _: String, _: String)).expects(storage, someKey, someValue)
+          .returning(Future(Right(Unit))).once
+        put(path, someValue, textHeaders) {
           status should equal(200)
           response.getContentType should include("text/plain")
         }
       }
-      it("set(key) should return 400 Bad Request Error if Content-Type is not text/plain") {
-        (processor.set(_: String, _: String, _: String)).expects(storage, someKey, someValue).never
-        put("/someStorage/" + someKey, someValue, Map("Content-Type"-> "application/json")) {
+
+      it("should return 400 Bad Request Error if Content-Type is not text/plain") {
+        put(path, someValue, jsonHeaders) {
           status should equal(400)
         }
       }
-      it("set(key) should return 500 Internal Server Error if request to Elasticsearch failed") {
-        (processor.set(_: String, _: String, _: String)).expects(storage, someKey, someValue).returning(Future(Left(InternalError(failureReason)))).once
-        put("/someStorage/" + someKey, someValue, Map("Content-Type"-> "text/plain")) {
+
+      it("should return 400 Bad Request Error if the key or value are invalid") {
+        (processor.set(_: String, _: String, _: String)).expects(storage, someKey, someValue)
+          .returning(Future(Left(BadRequestError())))
+        put(path, someValue, textHeaders) {
+          status should equal(400)
+        }
+      }
+
+      it("should return 500 Internal Server Error if request processing fails") {
+        (processor.set(_: String, _: String, _: String)).expects(storage, someKey, someValue)
+          .returning(internalError).once
+        put(path, someValue, textHeaders) {
           status should equal(500)
         }
       }
     }
 
     describe("(set key/value pairs)") {
-      it("should set multiple values by keys into storage") {
-        (processor.set(_: String, _: Map[String, String])).expects(storage, keyValueMap).returning(Future(Right(keyTrueMap))).once
-        put("/someStorage/set", jsonKeyValueMap, Map("Content-Type"-> "application/json")) {
+      val path = storagePath + "set"
+
+      def testSuccess(result: Map[String, Boolean], expectedBody: String) = {
+        (processor.set(_: String, _: Map[String, String])).expects(storage, keyValues).returning(Future(Right(result)))
+          .once
+        put(path, jsonKeyValues, jsonHeaders) {
           status should equal(200)
+          body should equal(expectedBody)
           response.getContentType should include("application/json")
         }
       }
-      it("set(kvs) should return 400 Bad Request Error if Content-Type is not application/json") {
-        (processor.set(_: String, _: Map[String, String])).expects(storage, keyValueMap).never
-        put("/someStorage/set", jsonKeyValueMap, Map("Content-Type"-> "text/plain")) {
+
+      def testBadRequest(body: Array[Byte], headers: scala.Iterable[(String, String)]) = {
+        (processor.set(_: String, _: Map[String, String])).expects(storage, keyValues).never
+        put(path, body, headers) {
           status should equal(400)
         }
       }
-      it("set(kvs) should return 500 Internal Server Error if request to Elasticsearch failed") {
-        (processor.set(_: String, _: Map[String, String])).expects(storage, keyValueMap).returning(Future(Left(InternalError(failureReason)))).once
-        put("/someStorage/set", jsonKeyValueMap, Map("Content-Type"-> "application/json")) {
+
+      it("should set values by keys") {
+        testSuccess(keyValues.map(kv => (kv._1, true)), jsonKeyResult)
+      }
+
+      it("should return false if the key or value are invalid") {
+        testSuccess(Map(someKey -> false), "{\"" + someKey + "\":false}")
+      }
+
+      it("should return 400 Bad Request Error if Content-Type is not application/json") {
+        testBadRequest(jsonKeyValues, textHeaders)
+      }
+
+      it("should return 400 Bad Request Error if the body is invalid JSON") {
+        testBadRequest("{\"key\"", jsonHeaders)
+      }
+
+      it("should return 400 Bad Request Error if the body is invalid") {
+        testBadRequest("{\"field\":[]}", jsonHeaders)
+      }
+
+      it("should return 500 Internal Server Error if request processing fails") {
+        (processor.set(_: String, _: Map[String, String])).expects(storage, keyValues).returning(internalError).once
+        put(path, jsonKeyValues, jsonHeaders) {
           status should equal(500)
         }
       }
     }
 
     describe("(delete by the key)") {
-      it("should delete value by key from storage") {
+      def test(result: Future[Either[StorageError, Unit]], status: Int) = {
         (processor.delete(_: String, _: String)).expects(storage, someKey).returning(Future(Right(Unit))).once
-        delete("/someStorage/" + someKey, Seq(), Map("Content-Type"-> "text/plain")) {
-          status should equal(200)
-          response.getContentType should include("text/plain")
+        delete(storagePath + someKey, Seq(), Map()) {
+          status should equal(status)
         }
       }
-      it("delete(key) should return 400 Bad Request Error if Content-Type is not text/plain") {
-        (processor.delete(_: String, _: String)).expects(storage, someKey).never
-        delete("/someStorage/" + someKey, Seq(), Map("Content-Type"-> "application/json")) {
-          status should equal(400)
-        }
+
+      it("should delete the value by the key") {
+        test(Future(Right(Unit)), 200)
       }
-      it("delete(key) should return 500 Internal Server Error if request to Elasticsearch failed") {
-        (processor.delete(_: String, _: String)).expects(storage, someKey).returning(Future(Left(InternalError(failureReason)))).once
-        delete("/someStorage/" + someKey, Seq(), Map("Content-Type"-> "text/plain")) {
-          status should equal(500)
-        }
+
+      it("should return 500 Internal Server Error if request processing fails") {
+        test(internalError, 500)
       }
     }
 
     describe("(delete by keys)") {
-      it("should delete multiple values by keys from storage") {
-        (processor.delete(_: String, _: Iterable[String])).expects(storage, keyList).returning(Future(Right(keyTrueMap))).once
-        put("/someStorage/delete", jsonKeyList,  Map("Content-Type"-> "application/json")) {
+      val path = storagePath + "delete"
+
+      def testSuccess(result: Map[String, Boolean], expectedBody: String) = {
+        (processor.delete(_: String, _: Iterable[String])).expects(storage, keys).returning(Future(Right(result))).once
+        put(path, jsonKeys, jsonHeaders) {
           status should equal(200)
+          body should equal(expectedBody)
           response.getContentType should include("application/json")
         }
       }
-      it("delete(keys) should return 400 Bad Request Error if Content-Type is not application/json") {
-        (processor.delete(_: String, _: Iterable[String])).expects(storage, keyList).never
-        put("/someStorage/delete", jsonKeyList, Map("Content-Type"-> "text/plain")) {
+
+      def testBadRequest(body: Array[Byte], headers: scala.Iterable[(String, String)]) = {
+        (processor.delete(_: String, _: Iterable[String])).expects(storage, keys).never
+        put(path, body, headers) {
           status should equal(400)
         }
       }
-      it("delete(keys) should return 500 Internal Server Error if request to Elasticsearch failed") {
-        (processor.delete(_: String, _: Iterable[String])).expects(storage, keyList).returning(Future(Left(InternalError(failureReason)))).once
-        put("/someStorage/delete", jsonKeyList,  Map("Content-Type"-> "application/json")) {
+
+      it("should delete values by keys") {
+        testSuccess(keyValues.map(kv => (kv._1, true)), jsonKeyResult)
+      }
+
+      it("should return false if the key does not exist") {
+        testSuccess(Map(someKey -> false), "{\"" + someKey + "\":false}")
+      }
+
+      it("should return 400 Bad Request Error if Content-Type is not application/json") {
+        testBadRequest(jsonKeys, textHeaders)
+      }
+
+      it("should return 400 Bad Request Error if the body is invalid JSON") {
+        testBadRequest("[\"key\"", jsonHeaders)
+      }
+
+      it("should return 400 Bad Request Error if the body is invalid") {
+        testBadRequest("{\"key\":null}", jsonHeaders)
+      }
+
+      it("should return 500 Internal Server Error if request processing fails") {
+        (processor.delete(_: String, _: Iterable[String])).expects(storage, keys).returning(internalError).once
+        put("/someStorage/delete", jsonKeys, jsonHeaders) {
           status should equal(500)
         }
       }
     }
 
     describe("(list)") {
-      it("should list keys existing in storage") {
-        (processor.list(_: String)).expects(storage).returning(Future(Right(keyList))).once
-        get("/someStorage/list",  Seq(), Map("Content-Type"-> "text/plain")) {
+      val path = storagePath + "list"
+
+      it("should returns keys") {
+        (processor.list(_: String)).expects(storage).returning(Future(Right(keys))).once
+        get(path, Seq(), Map()) {
           status should equal(200)
-          body should equal(jsonKeyList)
+          body should equal(jsonKeys)
           response.getContentType should include("application/json")
         }
       }
-      it("list should return 400 Bad Request Error if Content-Type is not text/plain") {
-        (processor.list(_: String)).expects(storage).never
-        get("/someStorage/list",  Seq(), Map("Content-Type"-> "application/json")) {
-          status should equal(400)
-        }
-      }
-      it("list should return 500 Internal Server Error if any request to Elasticsearch failed") {
-        (processor.list(_: String)).expects(storage).returning(Future(Left(InternalError(failureReason)))).once
-        get("/someStorage/list",  Seq(), Map("Content-Type"-> "text/plain")) {
+
+      it("should return 500 Internal Server Error if request processing fails") {
+        (processor.list(_: String)).expects(storage).returning(internalError).once
+        get(path, Seq(), textHeaders) {
           status should equal(500)
         }
       }
     }
 
     describe("(clear)") {
-      it("should clear storage") {
-        (processor.clear(_: String)).expects(storage).returning(Future(Right(Unit))).once
-        put("/someStorage/clear",  Array[Byte](), Map("Content-Type"-> "text/plain")) {
-          status should equal(200)
-          response.getContentType should include("text/plain")
+      def test(result: Future[Either[StorageError, Unit]], status: Int) = {
+        (processor.clear(_: String)).expects(storage).returning(result).once
+        put(storagePath + "clear", Array[Byte](), Map()) {
+          status should equal(status)
         }
       }
-      it("clear should return 500 Internal Server Error if request to Elasticsearch failed") {
-        (processor.clear(_: String)).expects(storage).returning(Future(Left(InternalError(failureReason)))).once
-        put("/someStorage/clear",  Array[Byte](), Map("Content-Type"-> "text/plain")) {
-          status should equal(500)
-        }
+
+      it("should clear the storage") {
+        test(Future(Right(Unit)), 200)
       }
-      it("clear should return 400 Bad Request Error if Content-Type is not text/plain") {
-        (processor.clear(_: String)).expects(storage).never
-        put("/someStorage/clear",  Array[Byte](), Map("Content-Type"-> "application/json")) {
-          status should equal(400)
-        }
+
+      it("should return 500 Internal Server Error if request processing fails") {
+        test(internalError, 500)
       }
-      it("clear should return 409 Conflict Error if version of any document changed during deletion") {
-        (processor.clear(_: String)).expects(storage).returning(Future(Left(ConflictError()))).once
-        put("/someStorage/clear",  Array[Byte](), Map("Content-Type"-> "text/plain")) {
-          status should equal(409)
-        }
+
+      it("should return 409 Conflict Error if the document is changed while deletion") {
+        test(Future(Left(ConflictError())), 409)
       }
     }
   }
-
 }

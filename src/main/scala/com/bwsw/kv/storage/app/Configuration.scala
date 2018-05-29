@@ -8,12 +8,11 @@ class Configuration {
   def getElasticsearchUri: String = {
     conf.getString("elasticsearch.uri")
   }
-  def getMaxValueLength: Int = {
-    conf.getInt("elasticsearch.maxValueLength")
-  }
+
   def getElasticsearchUsername: String = {
     conf.getString("elasticsearch.auth.username")
   }
+
   def getElasticsearchPassword: String = {
     conf.getString("elasticsearch.auth.password")
   }
@@ -24,5 +23,13 @@ class Configuration {
 
   def getSearchScrollKeepAlive: String = {
     conf.getString("elasticsearch.search.keepalive")
+  }
+
+  def getMaxValueLength: Int = {
+    conf.getInt("elasticsearch.limit.max-value-length")
+  }
+
+  def getMaxKeyLength: Int = {
+    conf.getInt("elasticsearch.limit.max-key-length")
   }
 }

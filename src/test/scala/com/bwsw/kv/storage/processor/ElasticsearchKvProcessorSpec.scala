@@ -23,9 +23,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
 
   private val key = "someKey"
   private val value = "someValue"
-  private val tooLongValue = "tooLongValue"
   private val keyValues = Map("key1" -> "value1", "key2" -> "value2", "key3" -> "value3")
-  private val keyValuesWithLong = Map("key1" -> "value1", "key2" -> "value2", "key3" -> "value3", "key4" -> "tooLongValue4")
   private val index = "storage-someStorage"
   private val storage = "someStorage"
   private val `type` = "_doc"
@@ -33,7 +31,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
   private val scrollSize = 1000
   private val exception = new RuntimeException("Test message")
   private val keepAlive = "1m"
-  private val maxValueSize = 10
+  private val unlimitedLength = -1
 
   describe("An ElasticsearchKvProcessor") {
     val fakeClient = mock[HttpClient]
@@ -132,9 +130,9 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
     }
 
     describe("(set the key/value)") {
-      it("should set the value by the key") {
+      def testSuccess(key: String, value: String, maxKeyLength: Int, maxValueLength: Int) = {
         val indexResponse = IndexResponse(key, index, `type`, 1, "created", forcedRefresh = false, null)
-        expectsMaxValueLength(fakeConf)
+        expectsMaxKeyValueLength(fakeConf, key.length, value.length)
         expectsIndexRequest(fakeClient).returning(getRequestSuccessFuture(indexResponse))
 
         elasticsearchKvProcessor.set(storage, key, value).map {
@@ -143,8 +141,40 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
         }
       }
 
+      def testInvalidKey(key: String) = {
+        expectsIndexRequest(fakeClient, key, value).never()
+
+        elasticsearchKvProcessor.set(storage, key, value).map {
+          case Left(error: BadRequestError) => succeed
+          case _ => fail
+        }
+      }
+
+      it("should set the value by the key") {
+        testSuccess(key, value, key.length, value.length)
+      }
+
+      it("should set null value by the key") {
+        val indexResponse = IndexResponse(key, index, `type`, 1, "created", forcedRefresh = false, null)
+        (fakeConf.getMaxKeyLength _).expects().returning(key.length).atLeastOnce()
+        expectsIndexRequest(fakeClient, key, null).returning(getRequestSuccessFuture(indexResponse))
+
+        elasticsearchKvProcessor.set(storage, key, null).map {
+          case Right(unit) => succeed
+          case Left(error) => fail
+        }
+      }
+
+      it("should set the value by the key if the value length is unlimited") {
+        testSuccess(key, value, key.length, unlimitedLength)
+      }
+
+      it("should set the value by the key if the key length is unlimited") {
+        testSuccess(key, value, unlimitedLength, value.length)
+      }
+
       it("should fail if execute method fails") {
-        expectsMaxValueLength(fakeConf)
+        expectsMaxKeyValueLength(fakeConf, key.length, value.length)
         expectsIndexRequest(fakeClient).throwing(exception)
 
         recoverToExceptionIf[Exception] {
@@ -154,17 +184,31 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
         } map { ex => assert(ex == exception) }
       }
 
-      it("should return BadRequest if the value is too big") {
-        expectsIndexRequest(fakeClient).never()
-        expectsMaxValueLength(fakeConf)
+      it("should return BadRequest if the key is null") {
+        testInvalidKey(null)
+      }
 
-        elasticsearchKvProcessor.set(storage, key, tooLongValue).map {
+      it("should return BadRequest if the key is empty") {
+        testInvalidKey("")
+      }
+
+      it("should return BadRequest if the key is too long") {
+        (fakeConf.getMaxKeyLength _).expects().returning(key.length - 1).atLeastOnce()
+        testInvalidKey(key)
+      }
+
+      it("should return BadRequest if the value is too long") {
+        expectsIndexRequest(fakeClient).never()
+        expectsMaxKeyValueLength(fakeConf, key.length, value.length - 1)
+
+        elasticsearchKvProcessor.set(storage, key, value).map {
           case Left(error: BadRequestError) => succeed
           case _ => fail
         }
       }
+
       it("should return InternalError if the request fails") {
-        expectsMaxValueLength(fakeConf)
+        expectsMaxKeyValueLength(fakeConf, key.length, value.length)
         expectsIndexRequest(fakeClient).returning(getRequestFailureFuture)
         elasticsearchKvProcessor.set(storage, key, value).map {
           case Left(error: InternalError) => succeed
@@ -174,14 +218,14 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
     }
 
     describe("(set key/value pairs)") {
-      it("should set values by keys") {
+      def testSuccess(keyValues: Map[String, String], maxKeyLength: Int, maxValueLength: Int) = {
         val bulkResponse = BulkResponse(1, errors = false,
           keyValues.toList.map(kv => BulkResponseItems(
             Some(BulkResponseItem(0, kv._1, index, `type`, 1, forcedRefresh = false, found = false, created = false, "created", 200, None, None)),
             None,
             None,
             None)))
-        expectsMaxValueLength(fakeConf)
+        expectsMaxKeyValueLength(fakeConf, maxKeyLength, maxValueLength)
         expectsBulkIndexRequest(fakeClient, keyValues).returning(getRequestSuccessFuture(bulkResponse))
 
         elasticsearchKvProcessor.set(storage, keyValues).map {
@@ -190,24 +234,65 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
         }
       }
 
-      it("should set only valid values by keys") {
+      def testInvalidKey(key: String) = {
+        elasticsearchKvProcessor.set(storage, Map(key -> value)).map {
+          case Right(map) => assert(map.forall(v => !v._2))
+          case _ => fail
+        }
+      }
+
+      it("should set values by keys") {
+        testSuccess(keyValues, getMaxLength(keyValues.keys), getMaxLength(keyValues.values))
+      }
+
+      it("should set null values by keys") {
+        val data = keyValues ++ Map("nullValue" -> null)
+        testSuccess(data, getMaxLength(data.keys), getMaxLength(data.values))
+      }
+
+      it("should set values by keys if the value length is unlimited") {
+        testSuccess(keyValues, getMaxLength(keyValues.keys), unlimitedLength)
+      }
+
+      it("should set values by keys if the key length is unlimited") {
+        testSuccess(keyValues, unlimitedLength, getMaxLength(keyValues.values))
+      }
+
+      it("should not set too long values by keys") {
         val bulkResponse = BulkResponse(1, errors = false,
           keyValues.toList.map(kv => BulkResponseItems(
             Some(BulkResponseItem(0, kv._1, index, `type`, 1, forcedRefresh = false, found = false, created = false, "created", 200, None, None)),
             None,
             None,
             None)))
-        expectsMaxValueLength(fakeConf)
+
+        val maxValueLength = getMaxLength(keyValues.values)
+        expectsMaxKeyValueLength(fakeConf, getMaxLength(keyValues.keys), maxValueLength)
         expectsBulkIndexRequest(fakeClient, keyValues).returning(getRequestSuccessFuture(bulkResponse))
 
-        elasticsearchKvProcessor.set(storage, keyValuesWithLong).map {
-          case Right(map) => assert(map.count(v => v._2) == 3)
+        val invalidKeyValues = Map("keyForLongValue" -> "a" * (maxValueLength + 1))
+        elasticsearchKvProcessor.set(storage, keyValues ++ invalidKeyValues).map {
+          case Right(map) =>
+            assert(keyValues.map(kv => (kv._1, true)) ++ invalidKeyValues.map(kv => (kv._1, false)) == map)
           case _ => fail
         }
       }
 
+      it("should return false for null keys") {
+        testInvalidKey(null)
+      }
+
+      it("should return false for empty keys") {
+        testInvalidKey("")
+      }
+
+      it("should return false for too long keys") {
+        (fakeConf.getMaxKeyLength _).expects().returning(key.length - 1).atLeastOnce()
+        testInvalidKey(key)
+      }
+
       it("should fail if execute method fails") {
-        expectsMaxValueLength(fakeConf)
+        expectsMaxKeyValueLength(fakeConf, getMaxLength(keyValues.keys), getMaxLength(keyValues.values))
         expectsBulkIndexRequest(fakeClient, keyValues).throwing(exception)
 
         recoverToExceptionIf[Exception] {
@@ -218,7 +303,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
       }
 
       it("should return InternalError if the request fails") {
-        expectsMaxValueLength(fakeConf)
+        expectsMaxKeyValueLength(fakeConf, getMaxLength(keyValues.keys), getMaxLength(keyValues.values))
         expectsBulkIndexRequest(fakeClient, keyValues).returning(getRequestFailureFuture)
         elasticsearchKvProcessor.set(storage, keyValues).map {
           case Left(_: InternalError) => succeed
@@ -416,6 +501,11 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
       .expects(indexInto(index / `type`) id key fields (valueField -> value), IndexHttpExecutable, *)
   }
 
+  private def expectsIndexRequest(client: HttpClient, key: String, value: String) = {
+    (client.execute[IndexDefinition, IndexResponse](_: IndexDefinition)(_: HttpExecutable[IndexDefinition, IndexResponse], _: ExecutionContext))
+      .expects(indexInto(index / `type`) id key fields (valueField -> value), IndexHttpExecutable, *)
+  }
+
   private def expectsBulkIndexRequest(client: HttpClient, kvs: Map[String, String]) = {
     val sets = kvs.toList.map(kv => indexInto(index / `type`) id kv._1 fields (valueField -> kv._2))
     (client.execute[BulkDefinition, BulkResponse](_: BulkDefinition)(_: HttpExecutable[BulkDefinition, BulkResponse], _: ExecutionContext))
@@ -455,7 +545,11 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
       .expects(clearScroll(scrollId), ClearScrollHttpExec, *)
   }
 
-  private def expectsMaxValueLength(conf: Configuration) = {
-    (conf.getMaxValueLength _).expects().returning(maxValueSize).atLeastOnce()
+  private def expectsMaxKeyValueLength(conf: Configuration, maxKeyLength: Int, maxValueLength: Int) = {
+    (conf.getMaxKeyLength _).expects().returning(maxKeyLength).atLeastOnce()
+    (conf.getMaxValueLength _).expects().returning(maxValueLength).atLeastOnce()
   }
+
+  private def getMaxLength(data: Iterable[String]): Int = data.map(e => if (e == null) 0 else e.length).max
+
 }

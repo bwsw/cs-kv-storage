@@ -46,29 +46,32 @@ class ElasticsearchKvProcessor(client: HttpClient, configuration: Configuration)
   }
 
   def set(storage: String, key: String, value: String): Future[Either[StorageError, Unit]] = {
-    if(value.length > configuration.getMaxValueLength){
-      return Future(Left(BadRequestError()))
-    }
-    client.execute {
-      indexInto(getIndex(storage) / Type) id key fields (ValueField -> value)
-    }.map {
-      case Left(failure) => Left(getError(failure))
-      case Right(success) => Right(Unit)
-    }
+    if (isKvValid(key, value))
+      client.execute {
+        indexInto(getIndex(storage) / Type) id key fields (ValueField -> value)
+      }.map {
+        case Left(failure) => Left(getError(failure))
+        case Right(success) => Right(Unit)
+      }
+    else
+      Future(Left(BadRequestError()))
   }
 
   def set(storage: String, kvs: Map[String, String]): Future[Either[StorageError, Map[String, Boolean]]] = {
-    val splitKvs = kvs.partition { case (_, value) =>  value.length > configuration.getMaxValueLength }
-    val bad = splitKvs._1.map { case (key, _) =>  (key, false) }
-    val sets = splitKvs._2.map { case (key, value) => indexInto(getIndex(storage) / Type) id key fields ("value" -> value) }
-    client.execute {
-      bulk(sets)
-    }.map {
-      case Left(failure) => Left(getError(failure))
-      case Right(success) =>
-        Right(success.result.items.map(bulkResponseItem =>
-          (bulkResponseItem.id, bulkResponseItem.error.isEmpty)).toMap ++ bad)
-    }
+    val splitKvs = kvs.partition { kv => isKvValid(kv._1, kv._2) }
+    val sets = splitKvs._1.map { case (key, value) => indexInto(getIndex(storage) / Type) id key fields (ValueField -> value) }
+    val bad = splitKvs._2.map { case (key, _) => (key, false) }
+    if (sets.nonEmpty) {
+      client.execute {
+        bulk(sets)
+      }.map {
+        case Left(failure) => Left(getError(failure))
+        case Right(success) =>
+          Right(success.result.items.map(bulkResponseItem =>
+            (bulkResponseItem.id, bulkResponseItem.error.isEmpty)).toMap ++ bad)
+      }
+    } else
+      Future(Right(bad))
   }
 
   def delete(storage: String, key: String): Future[Either[StorageError, Unit]] = {
@@ -140,6 +143,16 @@ class ElasticsearchKvProcessor(client: HttpClient, configuration: Configuration)
           }
       }
   }
+
+  private def isKeyValid(key: String): Boolean = {
+    key != null && !key.isEmpty && (configuration.getMaxKeyLength == -1 || key.length <= configuration.getMaxKeyLength)
+  }
+
+  private def isValueValid(value: String): Boolean = {
+    value == null || configuration.getMaxValueLength == -1 || value.length <= configuration.getMaxValueLength
+  }
+
+  private def isKvValid(key: String, value: String): Boolean = isKeyValid(key) && isValueValid(value)
 }
 
 /** ElasticsearchKvProcessor companion object. **/
