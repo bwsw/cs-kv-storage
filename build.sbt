@@ -47,5 +47,10 @@ dockerfile in docker := {
     entryPoint("java", "-jar", artifactTargetPath)
   }
 }
-imageNames in docker := Seq(ImageName(s"git.bw-sw.com:5000/cloudstack-ecosystem/${name.value}:${version.value}"))
+imageNames in docker := Seq(
+  ImageName(
+    namespace = sys.props.get("docker.registry").orElse(Some("git.bw-sw.com:5000/cloudstack-ecosystem")),
+    repository = sys.props.get("docker.image").getOrElse(name.value),
+    tag = sys.props.get("docker.tag").orElse(Some(version.value)))
+)
 buildOptions in docker := BuildOptions(cache = false)
