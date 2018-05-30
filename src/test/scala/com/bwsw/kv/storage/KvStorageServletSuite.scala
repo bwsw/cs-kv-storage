@@ -73,8 +73,6 @@ class KvStorageServletSuite
       def testBadRequest(body: Array[Byte], headers: scala.Iterable[(String, String)]) = {
         (processor.get(_: String, _: Iterable[String])).expects(storage, keys).never
         post(storagePath, body, headers) {
-          println(status)
-          println(body.toString)
           status should equal(400)
         }
       }
