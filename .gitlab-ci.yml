@@ -23,7 +23,7 @@ test-release:
   before_script:
     - docker login -u CI_REGISTRY_USER -p $CI_JOB_TOKEN $CI_REGISTRY
   script:
-    - sbt -Ddocker.tag=$DOCKER_TAG dockerBuildAndPush
+    - sbt -Ddocker.tag=$CI_COMMIT_REF_NAME dockerBuildAndPush
   except:
     - master
     - develop
