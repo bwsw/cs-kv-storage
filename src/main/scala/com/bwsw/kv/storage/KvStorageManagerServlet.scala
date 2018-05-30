@@ -7,21 +7,26 @@ import org.scalatra._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class KvStorageManagerServlet(system: ActorSystem, manager: KvStorageManager) extends ScalatraServlet with FutureSupport {
+class KvStorageManagerServlet(system: ActorSystem, manager: KvStorageManager) extends ScalatraServlet
+  with FutureSupport {
 
   protected implicit def executor: ExecutionContext = system.dispatcher
 
   put("/storage/:storage_uuid") {
     new AsyncResult() {
       val is: Future[_] =
-        if(params("ttl").nonEmpty)
-          manager.updateTempStorageTtl(params("storage_uuid"), params("ttl").toLong)
-            .map {
-              case Right(_) => Ok()
-              case Left(_: BadRequestError) => BadRequest()
-              case Left(_: NotFoundError) => NotFound()
-              case _ => InternalServerError()
-            }
+        if (params("ttl").nonEmpty)
+          try {
+            manager.updateTempStorageTtl(params("storage_uuid"), params("ttl").toLong)
+              .map {
+                case Right(_) => Ok()
+                case Left(_: BadRequestError) => BadRequest()
+                case Left(_: NotFoundError) => NotFound()
+                case _ => InternalServerError()
+              }
+          } catch {
+            case e: NumberFormatException => Future(BadRequest())
+          }
         else
           Future(BadRequest())
     }

@@ -2,6 +2,7 @@ package com.bwsw.kv.storage.processor
 
 import com.bwsw.kv.storage.app.Configuration
 import com.bwsw.kv.storage.error._
+import com.bwsw.kv.storage.util.ElasticsearchUtils
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.get.GetResponse
 import com.sksamuel.elastic4s.http.search.SearchHits
@@ -22,7 +23,7 @@ class ElasticsearchKvProcessor(client: HttpClient, configuration: Configuration)
 
   def get(storage: String, key: String): Future[Either[StorageError, String]] = {
     client.execute {
-      ElasticDsl.get(key).from(getIndex(storage) / Type)
+      ElasticDsl.get(key).from(ElasticsearchUtils.getStorageIndex(storage) / Type)
     }.map {
       case Left(failure) => Left(getError(failure))
       case Right(success) =>
@@ -35,7 +36,7 @@ class ElasticsearchKvProcessor(client: HttpClient, configuration: Configuration)
 
   def get(storage: String, keys: Iterable[String]): Future[Either[StorageError, Map[String, Option[String]]]] = {
     val gets = keys.map {
-      ElasticDsl.get(_).from(getIndex(storage) / Type)
+      ElasticDsl.get(_).from(ElasticsearchUtils.getStorageIndex(storage) / Type)
     }
     client.execute {
       multiget(gets)
@@ -48,7 +49,7 @@ class ElasticsearchKvProcessor(client: HttpClient, configuration: Configuration)
   def set(storage: String, key: String, value: String): Future[Either[StorageError, Unit]] = {
     if (isKvValid(key, value))
       client.execute {
-        indexInto(getIndex(storage) / Type) id key fields (ValueField -> value)
+        indexInto(ElasticsearchUtils.getStorageIndex(storage) / Type) id key fields (ValueField -> value)
       }.map {
         case Left(failure) => Left(getError(failure))
         case Right(success) => Right(Unit)
@@ -59,7 +60,9 @@ class ElasticsearchKvProcessor(client: HttpClient, configuration: Configuration)
 
   def set(storage: String, kvs: Map[String, String]): Future[Either[StorageError, Map[String, Boolean]]] = {
     val splitKvs = kvs.partition { kv => isKvValid(kv._1, kv._2) }
-    val sets = splitKvs._1.map { case (key, value) => indexInto(getIndex(storage) / Type) id key fields (ValueField -> value) }
+    val sets = splitKvs._1.map { case (key, value) =>
+      indexInto(ElasticsearchUtils.getStorageIndex(storage) / Type) id key fields (ValueField -> value)
+    }
     val bad = splitKvs._2.map { case (key, _) => (key, false) }
     if (sets.nonEmpty) {
       client.execute {
@@ -76,7 +79,7 @@ class ElasticsearchKvProcessor(client: HttpClient, configuration: Configuration)
 
   def delete(storage: String, key: String): Future[Either[StorageError, Unit]] = {
     client.execute {
-      deleteById(getIndex(storage), Type, key)
+      deleteById(ElasticsearchUtils.getStorageIndex(storage), Type, key)
     }.map {
       case Left(failure) => Left(getError(failure))
       case Right(success) => Right(Unit)
@@ -85,7 +88,7 @@ class ElasticsearchKvProcessor(client: HttpClient, configuration: Configuration)
 
   def delete(storage: String, keys: Iterable[String]): Future[Either[StorageError, Map[String, Boolean]]] = {
     val deletes = keys.map {
-      deleteById(getIndex(storage), Type, _)
+      deleteById(ElasticsearchUtils.getStorageIndex(storage), Type, _)
     }
     client.execute {
       bulk(deletes)
@@ -100,7 +103,7 @@ class ElasticsearchKvProcessor(client: HttpClient, configuration: Configuration)
   def list(storage: String): Future[Either[StorageError, List[String]]] = {
     val keepAlive = configuration.getSearchScrollKeepAlive
     client.execute {
-      search(getIndex(storage)).size(configuration.getSearchPageSize)
+      search(ElasticsearchUtils.getStorageIndex(storage)).size(configuration.getSearchPageSize)
         .scroll(keepAlive)
     }.flatMap {
       case Left(failure) => Future(Left(getError(failure)))
@@ -115,7 +118,7 @@ class ElasticsearchKvProcessor(client: HttpClient, configuration: Configuration)
 
   def clear(storage: String): Future[Either[StorageError, Unit]] = {
     client.execute {
-      deleteByQuery(getIndex(storage), Type, matchAllQuery)
+      deleteByQuery(ElasticsearchUtils.getStorageIndex(storage), Type, matchAllQuery)
         .proceedOnConflicts(true)
     }
       .map {
@@ -159,8 +162,6 @@ class ElasticsearchKvProcessor(client: HttpClient, configuration: Configuration)
 object ElasticsearchKvProcessor {
   private val Type = "_doc"
   private val ValueField = "value"
-
-  private def getIndex(storage: String): String = "storage-" + storage
 
   private def getError(requestFailure: RequestFailure): InternalError = {
     if (requestFailure.error == null)
