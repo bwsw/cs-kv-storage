@@ -9,7 +9,7 @@ import org.scalatra.test.scalatest._
 
 import scala.concurrent.Future
 
-class KvStorageServletSuite
+class KvStorageServletSpec
   extends ScalatraSuite
     with FunSpecLike
     with MockFactory {

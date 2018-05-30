@@ -12,10 +12,10 @@ class KvStorageManagerServlet(system: ActorSystem, manager: KvStorageManager) ex
 
   protected implicit def executor: ExecutionContext = system.dispatcher
 
-  put("/storage/:storage_uuid") {
+  put("/:storage_uuid") {
     new AsyncResult() {
       val is: Future[_] =
-        if (params("ttl").nonEmpty)
+        if (params.get("ttl").nonEmpty)
           try {
             manager.updateTempStorageTtl(params("storage_uuid"), params("ttl").toLong)
               .map {
@@ -31,7 +31,7 @@ class KvStorageManagerServlet(system: ActorSystem, manager: KvStorageManager) ex
           Future(BadRequest())
     }
   }
-  delete("/storage/:storage_uuid") {
+  delete("/:storage_uuid") {
     new AsyncResult() {
       val is: Future[_] =
         manager.deleteTempStorage(params("storage_uuid"))
