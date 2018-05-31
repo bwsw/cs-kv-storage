@@ -1,7 +1,7 @@
 package com.bwsw.kv.storage
 
 import akka.actor.ActorSystem
-import com.bwsw.kv.storage.error.{BadRequestError, NotFoundError, StorageError, InternalError}
+import com.bwsw.kv.storage.error.{BadRequestError, InternalError, NotFoundError, StorageError}
 import com.bwsw.kv.storage.manager.KvStorageManager
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.FunSpecLike
@@ -9,7 +9,7 @@ import org.scalatra.test.scalatest.ScalatraSuite
 
 import scala.concurrent.Future
 
-class KvStorageManagerServletSpec
+class KvStorageManagerServletSuite
   extends ScalatraSuite
     with FunSpecLike
     with MockFactory {
@@ -44,25 +44,29 @@ class KvStorageManagerServletSpec
         }
       }
 
-      it("should return 400 BadRequest if no ttl specified") {
+      it("should return 400 BadRequest if no ttl is specified") {
         (manager.updateTempStorageTtl(_: String, _: Long)).expects(storage, ttl).never
         put(path) {
           status should equal(400)
         }
       }
-      it("should return 400 BadRequest if ttl could not be converted to Long") {
+
+      it("should return 400 BadRequest if ttl can not be converted to Long") {
         (manager.updateTempStorageTtl(_: String, _: Long)).expects(storage, ttl).never
         put(path, badTtlParams) {
           status should equal(400)
         }
       }
-      it("should return 400 BadRequest if manager returned BadRequestError") {
+
+      it("should return 400 BadRequest if the manager returns BadRequestError") {
         testProvidesError(BadRequestError(), 400)
       }
-      it("should return 404 NotFound if manager returned NotFoundError") {
+
+      it("should return 404 NotFound if the manager returns NotFoundError") {
         testProvidesError(NotFoundError(), 404)
       }
-      it("should return 500 InternalServerError if manager returned InternalError") {
+
+      it("should return 500 InternalServerError if the manager returns InternalError") {
         testProvidesError(InternalError(message), 500)
       }
     }
@@ -77,19 +81,22 @@ class KvStorageManagerServletSpec
       }
     }
 
-    it("should update the value of ttl field in storage registry") {
+    it("should delete the storage") {
       (manager.deleteTempStorage(_: String)).expects(storage).returning(Future(Right())).once
       delete(path) {
         status should equal(200)
       }
     }
-    it("should return 400 BadRequest if manager returned BadRequestError") {
+
+    it("should return 400 BadRequest if the manager returns BadRequestError") {
       testProvidesError(BadRequestError(), 400)
     }
-    it("should return 404 NotFound if manager returned NotFoundError") {
+
+    it("should return 404 NotFound if the manager returns NotFoundError") {
       testProvidesError(NotFoundError(), 404)
     }
-    it("should return 500 InternalServerError if manager returned InternalError") {
+
+    it("should return 500 InternalServerError if the manager returns InternalError") {
       testProvidesError(InternalError(message), 500)
     }
   }
