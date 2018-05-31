@@ -14,10 +14,11 @@ class KvStorageManagerServlet(system: ActorSystem, manager: KvStorageManager) ex
 
   put("/:storage_uuid") {
     new AsyncResult() {
-      val is: Future[_] =
-        if (params.get("ttl").nonEmpty)
+      val is: Future[_] = {
+        val ttl = params.get("ttl")
+        if (ttl.nonEmpty)
           try {
-            manager.updateTempStorageTtl(params("storage_uuid"), params("ttl").toLong)
+            manager.updateTempStorageTtl(params("storage_uuid"), ttl.get.toLong)
               .map {
                 case Right(_) => Ok()
                 case Left(_: BadRequestError) => BadRequest()
@@ -29,8 +30,10 @@ class KvStorageManagerServlet(system: ActorSystem, manager: KvStorageManager) ex
           }
         else
           Future(BadRequest())
+      }
     }
   }
+
   delete("/:storage_uuid") {
     new AsyncResult() {
       val is: Future[_] =
