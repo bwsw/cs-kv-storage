@@ -29,7 +29,7 @@ libraryDependencies ++= Seq(
 )
 
 assemblyJarName := s"${name.value}-${version.value}-jar-with-dependencies.jar"
-mainClass in assembly := Some("com.bwsw.kv.storage.JettyLauncher")
+mainClass in assembly := Some("com.bwsw.cloudstack.storage.kv.app.JettyLauncher")
 
 enablePlugins(SbtTwirl)
 enablePlugins(ScalatraPlugin)
