@@ -1,0 +1,24 @@
+{
+  "index_patterns": [
+    "storage-*-history"
+  ],
+  "settings": {
+    "number_of_replicas": 2
+  },
+  "mappings": {
+    "_doc": {
+      "properties": {
+        "key": {
+          "type": "keyword"
+        },
+        "value": {
+          "type": "keyword",
+          "index": false
+        },
+        "timestamp": {
+          "type": "long"
+        }
+      }
+    }
+  }
+}

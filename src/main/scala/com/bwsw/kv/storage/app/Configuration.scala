@@ -32,4 +32,12 @@ class Configuration {
   def getMaxKeyLength: Int = {
     conf.getInt("elasticsearch.limit.max-key-length")
   }
+
+  def getMaxStorageCacheSize: Int = {
+    conf.getInt("elasticsearch.cache.max-size")
+  }
+
+  def getStorageCacheExpirationTime: String = {
+    conf.getString("elasticsearch.cache.expiration-time")
+  }
 }

@@ -22,6 +22,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % "2.5.12",
   "org.scalatra" %% "scalatra-json" % ScalatraVersion,
   "org.json4s" %% "json4s-jackson" % "3.5.4",
+  "com.github.blemale" % "scaffeine_2.12" % "2.5.0",
 
   "org.scalatest" %% "scalatest" % "3.0.5" % Test,
   "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % Test,
