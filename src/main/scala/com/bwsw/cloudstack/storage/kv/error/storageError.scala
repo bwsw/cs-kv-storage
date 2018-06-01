@@ -1,4 +1,4 @@
-package com.bwsw.kv.storage.error
+package com.bwsw.cloudstack.storage.kv.error
 
 sealed trait StorageError
 

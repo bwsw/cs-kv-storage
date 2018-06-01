@@ -29,7 +29,7 @@ libraryDependencies ++= Seq(
 )
 
 assemblyJarName := s"${name.value}-${version.value}-jar-with-dependencies.jar"
-mainClass in assembly := Some("com.bwsw.kv.storage.JettyLauncher")
+mainClass in assembly := Some("com.bwsw.cloudstack.storage.kv.app.JettyLauncher")
 
 enablePlugins(SbtTwirl)
 enablePlugins(ScalatraPlugin)
@@ -37,14 +37,15 @@ enablePlugins(DockerPlugin)
 
 dockerfile in docker := {
   val artifact: File = assembly.value
-  val artifactTargetPath = s"/opt/cs-kv-storage/${artifact.name}"
+  val appDirectory = "/opt/cs-kv-storage"
+  val appPath = s"$appDirectory/${artifact.name}"
 
   new Dockerfile {
-    from("openjdk:8-jre")
+    from("openjdk:8-alpine")
     expose(8080)
     volume("/var/log/cs-kv-storage")
-    add(artifact, artifactTargetPath)
-    entryPoint("java", "-jar", artifactTargetPath)
+    add(artifact, appPath)
+    entryPoint("java", s"-Dconfig.file=$appDirectory/application.conf", "-jar", appPath)
   }
 }
 imageNames in docker := Seq(

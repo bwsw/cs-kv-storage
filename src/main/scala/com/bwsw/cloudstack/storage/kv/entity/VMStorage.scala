@@ -1,6 +1,7 @@
-package com.bwsw.kv.storage.models.storage
+package com.bwsw.cloudstack.storage.kv.entity
 
 /** Temporary storage for a specific Virtual Machine
+  *
   * @param uUID Storage unique identifier
   * @param ownerUUID VM unique identifier
   */

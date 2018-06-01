@@ -1,4 +1,4 @@
-package com.bwsw.kv.storage.models.storage
+package com.bwsw.cloudstack.storage.kv.entity
 
 /** Abstract Key-Value Storage with basic methods
   */

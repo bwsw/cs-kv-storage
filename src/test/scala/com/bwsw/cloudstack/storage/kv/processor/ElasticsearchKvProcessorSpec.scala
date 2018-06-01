@@ -1,7 +1,7 @@
-package com.bwsw.kv.storage.processor
+package com.bwsw.cloudstack.storage.kv.processor
 
-import com.bwsw.kv.storage.app.Configuration
-import com.bwsw.kv.storage.error._
+import com.bwsw.cloudstack.storage.kv.app.Configuration
+import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError}
 import com.sksamuel.elastic4s.bulk.BulkDefinition
 import com.sksamuel.elastic4s.delete.{DeleteByIdDefinition, DeleteByQueryDefinition}
 import com.sksamuel.elastic4s.get.{GetDefinition, MultiGetDefinition}

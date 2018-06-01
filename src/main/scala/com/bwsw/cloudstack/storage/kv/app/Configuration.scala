@@ -1,4 +1,4 @@
-package com.bwsw.kv.storage.app
+package com.bwsw.cloudstack.storage.kv.app
 
 import com.typesafe.config._
 

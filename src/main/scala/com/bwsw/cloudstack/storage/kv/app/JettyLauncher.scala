@@ -1,4 +1,4 @@
-package com.bwsw.kv.storage
+package com.bwsw.cloudstack.storage.kv.app
 
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.webapp.WebAppContext
@@ -12,6 +12,7 @@ object JettyLauncher {
     val context = new WebAppContext()
     context setContextPath "/"
     context.setResourceBase("src/main/webapp")
+    context.setInitParameter(ScalatraListener.LifeCycleKey, "com.bwsw.cloudstack.storage.kv.app.ScalatraBootstrap")
     context.addEventListener(new ScalatraListener)
 
     server.setHandler(context)

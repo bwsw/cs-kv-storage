@@ -1,4 +1,4 @@
-package com.bwsw.kv.storage.models
+package com.bwsw.cloudstack.storage.kv.entity
 
 /** Set of storage settings
   */

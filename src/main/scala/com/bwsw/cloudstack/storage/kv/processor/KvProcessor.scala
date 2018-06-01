@@ -1,6 +1,6 @@
-package com.bwsw.kv.storage.processor
+package com.bwsw.cloudstack.storage.kv.processor
 
-import com.bwsw.kv.storage.error.StorageError
+import com.bwsw.cloudstack.storage.kv.error.StorageError
 
 import scala.concurrent.Future
 

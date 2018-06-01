@@ -1,4 +1,4 @@
-package com.bwsw.kv.storage.models.storage
+package com.bwsw.cloudstack.storage.kv.entity
 
 /** Persistent storage for a specific account
   * @param uUID Storage unique identifier

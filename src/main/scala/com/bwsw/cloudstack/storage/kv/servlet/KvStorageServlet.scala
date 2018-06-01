@@ -1,8 +1,8 @@
-package com.bwsw.kv.storage
+package com.bwsw.cloudstack.storage.kv.servlet
 
 import akka.actor.ActorSystem
-import com.bwsw.kv.storage.error._
-import com.bwsw.kv.storage.processor.KvProcessor
+import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, ConflictError, NotFoundError}
+import com.bwsw.cloudstack.storage.kv.processor.KvProcessor
 import org.json4s.JsonAST.JArray
 import org.json4s.{DefaultFormats, Formats, JObject, MappingException}
 import org.scalatra._
