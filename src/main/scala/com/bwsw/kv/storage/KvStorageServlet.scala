@@ -7,7 +7,6 @@ import org.json4s.JsonAST.JArray
 import org.json4s.{DefaultFormats, Formats, JObject, MappingException}
 import org.scalatra._
 import org.scalatra.json.JacksonJsonSupport
-
 import scala.concurrent.{ExecutionContext, Future}
 
 class KvStorageServlet(system: ActorSystem, processor: KvProcessor)

@@ -2,7 +2,8 @@ package com.bwsw.kv.storage
 
 import akka.actor.ActorSystem
 import com.bwsw.kv.storage.error._
-import com.bwsw.kv.storage.processor.KvProcessor
+import com.bwsw.kv.storage.models.HistoryEntry
+import com.bwsw.kv.storage.processor.{HistoryProcessor, KvProcessor}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.FunSpecLike
 import org.scalatra.test.scalatest._
