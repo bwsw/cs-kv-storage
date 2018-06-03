@@ -2,6 +2,8 @@ package com.bwsw.cloudstack.storage.kv.app
 
 import com.typesafe.config._
 
+import scala.concurrent.duration._
+
 class Configuration {
   private val conf = ConfigFactory.load
 
@@ -32,4 +34,11 @@ class Configuration {
   def getMaxKeyLength: Int = {
     conf.getInt("elasticsearch.limit.max-key-length")
   }
+
+  // TODO: extract values from the configuration file
+  def getFlushHistorySize: Int = 1000
+
+  def getFlushHistoryTimeout: FiniteDuration = 30.seconds
+
+  def getRequestTimeout: FiniteDuration = 1.second
 }

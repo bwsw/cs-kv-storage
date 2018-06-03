@@ -1,16 +1,20 @@
 package com.bwsw.cloudstack.storage.kv.servlet
 
-import akka.actor.ActorSystem
+import akka.actor.{ActorRef, ActorSystem}
+import akka.pattern.ask
+import akka.util.Timeout
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, ConflictError, NotFoundError}
+import com.bwsw.cloudstack.storage.kv.message.{KvGetRequest, KvSetRequest}
 import com.bwsw.cloudstack.storage.kv.processor.KvProcessor
 import org.json4s.JsonAST.JArray
 import org.json4s.{DefaultFormats, Formats, JObject, MappingException}
 import org.scalatra._
 import org.scalatra.json.JacksonJsonSupport
 
+import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 
-class KvStorageServlet(system: ActorSystem, processor: KvProcessor)
+class KvStorageServlet(system: ActorSystem, requestTimeout: FiniteDuration, kvProcessor: KvProcessor, kvActor: ActorRef)
   extends ScalatraServlet
     with FutureSupport
     with JacksonJsonSupport {
@@ -19,16 +23,16 @@ class KvStorageServlet(system: ActorSystem, processor: KvProcessor)
 
   protected implicit def executor: ExecutionContext = system.dispatcher
 
+  implicit val timeout: Timeout = new Timeout(requestTimeout)
+
   get("/:storage_uuid/:key") {
-    new AsyncResult() {
-      val is: Future[_] = processor.get(params("storage_uuid"), params("key"))
-        .map {
-          case Left(_: NotFoundError) => NotFound()
-          case Right(value) =>
-            contentType = formats("txt")
-            value
-          case _ => InternalServerError()
-        }
+    val result = kvActor ? KvGetRequest(params("storage_uuid"), params("key"))
+    result.map {
+      case Left(_: NotFoundError) => NotFound()
+      case Right(value) =>
+        contentType = formats("txt")
+        value
+      case _ => InternalServerError()
     }
   }
 
@@ -39,7 +43,7 @@ class KvStorageServlet(system: ActorSystem, processor: KvProcessor)
           parsedBody match {
             case json: JArray =>
               try {
-                processor.get(params("storage_uuid"), json.extract[List[String]])
+                kvProcessor.get(params("storage_uuid"), json.extract[List[String]])
                   .map {
                     case Right(value) =>
                       contentType = formats("json")
@@ -57,18 +61,16 @@ class KvStorageServlet(system: ActorSystem, processor: KvProcessor)
   }
 
   put("/:storage_uuid/:key") {
-    new AsyncResult() {
-      val is: Future[_] =
-        if (request.getHeader("Content-Type") == formats("txt"))
-          processor.set(params("storage_uuid"), params("key"), request.body)
-            .map {
-              case Right(_) => Ok()
-              case Left(_: BadRequestError) => BadRequest()
-              case _ => InternalServerError()
-            }
-        else
-          Future(BadRequest())
+    if (request.getHeader("Content-Type") == formats("txt")) {
+      val result = kvActor ? KvSetRequest(params("storage_uuid"), params("key"), request.body)
+      result.map {
+        case Right(_) => Ok()
+        case Left(_: BadRequestError) => BadRequest()
+        case _ => InternalServerError()
+      }
     }
+    else
+      Future(BadRequest())
   }
 
   put("/:storage_uuid/set") {
@@ -78,7 +80,7 @@ class KvStorageServlet(system: ActorSystem, processor: KvProcessor)
           parsedBody match {
             case json: JObject =>
               try {
-                processor.set(params("storage_uuid"), json.extract[Map[String, String]])
+                kvProcessor.set(params("storage_uuid"), json.extract[Map[String, String]])
                   .map {
                     case Right(value) =>
                       contentType = formats("json")
@@ -98,7 +100,7 @@ class KvStorageServlet(system: ActorSystem, processor: KvProcessor)
   delete("/:storage_uuid/:key") {
     new AsyncResult() {
       val is: Future[_] =
-        processor.delete(params("storage_uuid"), params("key"))
+        kvProcessor.delete(params("storage_uuid"), params("key"))
           .map {
             case Right(_) => Ok()
             case _ => InternalServerError()
@@ -113,7 +115,7 @@ class KvStorageServlet(system: ActorSystem, processor: KvProcessor)
           parsedBody match {
             case json: JArray =>
               try {
-                processor.delete(params("storage_uuid"), json.extract[List[String]])
+                kvProcessor.delete(params("storage_uuid"), json.extract[List[String]])
                   .map {
                     case Right(value) =>
                       contentType = formats("json")
@@ -133,7 +135,7 @@ class KvStorageServlet(system: ActorSystem, processor: KvProcessor)
   get("/:storage_uuid/list") {
     new AsyncResult() {
       val is: Future[_] =
-        processor.list(params("storage_uuid"))
+        kvProcessor.list(params("storage_uuid"))
           .map {
             case Right(value) =>
               contentType = formats("json")
@@ -146,7 +148,7 @@ class KvStorageServlet(system: ActorSystem, processor: KvProcessor)
   put("/:storage_uuid/clear") {
     new AsyncResult() {
       val is: Future[_] =
-        processor.clear(params("storage_uuid"))
+        kvProcessor.clear(params("storage_uuid"))
           .map {
             case Left(_: ConflictError) => Conflict()
             case Right(_) => Ok()
