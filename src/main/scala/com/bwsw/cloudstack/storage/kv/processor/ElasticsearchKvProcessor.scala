@@ -52,7 +52,7 @@ class ElasticsearchKvProcessor(client: HttpClient, configuration: Configuration)
         indexInto(ElasticsearchUtils.getStorageIndex(storage) / Type) id key fields (ValueField -> value)
       }.map {
         case Left(failure) => Left(getError(failure))
-        case Right(success) => Right(Unit)
+        case Right(_) => Right(Unit)
       }
     else
       Future(Left(BadRequestError()))
@@ -82,7 +82,7 @@ class ElasticsearchKvProcessor(client: HttpClient, configuration: Configuration)
       deleteById(ElasticsearchUtils.getStorageIndex(storage), Type, key)
     }.map {
       case Left(failure) => Left(getError(failure))
-      case Right(success) => Right(Unit)
+      case Right(_) => Right(Unit)
     }
   }
 

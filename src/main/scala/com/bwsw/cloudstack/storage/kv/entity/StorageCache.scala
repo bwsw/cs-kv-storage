@@ -4,8 +4,10 @@ import com.bwsw.cloudstack.storage.kv.app.Configuration
 import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.HttpClient
-import scala.concurrent, scala.concurrent.ExecutionContext.Implicits.global
 
+import scala.concurrent
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 
 class StorageCache(conf: Configuration, client: HttpClient) {
@@ -25,6 +27,13 @@ class StorageCache(conf: Configuration, client: HttpClient) {
             }
             else None
         })
+
+  def isHistoryEnabled(storage: String): Future[Boolean] = {
+    cache.get(storage).map {
+      case Some((_, _, isHistoryEnabled)) => isHistoryEnabled
+      case None => false //TODO: Add error handling?
+    }
+  }
 
   private def getValue(source: Map[String, Any], key: String) = {
     source.get(key) match {

@@ -2,6 +2,7 @@ package com.bwsw.cloudstack.storage.kv.actor
 
 import akka.actor.Status
 import akka.pattern.pipe
+import com.bwsw.cloudstack.storage.kv.entity.StorageCache
 import com.bwsw.cloudstack.storage.kv.error.{InternalError, StorageError}
 import com.bwsw.cloudstack.storage.kv.message._
 import com.bwsw.cloudstack.storage.kv.processor.KvProcessor
@@ -9,11 +10,13 @@ import scaldi.Injector
 import scaldi.akka.AkkaInjectable._
 
 class HistoricalKvActor(implicit inj: Injector) extends KvActor {
+  //TODO: is HistoricalKvActor responsible for keepHistory check?
 
   import context.dispatcher
 
   private val historyKvActor = injectActorRef[HistoryKvActor]
   private val kvProcessor = inject[KvProcessor]
+  //  private val storageCache = inject[StorageCache]
 
   override def receive: Receive = {
     case KvGetRequest(storage: String, key: String) =>
@@ -59,8 +62,8 @@ class HistoricalKvActor(implicit inj: Injector) extends KvActor {
       sender() ! response
     case KvMultiDeleteRequest(storage: String, keys: Iterable[String]) =>
       val timestamp = System.currentTimeMillis()
-      kvProcessor.delete(storage, keys).map(r => KvMultiDeleteResponse(storage, keys, timestamp, r)).pipeTo(self)(sender())
-    case KvMultiDeleteResponse(storage: String, keys: Iterable[String], timestamp: Long, response: Either[StorageError, Map[String, Boolean]]) =>
+      kvProcessor.delete(storage, keys).map(r => KvMultiDeleteResponse(storage, timestamp, r)).pipeTo(self)(sender())
+    case KvMultiDeleteResponse(storage: String, timestamp: Long, response: Either[StorageError, Map[String, Boolean]]) =>
       response match {
         case Right(results) =>
           results.foreach { case (key, isDeleted) =>
@@ -77,7 +80,7 @@ class HistoricalKvActor(implicit inj: Injector) extends KvActor {
     case KvClearRequest(storage: String) =>
       kvProcessor.clear(storage).map(r => KvClearResponse(r)).pipeTo(self)(sender())
     case KvClearResponse(response) =>
-      //TODO: Maintain history
+      //TODO: Maintain history?
       sender() ! response
     case failure: Status.Failure =>
       sender() ! Left(InternalError(failure.cause.getMessage))
