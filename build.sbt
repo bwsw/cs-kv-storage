@@ -11,6 +11,7 @@ scalaVersion := "2.12.6"
 resolvers += Classpaths.typesafeReleases
 
 val elastic4sVersion = "6.2.8"
+val akkaVersion = "2.5.12"
 
 libraryDependencies ++= Seq(
   "org.scalatra" %% "scalatra" % ScalatraVersion,
@@ -19,18 +20,20 @@ libraryDependencies ++= Seq(
   "javax.servlet" % "javax.servlet-api" % "3.1.0" % "provided",
   "com.sksamuel.elastic4s" % "elastic4s-http_2.12" % elastic4sVersion,
   "com.typesafe" % "config" % "1.3.3",
-  "com.typesafe.akka" %% "akka-actor" % "2.5.12",
+  "com.typesafe.akka" %% "akka-actor" % akkaVersion,
   "org.scalatra" %% "scalatra-json" % ScalatraVersion,
   "org.json4s" %% "json4s-jackson" % "3.5.4",
   "com.github.blemale" % "scaffeine_2.12" % "2.5.0",
+  "org.scaldi" % "scaldi-akka_2.12" % "0.5.8",
 
   "org.scalatest" %% "scalatest" % "3.0.5" % Test,
   "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % Test,
-  "org.scalamock" %% "scalamock" % "4.1.0" % Test
+  "org.scalamock" %% "scalamock" % "4.1.0" % Test,
+  "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test
 )
 
 assemblyJarName := s"${name.value}-${version.value}-jar-with-dependencies.jar"
-mainClass in assembly := Some("com.bwsw.kv.storage.JettyLauncher")
+mainClass in assembly := Some("com.bwsw.cloudstack.storage.kv.app.JettyLauncher")
 
 enablePlugins(SbtTwirl)
 enablePlugins(ScalatraPlugin)
@@ -38,14 +41,15 @@ enablePlugins(DockerPlugin)
 
 dockerfile in docker := {
   val artifact: File = assembly.value
-  val artifactTargetPath = s"/opt/cs-kv-storage/${artifact.name}"
+  val appDirectory = "/opt/cs-kv-storage"
+  val appPath = s"$appDirectory/${artifact.name}"
 
   new Dockerfile {
-    from("openjdk:8-jre")
+    from("openjdk:8-alpine")
     expose(8080)
     volume("/var/log/cs-kv-storage")
-    add(artifact, artifactTargetPath)
-    entryPoint("java", "-jar", artifactTargetPath)
+    add(artifact, appPath)
+    entryPoint("java", s"-Dconfig.file=$appDirectory/application.conf", "-jar", appPath)
   }
 }
 imageNames in docker := Seq(
