@@ -3,7 +3,7 @@ package com.bwsw.cloudstack.storage.kv.servlet
 import akka.actor.ActorSystem
 import akka.testkit.TestProbe
 import com.bwsw.cloudstack.storage.kv.error._
-import com.bwsw.cloudstack.storage.kv.message.{KvGetRequest, KvGetResponse}
+import com.bwsw.cloudstack.storage.kv.message.response.KvGetResponse
 import com.bwsw.cloudstack.storage.kv.processor.KvProcessor
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.FunSpecLike

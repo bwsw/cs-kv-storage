@@ -5,6 +5,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, ConflictError, NotFoundError}
 import com.bwsw.cloudstack.storage.kv.message._
+import com.bwsw.cloudstack.storage.kv.message.request._
 import com.bwsw.cloudstack.storage.kv.processor.KvProcessor
 import org.json4s.JsonAST.JArray
 import org.json4s.{DefaultFormats, Formats, JObject, MappingException}

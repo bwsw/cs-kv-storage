@@ -18,5 +18,5 @@ trait KvHistorian {
     * @param histories a Collection of histories
     * @return a [[Future]] with a count of successful operation for each dedicated storage or error
     */
-  def save(histories: Iterable[KvHistory]): Future[Either[StorageError, Map[String, Int]]]
+  def save(histories: Vector[KvHistory]): Future[Either[StorageError, Map[KvHistory, Boolean]]]
 }

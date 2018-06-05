@@ -16,7 +16,8 @@ class ElasticsearchKvHistorian(client: HttpClient) extends KvHistorian {
     client.execute(indexInto(getHistoricalStorage(history.storage), `type`) fields Map(
       "key" -> history.key,
       "value" -> history.value,
-      "timestamp" -> history.timestamp))
+      "timestamp" -> history.timestamp),
+      "operation" -> history.operation)
       .map {
         case Left(failure) => Left(getError(failure))
         case Right(_) => Right(Unit)
@@ -25,7 +26,7 @@ class ElasticsearchKvHistorian(client: HttpClient) extends KvHistorian {
 
   /** Saves collection af historical records into dedicated storage
     */
-  def save(histories: Iterable[KvHistory]): Future[Either[StorageError, Map[String, Int]]] = {
+  def save(histories: Vector[KvHistory]): Future[Either[StorageError, Map[KvHistory, Boolean]]] = {
     val indices = histories.map {
       record =>
         indexInto(getHistoricalStorage(record.storage), `type`) fields Map(
@@ -37,11 +38,9 @@ class ElasticsearchKvHistorian(client: HttpClient) extends KvHistorian {
     client.execute(bulk(indices)).map {
       case Left(failure) => Left(getError(failure))
       case Right(success) =>
-        Right(success.result.items.groupBy(bulkResponseItem => bulkResponseItem.index).map {
-          case (index, items) => (index, items.count(item => item.error.isEmpty))
-        })
-      //        Right(success.result.items.map(bulkResponseItem =>
-      //          ((bulkResponseItem.index, bulkResponseItem.id), bulkResponseItem.error.isEmpty)).toMap)
+        Right(success.result.items.map {
+          bulkResponseItem => (histories(bulkResponseItem.itemId), bulkResponseItem.error.isEmpty)
+        }.toMap)
     }
   }
 

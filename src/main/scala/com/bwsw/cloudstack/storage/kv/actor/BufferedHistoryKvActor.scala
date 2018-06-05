@@ -13,7 +13,7 @@ class BufferedHistoryKvActor(implicit inj: Injector) extends HistoryKvActor with
 
   import BufferedHistoryKvActor._
 
-  private val buffer: ListBuffer[KvHistory] = ListBuffer.empty
+  private val buffer: ListBuffer[(KvHistory, Int)] = ListBuffer.empty
   private val configuration = inject[Configuration]
   private val kvHistorian = inject[KvHistorian]
 
@@ -22,17 +22,28 @@ class BufferedHistoryKvActor(implicit inj: Injector) extends HistoryKvActor with
   override def receive: Receive = {
     case HistoryTimeout ⇒
       self ! flush()
-    case KvHistoryFlush(values) =>
-      kvHistorian.save(values) //TODO: problem solving
-    case history: KvHistory =>
-      buffer += history
-      if (buffer.length == configuration.getFlushHistorySize) {
-        self ! flush()
+    case KvHistoryFlush(historiesWithRepeats) =>
+      val histories = historiesWithRepeats.keys.toVector
+      kvHistorian.save(histories).map {
+        case Right(results) =>
+          buffer.appendAll(historiesWithRepeats.filter { case (history, count) =>
+            !results(history) && (count < configuration.getHistoryRetryLimit)
+          }.map { case (history, count) => (history, count + 1) })
+        case Left(_) => //do nothing
+
       }
+    case maybeHistory: Either[Unit, KvHistory] => maybeHistory match {
+      case Right(history) =>
+        buffer += Tuple2(history, 1)
+        if (buffer.length == configuration.getFlushHistorySize) {
+          self ! flush()
+        }
+      case _ => //do nothing
+    }
   }
 
   private def flush(): KvHistoryFlush = {
-    val values = buffer.toList
+    val values = buffer.toMap
     buffer.clear()
     KvHistoryFlush(values)
   }

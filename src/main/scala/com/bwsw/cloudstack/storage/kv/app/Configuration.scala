@@ -43,10 +43,27 @@ class Configuration {
     conf.getString("elasticsearch.cache.expiration-time")
   }
 
-  // TODO: extract values from the configuration file
-  def getFlushHistorySize: Int = 1000
+  def getFlushHistorySize: Int = {
+    conf.getInt("elasticsearch.history.flush-size")
+  }
 
-  def getFlushHistoryTimeout: FiniteDuration = 30.seconds
+  def getFlushHistoryTimeout: FiniteDuration = {
+    val timeout = Duration(conf.getString("elasticsearch.history.flush-timeout"))
+    timeout match {
+      case f: FiniteDuration => f
+      case _ => throw new RuntimeException("Misconfiguration in elasticsearch.history.flush-timeout")
+    }
+  }
 
-  def getRequestTimeout: FiniteDuration = 1.second
+  def getRequestTimeout: FiniteDuration = {
+    val timeout = Duration(conf.getString("elasticsearch.history.request-timeout"))
+    timeout match {
+      case f: FiniteDuration => f
+      case _ => throw new RuntimeException("Misconfiguration in elasticsearch.history.request-timeout")
+    }
+  }
+
+  def getHistoryRetryLimit: Int = {
+    conf.getInt("elasticsearch.history.retry-limit")
+  }
 }

@@ -5,6 +5,8 @@ import akka.pattern.pipe
 import com.bwsw.cloudstack.storage.kv.entity.StorageCache
 import com.bwsw.cloudstack.storage.kv.error.{InternalError, StorageError}
 import com.bwsw.cloudstack.storage.kv.message._
+import com.bwsw.cloudstack.storage.kv.message.request._
+import com.bwsw.cloudstack.storage.kv.message.response._
 import com.bwsw.cloudstack.storage.kv.processor.KvProcessor
 import scaldi.Injector
 import scaldi.akka.AkkaInjectable._
@@ -33,7 +35,7 @@ class HistoricalKvActor(implicit inj: Injector) extends KvActor {
     case KvSetResponse(storage: String, key: String, value: String, timestamp: Long, response: Either[StorageError, Unit]) =>
       response match {
         case Right(_) =>
-          historyKvActor ! KvHistory(storage, key, value, timestamp)
+          historyKvActor ! KvHistory(storage, key, value, timestamp, "set")
         case Left(_) => // do nothing
       }
       sender() ! response
@@ -45,7 +47,7 @@ class HistoricalKvActor(implicit inj: Injector) extends KvActor {
         case Right(results) =>
           results.foreach { case (key, isSet) =>
             if (isSet)
-              historyKvActor ! KvHistory(storage, key, kvs(key), timestamp)
+              historyKvActor ! KvHistory(storage, key, kvs(key), timestamp, "set")
           }
         case Left(_) => // do nothing
       }
@@ -56,7 +58,7 @@ class HistoricalKvActor(implicit inj: Injector) extends KvActor {
     case KvDeleteResponse(storage: String, key: String, timestamp: Long, response: Either[StorageError, Unit]) =>
       response match {
         case Right(_) =>
-          historyKvActor ! KvHistory(storage, key, null, timestamp)
+          historyKvActor ! KvHistory(storage, key, null, timestamp, "delete")
         case Left(_) => // do nothing
       }
       sender() ! response
@@ -68,7 +70,7 @@ class HistoricalKvActor(implicit inj: Injector) extends KvActor {
         case Right(results) =>
           results.foreach { case (key, isDeleted) =>
             if (isDeleted)
-              historyKvActor ! KvHistory(storage, key, null, timestamp)
+              historyKvActor ! KvHistory(storage, key, null, timestamp, "delete")
           }
         case Left(_) => // do nothing
       }
