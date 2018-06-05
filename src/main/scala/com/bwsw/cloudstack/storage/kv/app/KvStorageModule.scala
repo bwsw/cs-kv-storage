@@ -1,6 +1,7 @@
 package com.bwsw.cloudstack.storage.kv.app
 
 import com.bwsw.cloudstack.storage.kv.actor.{BufferedHistoryKvActor, HistoricalKvActor, HistoryKvActor, KvActor}
+import com.bwsw.cloudstack.storage.kv.entity.StorageCache
 import com.bwsw.cloudstack.storage.kv.historian.{ElasticsearchKvHistorian, KvHistorian}
 import com.bwsw.cloudstack.storage.kv.manager.{ElasticsearchKvStorageManager, KvStorageManager}
 import com.bwsw.cloudstack.storage.kv.processor.{ElasticsearchKvProcessor, KvProcessor}
@@ -20,4 +21,5 @@ class KvStorageModule extends Module {
   bind[HistoryKvActor] to injected[BufferedHistoryKvActor]
   bind[KvActor] to injected[HistoricalKvActor]
   bind[KvHistorian] to injected[ElasticsearchKvHistorian]
+  bind[StorageCache] to injected[StorageCache]
 }

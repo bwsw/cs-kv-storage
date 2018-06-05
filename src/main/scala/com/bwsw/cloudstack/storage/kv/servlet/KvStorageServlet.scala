@@ -111,6 +111,7 @@ class KvStorageServlet(system: ActorSystem, requestTimeout: FiniteDuration, kvPr
           case Right(_) => Ok()
           case _ => InternalServerError()
         }
+      }
     }
   }
 

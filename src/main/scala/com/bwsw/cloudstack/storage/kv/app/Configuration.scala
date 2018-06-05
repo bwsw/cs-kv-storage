@@ -28,11 +28,11 @@ class Configuration {
   }
 
   def getMaxValueLength: Int = {
-    conf.getInt("elasticsearch.limit.max-value-length")
+    conf.getInt("elasticsearch.limit.max-value-size")
   }
 
   def getMaxKeyLength: Int = {
-    conf.getInt("elasticsearch.limit.max-key-length")
+    conf.getInt("elasticsearch.limit.max-key-size")
   }
 
   def getMaxStorageCacheSize: Int = {
