@@ -1,0 +1,40 @@
+version: '3.3'
+services:
+  elasticsearch:
+    image: "docker.elastic.co/elasticsearch/elasticsearch:6.2.4"
+    environment:
+      - cluster.name=cs-kv-storage-compose
+      - discovery.type=single-node
+      - discovery.zen.minimum_master_nodes=1
+      - network.host=0.0.0.0
+      - xpack.security.enabled=false
+    volumes:
+      - eslogs:/usr/share/elasticsearch/logs
+      - esdata:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+    networks:
+      - cs-kv-storage-e2e
+  initializer:
+    build: ./initializer
+    depends_on:
+      - elasticsearch
+    networks:
+      - cs-kv-storage-e2e
+  app:
+    image: "git.bw-sw.com:5000/cloudstack-ecosystem/cs-kv-storage:${APP_DOCKER_TAG}"
+    depends_on:
+      - initializer
+    volumes:
+      - applogs:/var/log/cs-kv-storage
+      - "./cs-kv-storage/application.conf:/opt/cs-kv-storage/application.conf"
+    ports:
+      - 8080:8080
+    networks:
+      - cs-kv-storage-e2e
+volumes:
+  eslogs:
+  esdata:
+  applogs:
+networks:
+  cs-kv-storage-e2e:
