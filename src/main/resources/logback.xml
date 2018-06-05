@@ -2,7 +2,7 @@
   <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <file>/var/log/cs-kv-storage/cs-kv-storage.log</file>
     <rollingPolicy  class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-      <fileNamePattern>/var/log/cs-kv-storage/cs-kv-storage-%d{YYYY-MM-dd}.log</fileNamePattern>
+      <fileNamePattern>/var/log/cs-kv-storage/cs-kv-storage.%d{YYYY-MM-dd}.log.gz</fileNamePattern>
       <maxHistory>30</maxHistory>
     </rollingPolicy>
     <encoder>
