@@ -30,7 +30,7 @@ class StorageCache(conf: Configuration, client: HttpClient) {
 
   def isHistoryEnabled(storage: String): Future[Option[Boolean]] = {
     cache.get(storage).map {
-      case Some((_, _, isHistoryEnabled)) => Some(isHistoryEnabled)
+      case Some((_, aType, isHistoryEnabled)) => Some(isHistoryEnabled && aType != "TEMP")
       case None => None
     }
   }

@@ -219,7 +219,7 @@ class KvStorageServletSuite
 
       def testSuccess(result: Map[String, Boolean], expectedBody: String) = {
         kvActor.underlyingActor.clearAndExpect(Expectation(KvMultiDeleteRequest(storage, keys), () => Right(result)))
-        put(path, jsonKeys, jsonHeaders) {
+        post(path, jsonKeys, jsonHeaders) {
           status should equal(200)
           body should equal(expectedBody)
           response.getContentType should include("application/json")
@@ -228,7 +228,7 @@ class KvStorageServletSuite
 
       def testBadRequest(body: Array[Byte], headers: scala.Iterable[(String, String)]) = {
         //        (processor.delete(_: String, _: Iterable[String])).expects(storage, keys).never
-        put(path, body, headers) {
+        post(path, body, headers) {
           status should equal(400)
         }
       }
@@ -255,7 +255,7 @@ class KvStorageServletSuite
 
       it("should return 500 Internal Server Error if request processing fails") {
         kvActor.underlyingActor.clearAndExpect(Expectation(KvMultiDeleteRequest(storage, keys), () => internalError))
-        put(path, jsonKeys, jsonHeaders) {
+        post(path, jsonKeys, jsonHeaders) {
           status should equal(500)
         }
       }
@@ -289,7 +289,7 @@ class KvStorageServletSuite
       def test(result: Future[Either[StorageError, Unit]], status: Int) = {
         kvActor.underlyingActor.clearAndExpect(Expectation(KvClearRequest(storage), () => result))
         //        (processor.clear(_: String)).expects(storage).returning(result).once
-        put(path, Array[Byte](), Map()) {
+        post(path, Array[Byte](), Map()) {
           status should equal(status)
         }
       }
