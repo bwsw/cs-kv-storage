@@ -1,8 +1,11 @@
 package com.bwsw.cloudstack.storage.kv.servlet
 
 import akka.actor.ActorSystem
-import akka.testkit.TestProbe
+import akka.testkit.TestActorRef
 import com.bwsw.cloudstack.storage.kv.error._
+import com.bwsw.cloudstack.storage.kv.message.{KvGetRequest, KvSetRequest}
+import com.bwsw.cloudstack.storage.kv.mock.MockActor
+import com.bwsw.cloudstack.storage.kv.mock.MockActor.Expectation
 import com.bwsw.cloudstack.storage.kv.processor.KvProcessor
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.FunSpecLike
@@ -20,7 +23,7 @@ class KvStorageServletSuite
 
   implicit val system: ActorSystem = ActorSystem()
   private val processor = mock[KvProcessor]
-  private val kvActor = TestProbe()
+  private val kvActor = TestActorRef(new MockActor())
   private val someKey = "someKey"
   private val someValue = "someValue"
   private val keyValues = Map("key1" -> "value1", "key2" -> "value2", "key3" -> "value3")
@@ -36,12 +39,11 @@ class KvStorageServletSuite
   private val textHeaders = Map("Content-Type" -> "text/plain")
 
   describe("a KvStorageServlet") {
-    addServlet(new KvStorageServlet(system, 1.second, processor, kvActor.ref), "/*")
+    addServlet(new KvStorageServlet(system, 1.second, processor, kvActor), "/*")
 
-/*
     describe("(get by key)") {
       it("should return the value if the key exists") {
-        (processor.get(_: String, _: String)).expects(storage, someKey).returning(Future(Right(someValue))).once
+        kvActor.underlyingActor.clearAndExpect(Expectation(KvGetRequest(storage, someKey), () => Right(someValue)))
         get(storagePath + someKey, Seq(), Map()) {
           status should equal(200)
           body should equal(someValue)
@@ -50,20 +52,19 @@ class KvStorageServletSuite
       }
 
       it("should return 404 Not Found if the key does not exist") {
-        (processor.get(_: String, _: String)).expects(storage, someKey).returning(Future(Left(NotFoundError()))).once
+        kvActor.underlyingActor.clearAndExpect(Expectation(KvGetRequest(storage, someKey), () => Left(NotFoundError())))
         get(storagePath + someKey, Seq(), Map()) {
           status should equal(404)
         }
       }
 
       it("should return 500 Internal Server Error if request processing fails") {
-        (processor.get(_: String, _: String)).expects(storage, someKey).returning(internalError).once
+        kvActor.underlyingActor.clearAndExpect(Expectation(KvGetRequest(storage, someKey), () => internalError))
         get(storagePath + someKey, Seq(), Map()) {
           status should equal(500)
         }
       }
     }
-*/
 
     describe("(get by keys)") {
       def testSuccess(result: Map[String, Option[String]], expectedBody: String) = {
@@ -110,13 +111,12 @@ class KvStorageServletSuite
       }
     }
 
-/*
     describe("(set the key/value)") {
       val path = storagePath + someKey
 
       it("should set the value by the key") {
-        (processor.set(_: String, _: String, _: String)).expects(storage, someKey, someValue)
-          .returning(Future(Right(Unit))).once
+        kvActor.underlyingActor.clearAndExpect(
+          Expectation(KvSetRequest(storage, someKey, someValue), () => Right(Unit)))
         put(path, someValue, textHeaders) {
           status should equal(200)
           response.getContentType should include("text/plain")
@@ -130,23 +130,22 @@ class KvStorageServletSuite
       }
 
       it("should return 400 Bad Request Error if the key or value are invalid") {
-        (processor.set(_: String, _: String, _: String)).expects(storage, someKey, someValue)
-          .returning(Future(Left(BadRequestError())))
+        kvActor.underlyingActor.clearAndExpect(
+          Expectation(KvSetRequest(storage, someKey, someValue), () => Left(BadRequestError())))
         put(path, someValue, textHeaders) {
           status should equal(400)
         }
       }
 
       it("should return 500 Internal Server Error if request processing fails") {
-        (processor.set(_: String, _: String, _: String)).expects(storage, someKey, someValue)
-          .returning(internalError).once
+        kvActor.underlyingActor.clearAndExpect(
+          Expectation(KvSetRequest(storage, someKey, someValue), () => internalError))
         put(path, someValue, textHeaders) {
           status should equal(500)
         }
       }
     }
 
-*/
     describe("(set key/value pairs)") {
       val path = storagePath + "set"
 

@@ -23,16 +23,18 @@ class KvStorageServlet(system: ActorSystem, requestTimeout: FiniteDuration, kvPr
 
   protected implicit def executor: ExecutionContext = system.dispatcher
 
-  implicit val timeout: Timeout = new Timeout(requestTimeout)
+  protected implicit val akkaTimeout: Timeout = requestTimeout
 
   get("/:storage_uuid/:key") {
-    val result = kvActor ? KvGetRequest(params("storage_uuid"), params("key"))
-    result.map {
-      case Left(_: NotFoundError) => NotFound()
-      case Right(value) =>
-        contentType = formats("txt")
-        value
-      case _ => InternalServerError()
+    new AsyncResult() {
+      val is: Future[_] = (kvActor ? KvGetRequest(params("storage_uuid"), params("key")))
+        .map {
+          case Left(_: NotFoundError) => NotFound()
+          case Right(value) =>
+            contentType = formats("txt")
+            value
+          case _ => InternalServerError()
+        }
     }
   }
 
@@ -61,16 +63,19 @@ class KvStorageServlet(system: ActorSystem, requestTimeout: FiniteDuration, kvPr
   }
 
   put("/:storage_uuid/:key") {
-    if (request.getHeader("Content-Type") == formats("txt")) {
-      val result = kvActor ? KvSetRequest(params("storage_uuid"), params("key"), request.body)
-      result.map {
-        case Right(_) => Ok()
-        case Left(_: BadRequestError) => BadRequest()
-        case _ => InternalServerError()
-      }
+    new AsyncResult() {
+      val is: Future[_] =
+        if (request.getHeader("Content-Type") == formats("txt")) {
+          val result = kvActor ? KvSetRequest(params("storage_uuid"), params("key"), request.body)
+          result.map {
+            case Right(_) => Ok()
+            case Left(_: BadRequestError) => BadRequest()
+            case _ => InternalServerError()
+          }
+        }
+        else
+          Future(BadRequest())
     }
-    else
-      Future(BadRequest())
   }
 
   put("/:storage_uuid/set") {
