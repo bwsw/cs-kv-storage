@@ -23,7 +23,7 @@ class KvStorageServlet(system: ActorSystem, processor: KvProcessor)
     new AsyncResult() {
       val is: Future[_] = processor.get(params("storage_uuid"), params("key"))
         .map {
-          case Left(_: NotFoundError) => NotFound()
+          case Left(_: NotFoundError) => NotFound("")
           case Right(value) =>
             contentType = formats("txt")
             value
