@@ -21,16 +21,15 @@ class KvStorageServlet(system: ActorSystem, requestTimeout: FiniteDuration, kvPr
     with JacksonJsonSupport {
 
   protected implicit lazy val jsonFormats: Formats = DefaultFormats.preservingEmptyValues
+  protected implicit val akkaTimeout: Timeout = requestTimeout
 
   protected implicit def executor: ExecutionContext = system.dispatcher
 
-  protected implicit val akkaTimeout: Timeout = requestTimeout
-
-  get("/:storage_uuid/:key") {
+  get("/get/:storage_uuid/:key") {
     new AsyncResult() {
       val is: Future[_] = (kvActor ? KvGetRequest(params("storage_uuid"), params("key")))
         .map {
-          case Left(_: NotFoundError) => NotFound()
+          case Left(_: NotFoundError) => NotFound("")
           case Right(value) =>
             contentType = formats("txt")
             value
@@ -39,7 +38,7 @@ class KvStorageServlet(system: ActorSystem, requestTimeout: FiniteDuration, kvPr
     }
   }
 
-  post("/:storage_uuid/") {
+  post("/get/:storage_uuid") {
     new AsyncResult() {
       val is: Future[_] =
         if (request.getHeader("Content-Type") == formats("json"))
@@ -63,7 +62,7 @@ class KvStorageServlet(system: ActorSystem, requestTimeout: FiniteDuration, kvPr
     }
   }
 
-  put("/:storage_uuid/:key") {
+  put("/set/:storage_uuid/:key") {
     new AsyncResult() {
       val is: Future[_] =
         if (request.getHeader("Content-Type") == formats("txt")) {
@@ -79,7 +78,7 @@ class KvStorageServlet(system: ActorSystem, requestTimeout: FiniteDuration, kvPr
     }
   }
 
-  put("/:storage_uuid/set") {
+  put("/set/:storage_uuid") {
     new AsyncResult() {
       val is: Future[_] =
         if (request.getHeader("Content-Type") == formats("json"))
@@ -103,7 +102,7 @@ class KvStorageServlet(system: ActorSystem, requestTimeout: FiniteDuration, kvPr
     }
   }
 
-  delete("/:storage_uuid/:key") {
+  delete("/delete/:storage_uuid/:key") {
     new AsyncResult() {
       val is: Future[_] = {
         val result = kvActor ? KvDeleteRequest(params("storage_uuid"), params("key"))
@@ -115,7 +114,7 @@ class KvStorageServlet(system: ActorSystem, requestTimeout: FiniteDuration, kvPr
     }
   }
 
-  put("/:storage_uuid/delete") {
+  post("/delete/:storage_uuid") {
     new AsyncResult() {
       val is: Future[_] =
         if (request.getHeader("Content-Type") == formats("json"))
@@ -139,7 +138,7 @@ class KvStorageServlet(system: ActorSystem, requestTimeout: FiniteDuration, kvPr
     }
   }
 
-  get("/:storage_uuid/list") {
+  get("/list/:storage_uuid") {
     new AsyncResult() {
       val is: Future[_] = {
         val result = kvActor ? KvListRequest(params("storage_uuid"))
@@ -153,7 +152,7 @@ class KvStorageServlet(system: ActorSystem, requestTimeout: FiniteDuration, kvPr
     }
   }
 
-  put("/:storage_uuid/clear") {
+  post("/clear/:storage_uuid") {
     new AsyncResult() {
       val is: Future[_] = {
         val result = kvActor ? KvClearRequest(params("storage_uuid"))
