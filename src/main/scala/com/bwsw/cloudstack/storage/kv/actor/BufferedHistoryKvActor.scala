@@ -3,10 +3,11 @@ package com.bwsw.cloudstack.storage.kv.actor
 import akka.actor.Timers
 import com.bwsw.cloudstack.storage.kv.app.Configuration
 import com.bwsw.cloudstack.storage.kv.historian.KvHistorian
-import com.bwsw.cloudstack.storage.kv.message.{KvHistory, KvHistoryFlush}
+import com.bwsw.cloudstack.storage.kv.message.{KvHistory, KvHistoryBulk, KvHistoryFlush}
 import scaldi.Injector
 import scaldi.akka.AkkaInjectable._
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.collection.mutable.ListBuffer
 
 class BufferedHistoryKvActor(implicit inj: Injector) extends HistoryKvActor with Timers {
@@ -32,12 +33,13 @@ class BufferedHistoryKvActor(implicit inj: Injector) extends HistoryKvActor with
         case Left(_) => //do nothing
 
       }
-    case maybeHistory: Either[Unit, KvHistory] => maybeHistory match {
-      case Right(history) =>
+    case option: Option[_] => option match {
+      case Some(history: KvHistory) =>
         buffer += Tuple2(history, 1)
         if (buffer.length == configuration.getFlushHistorySize) {
           self ! flush()
         }
+      case Some(bulk: KvHistoryBulk) => bulk.values.foreach(history => self ! Some(history))
       case _ => //do nothing
     }
   }

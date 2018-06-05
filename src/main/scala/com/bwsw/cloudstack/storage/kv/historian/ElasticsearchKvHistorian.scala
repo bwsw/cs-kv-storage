@@ -16,8 +16,8 @@ class ElasticsearchKvHistorian(client: HttpClient) extends KvHistorian {
     client.execute(indexInto(getHistoricalStorage(history.storage), `type`) fields Map(
       "key" -> history.key,
       "value" -> history.value,
-      "timestamp" -> history.timestamp),
-      "operation" -> history.operation)
+      "timestamp" -> history.timestamp,
+      "operation" -> history.operation))
       .map {
         case Left(failure) => Left(getError(failure))
         case Right(_) => Right(Unit)
@@ -32,8 +32,8 @@ class ElasticsearchKvHistorian(client: HttpClient) extends KvHistorian {
         indexInto(getHistoricalStorage(record.storage), `type`) fields Map(
           "key" -> record.key,
           "value" -> record.value,
-          "timestamp" -> record.timestamp
-        )
+          "timestamp" -> record.timestamp,
+          "operation" -> record.operation)
     }
     client.execute(bulk(indices)).map {
       case Left(failure) => Left(getError(failure))
