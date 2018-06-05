@@ -62,7 +62,7 @@ class KvStorageServletSuite
     }
 
     describe("(get by keys)") {
-      val path = "/get/" + storage
+      val path = s"/get/$storage"
 
       def testSuccess(result: Map[String, Option[String]], expectedBody: String) = {
         (processor.get(_: String, _: Iterable[String])).expects(storage, keys).returning(Future(Right(result))).once
@@ -211,7 +211,7 @@ class KvStorageServletSuite
     }
 
     describe("(delete by keys)") {
-      val path = "/delete/" + storage
+      val path = s"/delete/$storage"
 
       def testSuccess(result: Map[String, Boolean], expectedBody: String) = {
         (processor.delete(_: String, _: Iterable[String])).expects(storage, keys).returning(Future(Right(result))).once
@@ -251,14 +251,14 @@ class KvStorageServletSuite
 
       it("should return 500 Internal Server Error if request processing fails") {
         (processor.delete(_: String, _: Iterable[String])).expects(storage, keys).returning(internalError).once
-        post("/delete/someStorage", jsonKeys, jsonHeaders) {
+        post(path, jsonKeys, jsonHeaders) {
           status should equal(500)
         }
       }
     }
 
     describe("(list)") {
-      val path = "/list/" + storage
+      val path = s"/list/$storage"
 
       it("should returns keys") {
         (processor.list(_: String)).expects(storage).returning(Future(Right(keys))).once
@@ -278,7 +278,7 @@ class KvStorageServletSuite
     }
 
     describe("(clear)") {
-      val path = "/clear/" + storage
+      val path = s"/clear/$storage"
 
       def test(result: Future[Either[StorageError, Unit]], status: Int) = {
         (processor.clear(_: String)).expects(storage).returning(result).once
