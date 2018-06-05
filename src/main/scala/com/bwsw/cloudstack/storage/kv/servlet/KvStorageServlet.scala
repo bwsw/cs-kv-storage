@@ -106,7 +106,7 @@ class KvStorageServlet(system: ActorSystem, processor: KvProcessor)
     }
   }
 
-  put("/delete/:storage_uuid") {
+  post("/delete/:storage_uuid") {
     new AsyncResult() {
       val is: Future[_] =
         if (request.getHeader("Content-Type") == formats("json"))
@@ -143,7 +143,7 @@ class KvStorageServlet(system: ActorSystem, processor: KvProcessor)
     }
   }
 
-  put("/clear/:storage_uuid") {
+  post("/clear/:storage_uuid") {
     new AsyncResult() {
       val is: Future[_] =
         processor.clear(params("storage_uuid"))

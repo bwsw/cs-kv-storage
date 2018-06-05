@@ -215,7 +215,7 @@ class KvStorageServletSuite
 
       def testSuccess(result: Map[String, Boolean], expectedBody: String) = {
         (processor.delete(_: String, _: Iterable[String])).expects(storage, keys).returning(Future(Right(result))).once
-        put(path, jsonKeys, jsonHeaders) {
+        post(path, jsonKeys, jsonHeaders) {
           status should equal(200)
           body should equal(expectedBody)
           response.getContentType should include("application/json")
@@ -224,7 +224,7 @@ class KvStorageServletSuite
 
       def testBadRequest(body: Array[Byte], headers: scala.Iterable[(String, String)]) = {
         (processor.delete(_: String, _: Iterable[String])).expects(storage, keys).never
-        put(path, body, headers) {
+        post(path, body, headers) {
           status should equal(400)
         }
       }
@@ -251,7 +251,7 @@ class KvStorageServletSuite
 
       it("should return 500 Internal Server Error if request processing fails") {
         (processor.delete(_: String, _: Iterable[String])).expects(storage, keys).returning(internalError).once
-        put("/delete/someStorage", jsonKeys, jsonHeaders) {
+        post("/delete/someStorage", jsonKeys, jsonHeaders) {
           status should equal(500)
         }
       }
@@ -282,7 +282,7 @@ class KvStorageServletSuite
 
       def test(result: Future[Either[StorageError, Unit]], status: Int) = {
         (processor.clear(_: String)).expects(storage).returning(result).once
-        put(path, Array[Byte](), Map()) {
+        post(path, Array[Byte](), Map()) {
           status should equal(status)
         }
       }
