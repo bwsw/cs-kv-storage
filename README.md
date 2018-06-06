@@ -42,6 +42,7 @@ GET /get/8986a11c-3f4c-4e22-8e04-5fe35dfd3a1d/somekey
 | 200 OK | Body contains text/plain value string |
 | 404 Not Found | Given storage aren't contain such key |
 | 500 Internal Server Error | Server have a problem processing the request |
+---
 ### POST /get/\<storage UUID\>
 #### Request example 
 ```
@@ -68,6 +69,7 @@ In the following example values can be found only by first and third keys:
     "key3": "value3"
 }
 ```
+---
 ### PUT /set/\<storage UUID\>/\<key\>
 #### Request
 Request must have Content-Type set to text/plain and contain value as a simple string in the body  
@@ -84,6 +86,7 @@ somevalue
 | 200 OK | Body are empty |
 | 400 Bad Request | Request have wrong content type or key or value are invalid |
 | 500 Internal Server Error | Server have a problem processing the request |
+---
 ### PUT /set/\<storage UUID\>
 #### Request
 Requset must have Content-Type set to application/json and contain map of keys and values encoded in JSON  
@@ -112,6 +115,7 @@ In the following example values can be set only by first and third keys:
     "key3": true
 }
 ```
+---
 ### DELETE /delete/\<storage UUID\>/\<key\>
 #### Request example
 ```
@@ -122,6 +126,7 @@ DELETE /delete/8986a11c-3f4c-4e22-8e04-5fe35dfd3a1d/somekey
 | ---------------- | ----------- |
 | 200 OK | Body is empty |
 | 500 Internal Server Error | Server have a problem processing the request |
+---
 ### POST /delete/\<storage UUID\>
 #### Request
 Requset must have Content-Type set to application/json and contain map of keys and values encoded in JSON  
@@ -151,6 +156,7 @@ In the following example values can be deleten only by first and third keys:
     "key3": true
 }
 ```
+---
 ### GET /list/\<storage UUID\>
 #### Request example 
 ```
@@ -169,6 +175,7 @@ GET /list/8986a11c-3f4c-4e22-8e04-5fe35dfd3a1d
     "key3"
 ]
 ```
+---
 ### POST /clear/\<storage UUID\>
 #### Request example 
 ```
