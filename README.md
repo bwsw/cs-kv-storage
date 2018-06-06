@@ -10,7 +10,7 @@
 ```sh
 $ cd cs-kv-storage
 $ sbt assembly
-$ java -Dconfig.file=&lt;config.path&gt; -jar target/scala-2.12/cs-kv-storage-&lt;version&gt;-jar-with-dependencies.jar 
+$ java -Dconfig.file=<config.path> -jar target/scala-2.12/cs-kv-storage-<version>-jar-with-dependencies.jar 
 ```
 where `<config.path>` and `<version>` should be replaced with actual values.
 
@@ -19,7 +19,7 @@ where `<config.path>` and `<version>` should be replaced with actual values.
 ```sh
 $ cd cs-kv-storage
 $ sbt docker
-$ docker -p &lt;port&gt;:8080 -v &lt;config.path&gt;/opt/cs-kv-storage/application.conf git.bw-sw.com:5000/cloudstack-ecosystem/cs-kv-storage:&lt;version&gt;  
+$ docker -p <port>:8080 -v <config.path>/opt/cs-kv-storage/application.conf git.bw-sw.com:5000/cloudstack-ecosystem/cs-kv-storage:<version>  
 ```
 where `<port>`, `<config.path>` and `<version>` should be replaced with actual values.
 
