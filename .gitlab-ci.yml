@@ -33,7 +33,7 @@ test-release:
   after_script:
     - docker-compose --file=$DOCKER_COMPOSE_FILE down --volumes
   tags:
-    - build-as-docker
+    - build-in-docker
     - cs-eco-builder
 
 release:

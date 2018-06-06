@@ -11,8 +11,6 @@ services:
     volumes:
       - eslogs:/usr/share/elasticsearch/logs
       - esdata:/usr/share/elasticsearch/data
-    ports:
-      - 9200:9200
     networks:
       - cs-kv-storage-e2e
   initializer:
@@ -28,8 +26,6 @@ services:
     volumes:
       - applogs:/var/log/cs-kv-storage
       - "./cs-kv-storage/application.conf:/opt/cs-kv-storage/application.conf"
-    ports:
-      - 8080:8080
     networks:
       - cs-kv-storage-e2e
   newman:
