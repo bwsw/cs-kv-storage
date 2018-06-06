@@ -44,7 +44,6 @@ class KvStorageServletSuite
   private val jsonNullValues = "{\"key1\":null,\"key2\":null,\"key3\":null}"
   private val jsonKeyResult = "{\"key1\":true,\"key2\":true,\"key3\":true}"
   private val storage = "someStorage"
-  private val storagePath = "/" + storage + "/"
   private val internalError = Future(Left(InternalError("some reason")))
   private val jsonHeaders = Map("Content-Type" -> "application/json")
   private val textHeaders = Map("Content-Type" -> "text/plain")
@@ -53,9 +52,11 @@ class KvStorageServletSuite
     addServlet(new KvStorageServlet(system, processor), "/*")
 
     describe("(get by key)") {
+      val path = s"/get/$storage/$someKey"
+
       it("should return the value if the key exists") {
         (processor.get(_: String, _: String)).expects(storage, someKey).returning(Future(Right(someValue))).once
-        get(storagePath + someKey, Seq(), Map()) {
+        get(path, Seq(), Map()) {
           status should equal(200)
           body should equal(someValue)
           response.getContentType should include("text/plain")
@@ -64,23 +65,25 @@ class KvStorageServletSuite
 
       it("should return 404 Not Found if the key does not exist") {
         (processor.get(_: String, _: String)).expects(storage, someKey).returning(Future(Left(NotFoundError()))).once
-        get(storagePath + someKey, Seq(), Map()) {
+        get(path, Seq(), Map()) {
           status should equal(404)
         }
       }
 
       it("should return 500 Internal Server Error if request processing fails") {
         (processor.get(_: String, _: String)).expects(storage, someKey).returning(internalError).once
-        get(storagePath + someKey, Seq(), Map()) {
+        get(path, Seq(), Map()) {
           status should equal(500)
         }
       }
     }
 
     describe("(get by keys)") {
+      val path = s"/get/$storage"
+
       def testSuccess(result: Map[String, Option[String]], expectedBody: String) = {
         (processor.get(_: String, _: Iterable[String])).expects(storage, keys).returning(Future(Right(result))).once
-        post(storagePath, jsonKeys, jsonHeaders) {
+        post(path, jsonKeys, jsonHeaders) {
           status should equal(200)
           body should equal(expectedBody)
           response.getContentType should include("application/json")
@@ -89,7 +92,7 @@ class KvStorageServletSuite
 
       def testBadRequest(body: Array[Byte], headers: scala.Iterable[(String, String)]) = {
         (processor.get(_: String, _: Iterable[String])).expects(storage, keys).never
-        post(storagePath, body, headers) {
+        post(path, body, headers) {
           status should equal(400)
         }
       }
@@ -116,14 +119,14 @@ class KvStorageServletSuite
 
       it("should return 500 Internal Server Error if request processing fails") {
         (processor.get(_: String, _: Iterable[String])).expects(storage, keys).returning(internalError).once
-        post(storagePath, jsonKeys, jsonHeaders) {
+        post(path, jsonKeys, jsonHeaders) {
           status should equal(500)
         }
       }
     }
 
     describe("(set the key/value)") {
-      val path = storagePath + someKey
+      val path = s"/set/$storage/$someKey"
 
       it("should set the value by the key") {
         (processor.set(_: String, _: String, _: String)).expects(storage, someKey, someValue)
@@ -158,7 +161,7 @@ class KvStorageServletSuite
     }
 
     describe("(set key/value pairs)") {
-      val path = storagePath + "set"
+      val path = s"/set/$storage"
 
       def testSuccess(result: Map[String, Boolean], expectedBody: String) = {
         (processor.set(_: String, _: Map[String, String])).expects(storage, keyValues).returning(Future(Right(result)))
@@ -206,9 +209,11 @@ class KvStorageServletSuite
     }
 
     describe("(delete by the key)") {
+      val path = s"/delete/$storage/$someKey"
+
       def test(result: Future[Either[StorageError, Unit]], status: Int) = {
         (processor.delete(_: String, _: String)).expects(storage, someKey).returning(Future(Right(Unit))).once
-        delete(storagePath + someKey, Seq(), Map()) {
+        delete(path, Seq(), Map()) {
           status should equal(status)
         }
       }
@@ -223,11 +228,11 @@ class KvStorageServletSuite
     }
 
     describe("(delete by keys)") {
-      val path = storagePath + "delete"
+      val path = s"/delete/$storage"
 
       def testSuccess(result: Map[String, Boolean], expectedBody: String) = {
         (processor.delete(_: String, _: Iterable[String])).expects(storage, keys).returning(Future(Right(result))).once
-        put(path, jsonKeys, jsonHeaders) {
+        post(path, jsonKeys, jsonHeaders) {
           status should equal(200)
           body should equal(expectedBody)
           response.getContentType should include("application/json")
@@ -236,7 +241,7 @@ class KvStorageServletSuite
 
       def testBadRequest(body: Array[Byte], headers: scala.Iterable[(String, String)]) = {
         (processor.delete(_: String, _: Iterable[String])).expects(storage, keys).never
-        put(path, body, headers) {
+        post(path, body, headers) {
           status should equal(400)
         }
       }
@@ -263,14 +268,14 @@ class KvStorageServletSuite
 
       it("should return 500 Internal Server Error if request processing fails") {
         (processor.delete(_: String, _: Iterable[String])).expects(storage, keys).returning(internalError).once
-        put("/someStorage/delete", jsonKeys, jsonHeaders) {
+        post(path, jsonKeys, jsonHeaders) {
           status should equal(500)
         }
       }
     }
 
     describe("(list)") {
-      val path = storagePath + "list"
+      val path = s"/list/$storage"
 
       it("should returns keys") {
         (processor.list(_: String)).expects(storage).returning(Future(Right(keys))).once
@@ -290,9 +295,11 @@ class KvStorageServletSuite
     }
 
     describe("(clear)") {
+      val path = s"/clear/$storage"
+
       def test(result: Future[Either[StorageError, Unit]], status: Int) = {
         (processor.clear(_: String)).expects(storage).returning(result).once
-        put(storagePath + "clear", Array[Byte](), Map()) {
+        post(path, Array[Byte](), Map()) {
           status should equal(status)
         }
       }

@@ -39,7 +39,7 @@ class KvStorageManagerServlet(system: ActorSystem, manager: KvStorageManager) ex
               .map {
                 case Right(_) => Ok()
                 case Left(_: BadRequestError) => BadRequest()
-                case Left(_: NotFoundError) => NotFound()
+                case Left(_: NotFoundError) => NotFound("")
                 case _ => InternalServerError()
               }
           } catch {
@@ -58,7 +58,7 @@ class KvStorageManagerServlet(system: ActorSystem, manager: KvStorageManager) ex
           .map {
             case Right(_) => Ok()
             case Left(_: BadRequestError) => BadRequest()
-            case Left(_: NotFoundError) => NotFound()
+            case Left(_: NotFoundError) => NotFound("")
             case _ => InternalServerError()
           }
     }
