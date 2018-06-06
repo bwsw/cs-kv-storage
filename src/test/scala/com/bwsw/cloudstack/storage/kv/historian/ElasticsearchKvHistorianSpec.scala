@@ -1,6 +1,7 @@
 package com.bwsw.cloudstack.storage.kv.historian
 
 import com.bwsw.cloudstack.storage.kv.message.KvHistory
+import com.bwsw.cloudstack.storage.kv.processor.ElasticsearchHistoryProcessor
 import com.sksamuel.elastic4s.bulk.BulkDefinition
 import com.sksamuel.elastic4s.http.ElasticDsl.indexInto
 import com.sksamuel.elastic4s.http._
@@ -26,7 +27,7 @@ class ElasticsearchKvHistorianSpec extends AsyncFunSpec with AsyncMockFactory {
 
   describe("An ElasticsearchKvHistorian") {
     val fakeClient = mock[HttpClient]
-    val historian = new ElasticsearchKvHistorian(fakeClient)
+    val historian = new ElasticsearchHistoryProcessor(fakeClient)
 
     describe("(save(history))") {
       it("should save single historical record") {

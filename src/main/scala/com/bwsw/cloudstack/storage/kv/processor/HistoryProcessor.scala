@@ -1,11 +1,11 @@
-package com.bwsw.cloudstack.storage.kv.historian
+package com.bwsw.cloudstack.storage.kv.processor
 
 import com.bwsw.cloudstack.storage.kv.error.StorageError
 import com.bwsw.cloudstack.storage.kv.message.KvHistory
 
 import scala.concurrent.Future
 
-trait KvHistorian {
+trait HistoryProcessor {
   /** Saves historical record into dedicated storage
     *
     * @param history a history

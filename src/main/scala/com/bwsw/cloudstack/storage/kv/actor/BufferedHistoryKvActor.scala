@@ -2,11 +2,10 @@ package com.bwsw.cloudstack.storage.kv.actor
 
 import akka.actor.Timers
 import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
-import com.bwsw.cloudstack.storage.kv.historian.KvHistorian
 import com.bwsw.cloudstack.storage.kv.message.{KvHistory, KvHistoryBulk, KvHistoryFlush}
+import com.bwsw.cloudstack.storage.kv.processor.HistoryProcessor
 import scaldi.Injector
 import scaldi.akka.AkkaInjectable._
-
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.collection.mutable.ListBuffer
@@ -17,7 +16,7 @@ class BufferedHistoryKvActor(implicit inj: Injector) extends HistoryKvActor with
 
   private val buffer: ListBuffer[(KvHistory, Int)] = ListBuffer.empty
   private val configuration = inject[AppConfig]
-  private val kvHistorian = inject[KvHistorian]
+  private val kvHistorian = inject[HistoryProcessor]
 
   timers.startPeriodicTimer(HistoryTimer, HistoryTimeout, configuration.getFlushHistoryTimeout)
 

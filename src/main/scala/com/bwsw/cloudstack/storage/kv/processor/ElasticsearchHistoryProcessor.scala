@@ -1,13 +1,14 @@
-package com.bwsw.cloudstack.storage.kv.historian
+package com.bwsw.cloudstack.storage.kv.processor
 
 import com.bwsw.cloudstack.storage.kv.error.{InternalError, StorageError}
 import com.bwsw.cloudstack.storage.kv.message.KvHistory
-import com.sksamuel.elastic4s.http.{HttpClient, RequestFailure}
 import com.sksamuel.elastic4s.http.ElasticDsl._
+import com.sksamuel.elastic4s.http.{HttpClient, RequestFailure}
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class ElasticsearchKvHistorian(client: HttpClient) extends KvHistorian {
+class ElasticsearchHistoryProcessor(client: HttpClient) extends HistoryProcessor {
   protected val `type` = "_doc"
 
   /** Saves historical record into dedicated storage
@@ -45,7 +46,7 @@ class ElasticsearchKvHistorian(client: HttpClient) extends KvHistorian {
   }
 
   protected def getHistoricalStorage(storageUuid: String): String = {
-    s"storage-$storageUuid-history"
+    s"history-$storageUuid"
   }
 
   protected def getError(requestFailure: RequestFailure): InternalError = {

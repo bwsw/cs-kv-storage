@@ -1,6 +1,6 @@
 {
   "index_patterns": [
-    "storage-*-history"
+    "history-*"
   ],
   "settings": {
     "number_of_replicas": 2
@@ -17,6 +17,9 @@
         },
         "timestamp": {
           "type": "long"
+        },
+        "operation": {
+          "type": "keyword"
         }
       }
     }

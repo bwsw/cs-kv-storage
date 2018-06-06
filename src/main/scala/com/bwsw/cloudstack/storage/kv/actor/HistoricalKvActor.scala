@@ -2,7 +2,7 @@ package com.bwsw.cloudstack.storage.kv.actor
 
 import akka.actor.Status
 import akka.pattern.pipe
-import com.bwsw.cloudstack.storage.kv.entity.StorageCache
+import com.bwsw.cloudstack.storage.kv.cache.StorageCache
 import com.bwsw.cloudstack.storage.kv.error.{InternalError, StorageError}
 import com.bwsw.cloudstack.storage.kv.message._
 import com.bwsw.cloudstack.storage.kv.message.request._
@@ -11,7 +11,9 @@ import com.bwsw.cloudstack.storage.kv.processor.KvProcessor
 import scaldi.Injector
 import scaldi.akka.AkkaInjectable._
 
-class HistoricalKvActor(implicit inj: Injector) extends KvActor {
+class HistoricalKvActor(implicit inj: Injector)
+  extends KvActor
+    with akka.actor.ActorLogging {
 
   import context.dispatcher
 
@@ -32,25 +34,25 @@ class HistoricalKvActor(implicit inj: Injector) extends KvActor {
       val timestamp = System.currentTimeMillis()
       kvProcessor.set(storage, key, value).map(r => KvSetResponse(storage, key, value, timestamp, r)).pipeTo(self)(sender())
     case KvSetResponse(storage: String, key: String, value: String, timestamp: Long, response: Either[StorageError, Unit]) =>
-      tryUpdateHistory(response, storage, key, value, timestamp, "set")
+      logHistory(response, storage, key, value, timestamp, "set")
       sender() ! response
     case KvMultiSetRequest(storage: String, kvs: Map[String, String]) =>
       val timestamp = System.currentTimeMillis()
       kvProcessor.set(storage, kvs).map(r => KvMultiSetResponse(storage, kvs, timestamp, r)).pipeTo(self)(sender())
     case KvMultiSetResponse(storage: String, kvs: Map[String, String], timestamp: Long, response: Either[StorageError, Map[String, Boolean]]) =>
-      tryUpdateHistory(response, storage, timestamp, "set", kvs)
+      logHistory(response, storage, timestamp, "set", kvs)
       sender() ! response
     case KvDeleteRequest(storage: String, key: String) =>
       val timestamp = System.currentTimeMillis()
       kvProcessor.delete(storage, key).map(r => KvDeleteResponse(storage, key, timestamp, r)).pipeTo(self)(sender())
     case KvDeleteResponse(storage: String, key: String, timestamp: Long, response: Either[StorageError, Unit]) =>
-      tryUpdateHistory(response, storage, key, null, timestamp, "delete")
+      logHistory(response, storage, key, null, timestamp, "delete")
       sender() ! response
     case KvMultiDeleteRequest(storage: String, keys: Iterable[String]) =>
       val timestamp = System.currentTimeMillis()
       kvProcessor.delete(storage, keys).map(r => KvMultiDeleteResponse(storage, timestamp, r)).pipeTo(self)(sender())
     case KvMultiDeleteResponse(storage: String, timestamp: Long, response: Either[StorageError, Map[String, Boolean]]) =>
-      tryUpdateHistory(response, storage, timestamp, "delete")
+      logHistory(response, storage, timestamp, "delete")
       sender() ! response
     case KvListRequest(storage: String) =>
       kvProcessor.list(storage).map(r => KvListResponse(r)).pipeTo(self)(sender())
@@ -60,25 +62,28 @@ class HistoricalKvActor(implicit inj: Injector) extends KvActor {
       val timestamp = System.currentTimeMillis()
       kvProcessor.clear(storage).map(r => KvClearResponse(storage, timestamp, r)).pipeTo(self)(sender())
     case KvClearResponse(storage, timestamp, response) =>
-      tryUpdateHistory(response, storage, null, null, timestamp, "clear")
+      logHistory(response, storage, null, null, timestamp, "clear")
       sender() ! response
     case failure: Status.Failure =>
       sender() ! Left(InternalError(failure.cause.getMessage))
   }
 
-  protected def tryUpdateHistory[A, B](response: Either[A, B], storage: String, key: String, value: String, timestamp: Long, operation: String): Unit = {
+  protected def logHistory[A, B](response: Either[A, B], storage: String, key: String, value: String, timestamp: Long, operation: String): Unit = {
     response match {
       case Right(_) =>
         storageCache.isHistoryEnabled(storage).map {
           case Some(true) => Some(KvHistory(storage, key, value, timestamp, operation))
           case Some(false) => None
-          case None => None //TODO: process error
+          case None =>
+            //            log.error("I Kant")
+            //TODO: process error
+            None
         }.pipeTo(historyKvActor)
       case Left(_) => // do nothing
     }
   }
 
-  protected def tryUpdateHistory[A](response: Either[A, Map[String, Boolean]], storage: String, timestamp: Long, operation: String, values: Map[String, String] = Map()): Unit = {
+  protected def logHistory[A](response: Either[A, Map[String, Boolean]], storage: String, timestamp: Long, operation: String, values: Map[String, String] = Map()): Unit = {
     response match {
       case Right(results) =>
         storageCache.isHistoryEnabled(storage).map {

@@ -1,11 +1,10 @@
-package com.bwsw.cloudstack.storage.kv.entity
+package com.bwsw.cloudstack.storage.kv.cache
 
 import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
 import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.HttpClient
 
-import scala.concurrent
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
