@@ -1,6 +1,6 @@
 package com.bwsw.cloudstack.storage.kv.processor
 
-import com.bwsw.cloudstack.storage.kv.app.Configuration
+import com.bwsw.cloudstack.storage.kv.configuration.ElasticsearchConfig
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, ConflictError, InternalError, NotFoundError, StorageError}
 import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils
 import com.sksamuel.elastic4s.http.ElasticDsl._
@@ -12,10 +12,10 @@ import scala.concurrent.Future
 
 /** A processor for Elasticsearch key/value storages.
   *
-  * @param client        the client to send requests to Elasticsearch
-  * @param configuration the configuration
+  * @param client the client to send requests to Elasticsearch
+  * @param conf   the configuration
   */
-class ElasticsearchKvProcessor(client: HttpClient, configuration: Configuration) extends KvProcessor {
+class ElasticsearchKvProcessor(client: HttpClient, conf: ElasticsearchConfig) extends KvProcessor {
 
   import ElasticsearchKvProcessor._
 
@@ -101,9 +101,9 @@ class ElasticsearchKvProcessor(client: HttpClient, configuration: Configuration)
   }
 
   def list(storage: String): Future[Either[StorageError, List[String]]] = {
-    val keepAlive = configuration.getSearchScrollKeepAlive
+    val keepAlive = conf.getScrollKeepAlive
     client.execute {
-      search(ElasticsearchUtils.getStorageIndex(storage)).size(configuration.getSearchPageSize)
+      search(ElasticsearchUtils.getStorageIndex(storage)).size(conf.getScrollPageSize)
         .scroll(keepAlive)
     }.flatMap {
       case Left(failure) => Future(Left(getError(failure)))
@@ -148,11 +148,11 @@ class ElasticsearchKvProcessor(client: HttpClient, configuration: Configuration)
   }
 
   private def isKeyValid(key: String): Boolean = {
-    key != null && !key.isEmpty && (configuration.getMaxKeyLength == -1 || key.length <= configuration.getMaxKeyLength)
+    key != null && !key.isEmpty && (conf.getMaxKeyLength == -1 || key.length <= conf.getMaxKeyLength)
   }
 
   private def isValueValid(value: String): Boolean = {
-    value == null || configuration.getMaxValueLength == -1 || value.length <= configuration.getMaxValueLength
+    value == null || conf.getMaxValueLength == -1 || value.length <= conf.getMaxValueLength
   }
 
   private def isKvValid(key: String, value: String): Boolean = isKeyValid(key) && isValueValid(value)

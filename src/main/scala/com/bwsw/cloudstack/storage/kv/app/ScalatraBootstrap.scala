@@ -2,12 +2,14 @@ package com.bwsw.cloudstack.storage.kv.app
 
 import akka.actor.ActorSystem
 import com.bwsw.cloudstack.storage.kv.actor.KvActor
+import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
 import com.bwsw.cloudstack.storage.kv.manager.KvStorageManager
 import com.bwsw.cloudstack.storage.kv.processor.KvProcessor
 import com.bwsw.cloudstack.storage.kv.servlet.{KvStorageManagerServlet, KvStorageServlet}
 import javax.servlet.ServletContext
 import org.scalatra._
 import scaldi.akka.AkkaInjectable._
+
 
 class ScalatraBootstrap extends LifeCycle {
 
@@ -17,7 +19,7 @@ class ScalatraBootstrap extends LifeCycle {
   private val kvManager = inject[KvStorageManager]
   private val kvProcessor = inject[KvProcessor]
   private val kvActor = injectActorRef[KvActor]
-  private val configuration = inject[Configuration]
+  private val configuration = inject[AppConfig]
 
   override def init(context: ServletContext) {
     context.mount(new KvStorageManagerServlet(system, kvManager), "/storage/*")

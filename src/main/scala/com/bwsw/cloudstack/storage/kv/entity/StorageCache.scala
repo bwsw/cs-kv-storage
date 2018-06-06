@@ -1,6 +1,6 @@
 package com.bwsw.cloudstack.storage.kv.entity
 
-import com.bwsw.cloudstack.storage.kv.app.Configuration
+import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
 import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.HttpClient
@@ -10,14 +10,14 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 
-class StorageCache(conf: Configuration, client: HttpClient) {
+class StorageCache(conf: AppConfig, client: HttpClient) {
   private val registry = "storage-registry"
   private val `type` = "_doc"
   val cache: AsyncLoadingCache[String, Option[(String, String, Boolean)]] =
     Scaffeine()
       .recordStats()
-      .expireAfterWrite(Duration(conf.getStorageCacheExpirationTime))
-      .maximumSize(conf.getMaxStorageCacheSize)
+      .expireAfterWrite(Duration(conf.getCacheExpirationTime))
+      .maximumSize(conf.getMaxCacheSize)
       .buildAsyncFuture((id: String) =>
         client.execute(get(registry, `type`, id)).map {
           case Left(_) => throw new RuntimeException("Storage info loading failed")
