@@ -189,6 +189,7 @@ POST /clear/8986a11c-3f4c-4e22-8e04-5fe35dfd3a1d
 | 500 Internal Server Error | Server have a problem processing the request |
 # Configuration
 Configuration file example can be found [here](/src/test/resources/application.conf)  
+### List of parameters
 | Parameter | Description |
 | --------- | ----------- |
 | elasticsearch.uri | Contains scheme (http or https), host and port, e.g. "http://localhost:9200" |
