@@ -1,4 +1,8 @@
 # Key-Value Storage #
+* [Build & Run](#build-run)
+* [API](#api)
+* [Configuration](#configuration)  
+
 
 ## Build & Run ##
 
