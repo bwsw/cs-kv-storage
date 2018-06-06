@@ -32,6 +32,14 @@ services:
       - 8080:8080
     networks:
       - cs-kv-storage-e2e
+  newman:
+    image: "postman/newman_ubuntu1404"
+    depends_on:
+      - app
+    volumes:
+      - ./newman:/etc/newman
+    networks:
+      - cs-kv-storage-e2e
 volumes:
   eslogs:
   esdata:

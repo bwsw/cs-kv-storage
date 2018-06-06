@@ -1,0 +1,89 @@
+{
+	"info": {
+		"name": "cs-kv-storage",
+		"_postman_id": "c2e3990b-7875-8b8c-2555-2a78cb1c267e",
+		"description": "E2E tests for cs-kv-storage",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "list-key-values",
+			"description": "",
+			"item": [
+				{
+					"name": "List an empty storage",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "2792a5a2-52db-4370-8f94-9e8d70b06a3d",
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", function() {",
+									"  pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+									"});",
+									"",
+									"pm.test(\"Response body is an empty array\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.eql([]);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {},
+						"url": {
+							"raw": "{{url}}/list/test",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"list",
+								"test"
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "47257ac9-4e9a-40a2-b4bf-5a2fda812bbb",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "738f7413-5a71-432e-9df7-1cc3f7995c7a",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"id": "de18a53c-6c00-456f-a88e-e7b3d21760a2",
+			"key": "url",
+			"value": "http://app:8080/",
+			"type": "text"
+		}
+	]
+}

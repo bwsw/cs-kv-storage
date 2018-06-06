@@ -3,9 +3,6 @@ stages:
   - test
   - release
 
-variables:
-  - DOCKER_COMPOSE_FILE: "e2e/docker-compose.yml"
-
 build:
   stage: build
   script: sbt clean compile  
@@ -24,18 +21,17 @@ test:
 test-release:
   stage: release
   variables:
-    - APP_DOCKER_TAG: $CI_COMMIT_REF_SLUG
+    APP_DOCKER_TAG: "$CI_COMMIT_REF_SLUG"
+    DOCKER_COMPOSE_FILE: "e2e/docker-compose.yml"
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_JOB_TOKEN $CI_REGISTRY
   script:
     - sbt -Ddocker.tag=$CI_COMMIT_REF_SLUG docker
-    - docker-compose -d --force-recreate --file=$DOCKER_COMPOSE_FILE up
-
-    - docker-compose --file=$DOCKER_COMPOSE_FILE --volumes down
+    - docker-compose --file=$DOCKER_COMPOSE_FILE up -d --force-recreate
+    - docker-compose --file=$DOCKER_COMPOSE_FILE run newman run cs-kv-storage.postman_collection.json --reporters=cli
     - sbt -Ddocker.tag=$CI_COMMIT_REF_SLUG dockerPush
-  except:
-    - master
-    - develop
+  after_script:
+    - docker-compose --file=$DOCKER_COMPOSE_FILE down --volumes
   tags:
     - build-as-docker
     - cs-eco-builder
@@ -52,4 +48,3 @@ release:
   tags:
     - build-as-docker
     - cs-eco-builder
-
