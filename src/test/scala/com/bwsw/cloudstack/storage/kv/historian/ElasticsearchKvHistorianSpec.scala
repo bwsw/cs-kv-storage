@@ -15,7 +15,7 @@ import com.sksamuel.elastic4s.http.bulk.{BulkResponse, BulkResponseItem, BulkRes
 import scala.concurrent.{ExecutionContext, Future}
 
 class ElasticsearchKvHistorianSpec extends AsyncFunSpec with AsyncMockFactory {
-  private val index = "storage-someStorage-history"
+  private val index = "history-someStorage"
   private val `type` = "_doc"
   private val artificalKey = "cbIaz2MBpp4Ypizt4vT5"
   private val history = KvHistory("someStorage", "someKey", "someValue", 1, "someOperation")
@@ -84,7 +84,7 @@ class ElasticsearchKvHistorianSpec extends AsyncFunSpec with AsyncMockFactory {
 
   }
 
-  private def getHistoryIndex(storage: String) = s"storage-$storage-history"
+  private def getHistoryIndex(storage: String) = s"history-$storage"
 
   private def getFields(history: KvHistory) = Map(
     "key" -> history.key,
