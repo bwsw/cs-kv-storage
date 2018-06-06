@@ -187,3 +187,21 @@ POST /clear/8986a11c-3f4c-4e22-8e04-5fe35dfd3a1d
 | 200 OK | Body is empty |
 | 409 Conflict | Conflicts occurred during deletion, storage may have been cleared partially |
 | 500 Internal Server Error | Server have a problem processing the request |
+# Configuration
+Configuration file example can be found [here](/src/test/resources/application.conf)  
+| Parameter | Description |
+| --------- | ----------- |
+| elasticsearch.uri | Contains scheme (http or https), host and port, e.g. "http://localhost:9200" |
+| elasticsearch.auth.username and elasticsearch.auth.password | Credentials used to authenticate application using X-Pack |
+| elasticsearch.search.pagesize | Size limit of a single page loaded during List operation |
+| elasticsearch.search.keepalive | Limit of time single page should be loaded during List action |
+| elasticsearch.limit.max-value-size | Limit of how many characters value can have |
+| elasticsearch.limit.max-key-size | Limit of how many characters key can have |
+| app.cache.max-size | Limit the number of storages cache can have information about in a single time |
+| app.cache.expiration-time | Expiration time of information stored in the cache about single storage |
+| app.history.flush-size | Amount of historical records in a queue to immediately start saving it into storage |
+| app.history.flush-timeout | Maximum period of time between flushes |
+| app.history.retry-limit | Amount of times system tries to put record into storage in case of consecutive errors |
+| app.request-timeout | Maximum time system tries to handle request |
+
+
