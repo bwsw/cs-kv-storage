@@ -1,6 +1,7 @@
 package com.bwsw.cloudstack.storage.kv.cache
 
 import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
+import com.bwsw.cloudstack.storage.kv.entity.Storage
 import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.HttpClient
@@ -12,7 +13,7 @@ import scala.concurrent.duration.Duration
 class StorageCache(conf: AppConfig, client: HttpClient) {
   private val registry = "storage-registry"
   private val `type` = "_doc"
-  val cache: AsyncLoadingCache[String, Option[(String, String, Boolean)]] =
+  val cache: AsyncLoadingCache[String, Option[Storage]] =
     Scaffeine()
       .recordStats()
       .expireAfterWrite(Duration(conf.getCacheExpirationTime))
@@ -22,14 +23,14 @@ class StorageCache(conf: AppConfig, client: HttpClient) {
           case Left(_) => throw new RuntimeException("Storage info loading failed")
           case Right(success) =>
             if (success.result.found) {
-              Some((success.result.id, getValue(success.result.source, "type"), getValue(success.result.source, "is_history_enabled").toBoolean))
+              Some(Storage(success.result.id, getValue(success.result.source, "type"), getValue(success.result.source, "is_history_enabled").toBoolean))
             }
             else None
         })
 
-  def isHistoryEnabled(storage: String): Future[Option[Boolean]] = {
-    cache.get(storage).map {
-      case Some((_, aType, isHistoryEnabled)) => Some(isHistoryEnabled && aType != "TEMP")
+  def isHistoryEnabled(storageUuid: String): Future[Option[Boolean]] = {
+    cache.get(storageUuid).map {
+      case Some(storage) => Some(storage.keepHistory && storage.storageType != "TEMP")
       case None => None
     }
   }

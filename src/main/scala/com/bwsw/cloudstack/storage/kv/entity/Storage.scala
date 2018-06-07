@@ -1,8 +1,3 @@
 package com.bwsw.cloudstack.storage.kv.entity
 
-/** Abstract Key-Value Storage with basic methods
-  */
-abstract class Storage {
-  val uUID: String
-  val keepHistory: Boolean
-}
+case class Storage(uUID: String, storageType: String, keepHistory: Boolean)

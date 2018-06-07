@@ -11,48 +11,38 @@ import scala.concurrent.Future
 class ElasticsearchHistoryProcessor(client: HttpClient) extends HistoryProcessor {
   protected val `type` = "_doc"
 
-  /** Saves historical record into dedicated storage
-    */
-  def save(history: KvHistory): Future[Either[StorageError, Unit]] = {
-    client.execute(indexInto(getHistoricalStorage(history.storage), `type`) fields Map(
-      "key" -> history.key,
-      "value" -> history.value,
-      "timestamp" -> history.timestamp,
-      "operation" -> history.operation))
-      .map {
-        case Left(failure) => Left(getError(failure))
-        case Right(_) => Right(Unit)
-      }
-  }
-
-  /** Saves collection af historical records into dedicated storage
-    */
-  def save(histories: Vector[KvHistory]): Future[Either[StorageError, Map[KvHistory, Boolean]]] = {
+  def save(histories: Vector[KvHistory]): Future[Either[StorageError, Option[List[KvHistory]]]] = {
     val indices = histories.map {
       record =>
-        indexInto(getHistoricalStorage(record.storage), `type`) fields Map(
-          "key" -> record.key,
-          "value" -> record.value,
-          "timestamp" -> record.timestamp,
-          "operation" -> record.operation)
+        indexInto(getHistoricalStorage(record.storage), `type`) fields getFields(record)
     }
     client.execute(bulk(indices)).map {
       case Left(failure) => Left(getError(failure))
       case Right(success) =>
-        Right(success.result.items.map {
-          bulkResponseItem => (histories(bulkResponseItem.itemId), bulkResponseItem.error.isEmpty)
-        }.toMap)
+        val erroneous = success.result.items.filter(_.error.isDefined).map(item => histories(item.itemId))
+        if (erroneous.isEmpty)
+          Right(None)
+        else
+          Right(Some(erroneous.toList))
     }
   }
 
   protected def getHistoricalStorage(storageUuid: String): String = {
-    s"history-$storageUuid"
+    s"history-storage-$storageUuid"
   }
 
   protected def getError(requestFailure: RequestFailure): InternalError = {
     if (requestFailure.error == null)
       InternalError("Elasticsearch error")
     else InternalError(requestFailure.error.reason)
+  }
+
+  protected def getFields(history: KvHistory): Map[String, Any] = {
+    Map(
+      "key" -> history.key,
+      "value" -> history.value,
+      "timestamp" -> history.timestamp,
+      "operation" -> history.operation.toString)
   }
 
 }

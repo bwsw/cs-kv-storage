@@ -14,6 +14,7 @@ import org.scalatra.json.JacksonJsonSupport
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import com.bwsw.cloudstack.storage.kv.message.request._
+import com.fasterxml.jackson.core.JsonParseException
 
 class KvStorageServlet(system: ActorSystem, requestTimeout: FiniteDuration, kvProcessor: KvProcessor, kvActor: ActorRef)
   extends ScalatraServlet
@@ -129,7 +130,7 @@ class KvStorageServlet(system: ActorSystem, requestTimeout: FiniteDuration, kvPr
                   case _ => InternalServerError()
                 }
               } catch {
-                case e: MappingException => Future(BadRequest)
+                case e: MappingException => Future(BadRequest())
               }
             case _ => Future(BadRequest())
           }
