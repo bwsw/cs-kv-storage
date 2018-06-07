@@ -19,7 +19,7 @@ test:
     - cs-eco-builder
 
 test-release:
-  image: docker:stable
+  image: "$CI_REGISTRY_IMAGE/cs-eco-ci-test-builder:latest"
   services:
   - docker:dind
   stage: release
