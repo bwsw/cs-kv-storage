@@ -1,3 +1,20 @@
+// Licensed to the Apache Software Foundation (ASF) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
 package com.bwsw.cloudstack.storage.kv.actor
 
 import akka.actor.Timers
@@ -10,6 +27,7 @@ import scaldi.akka.AkkaInjectable._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.collection.mutable.ListBuffer
 
+/** Actor responsible for history buffering and time or queue size based flushing to storages **/
 class BufferedHistoryKvActor(implicit inj: Injector)
   extends HistoryKvActor
     with Timers
@@ -30,11 +48,9 @@ class BufferedHistoryKvActor(implicit inj: Injector)
       self ! flush(retryBuffer)
     case KvHistoryFlush(histories) =>
       historyProcessor.save(histories).map {
-        case Right(Some(erroneous)) =>
+        case Some(erroneous) =>
           retry(erroneous)
-        case Right(None) => //do nothing
-        case Left(_) =>
-          retry(histories)
+        case None => //do nothing
       }
     case option: Option[_] => option match {
       case Some(history: KvHistory) =>
@@ -42,7 +58,11 @@ class BufferedHistoryKvActor(implicit inj: Injector)
         if (buffer.length == configuration.getFlushHistorySize) {
           self ! flush(buffer)
         }
-      case Some(bulk: KvHistoryBulk) => bulk.values.foreach(history => self ! Some(history))
+      case Some(bulk: KvHistoryBulk) =>
+        buffer.appendAll(bulk.values)
+        if (buffer.length == configuration.getFlushHistorySize) {
+          self ! flush(buffer)
+        }
       case _ => //do nothing
     }
   }
@@ -66,7 +86,7 @@ class BufferedHistoryKvActor(implicit inj: Injector)
   }
 
   private def flush(aBuffer: ListBuffer[KvHistory]): KvHistoryFlush = {
-    val values = aBuffer.toVector
+    val values = aBuffer.toList
     aBuffer.clear()
     KvHistoryFlush(values)
   }

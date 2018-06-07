@@ -1,41 +1,36 @@
 package com.bwsw.cloudstack.storage.kv.configuration
 
+import java.util.concurrent.TimeUnit
+
 import com.typesafe.config._
 
 import scala.concurrent.duration._
 
+/** Provides access to application level configurations **/
 class AppConfig {
-  private val conf = ConfigFactory.load
+  private val conf = ConfigFactory.load.getConfig("app")
 
   def getMaxCacheSize: Int = {
-    conf.getInt("app.cache.max-size")
+    conf.getInt("cache.max-size")
   }
 
   def getCacheExpirationTime: String = {
-    conf.getString("app.cache.expiration-time")
+    conf.getString("cache.expiration-time")
   }
 
   def getFlushHistorySize: Int = {
-    conf.getInt("app.history.flush-size")
+    conf.getInt("history.flush-size")
   }
 
   def getFlushHistoryTimeout: FiniteDuration = {
-    val timeout = Duration(conf.getString("app.history.flush-timeout"))
-    timeout match {
-      case f: FiniteDuration => f
-      case _ => throw new RuntimeException("Misconfiguration in history.flush-timeout")
-    }
+    FiniteDuration(conf.getDuration("history.flush-timeout").toMillis, TimeUnit.MILLISECONDS)
   }
 
   def getHistoryRetryLimit: Int = {
-    conf.getInt("app.history.retry-limit")
+    conf.getInt("history.retry-limit")
   }
 
   def getRequestTimeout: FiniteDuration = {
-    val timeout = Duration(conf.getString("app.request-timeout"))
-    timeout match {
-      case f: FiniteDuration => f
-      case _ => throw new RuntimeException("Misconfiguration in request-timeout")
-    }
+    FiniteDuration(conf.getDuration("request-timeout").toMillis, TimeUnit.MILLISECONDS)
   }
 }
