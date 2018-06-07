@@ -2,7 +2,7 @@ package com.bwsw.cloudstack.storage.kv.actor
 
 import akka.actor.Status
 import akka.pattern.pipe
-import com.bwsw.cloudstack.storage.kv.cache.StorageCache
+import com.bwsw.cloudstack.storage.kv.cache.LoadingStorageCache
 import com.bwsw.cloudstack.storage.kv.error.{InternalError, StorageError}
 import com.bwsw.cloudstack.storage.kv.message._
 import com.bwsw.cloudstack.storage.kv.message.request._
@@ -19,7 +19,7 @@ class HistoricalKvActor(implicit inj: Injector)
 
   private val historyKvActor = injectActorRef[HistoryKvActor]
   private val kvProcessor = inject[KvProcessor]
-  private val storageCache = inject[StorageCache]
+  private val storageCache = inject[LoadingStorageCache]
 
   override def receive: Receive = {
     case KvGetRequest(storage: String, key: String) =>
