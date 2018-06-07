@@ -68,7 +68,7 @@ class HistoricalKvActor(implicit inj: Injector)
       sender() ! Left(InternalError(failure.cause.getMessage))
   }
 
-  protected def logHistory[B](response: Either[StorageError, B], storage: String, key: String, value: String, timestamp: Long, operation: Operation): Unit = {
+  protected def logHistory(response: Either[StorageError, Unit], storage: String, key: String, value: String, timestamp: Long, operation: Operation): Unit = {
     response match {
       case Right(_) =>
         storageCache.isHistoryEnabled(storage).map {
