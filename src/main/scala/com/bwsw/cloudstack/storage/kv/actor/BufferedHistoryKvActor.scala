@@ -57,12 +57,12 @@ class BufferedHistoryKvActor(implicit inj: Injector)
     case option: Option[_] => option match {
       case Some(history: KvHistory) =>
         buffer += history
-        if (buffer.length == configuration.getFlushHistorySize) {
+        if (buffer.length >= configuration.getFlushHistorySize) {
           self ! flush(buffer)
         }
       case Some(bulk: KvHistoryBulk) =>
         buffer.appendAll(bulk.values)
-        if (buffer.length == configuration.getFlushHistorySize) {
+        if (buffer.length >= configuration.getFlushHistorySize) {
           self ! flush(buffer)
         }
       case _ => //do nothing
