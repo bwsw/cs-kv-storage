@@ -11,6 +11,11 @@ services:
     volumes:
       - eslogs:/usr/share/elasticsearch/logs
       - esdata:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200/_cluster/health?wait_for_status=yellow"]
+      interval: 60s
+      timeout: 30s
+      retries: 2
     networks:
       - cs-kv-storage-e2e
   initializer:
