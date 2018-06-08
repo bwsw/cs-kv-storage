@@ -19,7 +19,7 @@ package com.bwsw.cloudstack.storage.kv.actor
 
 import akka.actor.Timers
 import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
-import com.bwsw.cloudstack.storage.kv.message.{KvHistory, KvHistoryBulk, KvHistoryFlush}
+import com.bwsw.cloudstack.storage.kv.message.{HistoryRetry, KvHistory, KvHistoryBulk, KvHistoryFlush}
 import com.bwsw.cloudstack.storage.kv.processor.HistoryProcessor
 import scaldi.Injector
 import scaldi.akka.AkkaInjectable._
@@ -49,9 +49,11 @@ class BufferedHistoryKvActor(implicit inj: Injector)
     case KvHistoryFlush(histories) =>
       historyProcessor.save(histories).map {
         case Some(erroneous) =>
-          retry(erroneous)
+          self ! HistoryRetry(erroneous)
         case None => //do nothing
       }
+    case HistoryRetry(erroneous) =>
+      retry(erroneous)
     case option: Option[_] => option match {
       case Some(history: KvHistory) =>
         buffer += history
@@ -69,7 +71,7 @@ class BufferedHistoryKvActor(implicit inj: Injector)
 
   private def retry(histories: Iterable[KvHistory]): Unit = {
     retryBuffer.appendAll(histories.filter(filterWithErrorLogging).map(history => history.makeAttempt))
-    if (retryBuffer.length == configuration.getFlushHistorySize) {
+    if (retryBuffer.length >= configuration.getFlushHistorySize) {
       self ! flush(retryBuffer)
     }
   }
