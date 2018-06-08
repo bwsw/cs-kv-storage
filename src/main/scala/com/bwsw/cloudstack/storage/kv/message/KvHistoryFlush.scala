@@ -15,19 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package com.bwsw.cloudstack.storage.kv.util
+package com.bwsw.cloudstack.storage.kv.message
 
-import com.bwsw.cloudstack.storage.kv.error.InternalError
-import com.sksamuel.elastic4s.http.RequestFailure
-
-/** An utility for Elasticsearch operations **/
-object ElasticsearchUtils {
-
-  def getStorageIndex(storage: String): String = "storage-" + storage
-
-  def getError(requestFailure: RequestFailure): InternalError = {
-    if (requestFailure.error == null)
-      InternalError("Elasticsearch error")
-    else InternalError(requestFailure.error.reason)
-  }
-}
+/** List of KvHistory ready to be saved **/
+case class KvHistoryFlush(values: List[KvHistory])

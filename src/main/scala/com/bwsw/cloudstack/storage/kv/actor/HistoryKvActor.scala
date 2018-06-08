@@ -15,19 +15,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package com.bwsw.cloudstack.storage.kv.util
+package com.bwsw.cloudstack.storage.kv.actor
 
-import com.bwsw.cloudstack.storage.kv.error.InternalError
-import com.sksamuel.elastic4s.http.RequestFailure
+import akka.actor.Actor
 
-/** An utility for Elasticsearch operations **/
-object ElasticsearchUtils {
-
-  def getStorageIndex(storage: String): String = "storage-" + storage
-
-  def getError(requestFailure: RequestFailure): InternalError = {
-    if (requestFailure.error == null)
-      InternalError("Elasticsearch error")
-    else InternalError(requestFailure.error.reason)
-  }
-}
+/** Actor responsible for history processing **/
+trait HistoryKvActor extends Actor

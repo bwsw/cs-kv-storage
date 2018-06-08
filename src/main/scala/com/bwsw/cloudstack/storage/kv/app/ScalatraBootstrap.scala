@@ -18,24 +18,29 @@
 package com.bwsw.cloudstack.storage.kv.app
 
 import akka.actor.ActorSystem
-import com.bwsw.cloudstack.storage.kv.manager.ElasticsearchKvStorageManager
-import com.bwsw.cloudstack.storage.kv.processor.ElasticsearchKvProcessor
+import com.bwsw.cloudstack.storage.kv.actor.KvActor
+import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
+import com.bwsw.cloudstack.storage.kv.manager.KvStorageManager
+import com.bwsw.cloudstack.storage.kv.processor.KvProcessor
 import com.bwsw.cloudstack.storage.kv.servlet.{KvStorageManagerServlet, KvStorageServlet}
-import com.sksamuel.elastic4s.ElasticsearchClientUri
-import com.sksamuel.elastic4s.http.HttpClient
 import javax.servlet.ServletContext
 import org.scalatra._
+import scaldi.akka.AkkaInjectable._
+
 
 class ScalatraBootstrap extends LifeCycle {
-  val conf = new Configuration
-  val client = HttpClient(ElasticsearchClientUri(conf.getElasticsearchUri))
-  val processor = new ElasticsearchKvProcessor(client, conf)
-  val manager = new ElasticsearchKvStorageManager(client)
-  val system = ActorSystem()
+
+  implicit val system: ActorSystem = ActorSystem("cs-kv-storage")
+  implicit val module: KvStorageModule = new KvStorageModule
+
+  private val kvManager = inject[KvStorageManager]
+  private val kvProcessor = inject[KvProcessor]
+  private val kvActor = injectActorRef[KvActor]
+  private val appConfig = inject[AppConfig]
 
   override def init(context: ServletContext) {
-    context.mount(new KvStorageManagerServlet(system, manager), "/storage/*")
-    context.mount(new KvStorageServlet(system, processor), "/*")
+    context.mount(new KvStorageManagerServlet(system, kvManager), "/storage/*")
+    context.mount(new KvStorageServlet(system, appConfig.getRequestTimeout, kvProcessor, kvActor), "/*")
   }
 
   override def destroy(context: ServletContext) {

@@ -15,12 +15,13 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package com.bwsw.cloudstack.storage.kv.entity
+package com.bwsw.cloudstack.storage.kv.cache
 
-/** Temporary storage with a limited lifetime
-  *
-  * @param uUID Storage unique identifier
-  * @param expirationTime timestamp of storage becoming inaccessible
-  */
-case class TemporaryStorage(uUID: String, expirationTime: Long) extends Storage {
+import com.bwsw.cloudstack.storage.kv.entity.Storage
+
+import scala.concurrent.Future
+
+/** Provides method of record loading for LoadingStorageCache **/
+trait StorageLoader {
+  def load: String => Future[Option[Storage]]
 }

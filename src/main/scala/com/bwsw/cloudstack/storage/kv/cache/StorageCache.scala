@@ -15,13 +15,15 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package com.bwsw.cloudstack.storage.kv.entity
+package com.bwsw.cloudstack.storage.kv.cache
 
-/** Persistent storage for a specific account
-  * @param uUID Storage unique identifier
-  * @param name Storage name
-  * @param description Storage description
-  */
-case class PersistentStorage(uUID: String, name: String, description: String) extends Storage {
+import com.bwsw.cloudstack.storage.kv.entity.Storage
 
+import scala.concurrent.Future
+
+/** Provides access to storages data **/
+trait StorageCache {
+  def isHistoryEnabled(storageUuid: String): Future[Option[Boolean]]
+
+  def get(storageUuid: String): Future[Option[Storage]]
 }

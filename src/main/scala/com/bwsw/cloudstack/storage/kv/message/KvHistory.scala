@@ -15,38 +15,14 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package com.bwsw.cloudstack.storage.kv.app
+package com.bwsw.cloudstack.storage.kv.message
 
-import com.typesafe.config._
-
-class Configuration {
-  private val conf = ConfigFactory.load
-
-  def getElasticsearchUri: String = {
-    conf.getString("elasticsearch.uri")
-  }
-
-  def getElasticsearchUsername: String = {
-    conf.getString("elasticsearch.auth.username")
-  }
-
-  def getElasticsearchPassword: String = {
-    conf.getString("elasticsearch.auth.password")
-  }
-
-  def getSearchPageSize: Int = {
-    conf.getInt("elasticsearch.search.pagesize")
-  }
-
-  def getSearchScrollKeepAlive: String = {
-    conf.getString("elasticsearch.search.keepalive")
-  }
-
-  def getMaxValueLength: Int = {
-    conf.getInt("elasticsearch.limit.max-value-length")
-  }
-
-  def getMaxKeyLength: Int = {
-    conf.getInt("elasticsearch.limit.max-key-length")
+case class KvHistory(storage: String, key: String, value: String, timestamp: Long, operation: Operation, attempt: Int = 0) {
+  /** Returns copy of this history with incremented attempts
+    *
+    * @return new KvHistory
+    */
+  def makeAttempt: KvHistory = {
+    KvHistory(storage, key, value, timestamp, operation, attempt + 1)
   }
 }
