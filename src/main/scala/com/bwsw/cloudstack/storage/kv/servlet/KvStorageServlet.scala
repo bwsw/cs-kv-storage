@@ -47,10 +47,10 @@ class KvStorageServlet(system: ActorSystem, requestTimeout: FiniteDuration, kvPr
     new AsyncResult() {
       val is: Future[_] = (kvActor ? KvGetRequest(params("storage_uuid"), params("key")))
         .map {
-          case Left(_: NotFoundError) => NotFound("")
           case Right(value) =>
             contentType = formats("txt")
             value
+          case Left(_: NotFoundError) => NotFound("")
           case _ => InternalServerError()
         }
     }
@@ -68,6 +68,7 @@ class KvStorageServlet(system: ActorSystem, requestTimeout: FiniteDuration, kvPr
                   case Right(value) =>
                     contentType = formats("json")
                     value
+                  case Left(_: NotFoundError) => NotFound("")
                   case _ => InternalServerError()
                 }
               } catch {
@@ -88,6 +89,7 @@ class KvStorageServlet(system: ActorSystem, requestTimeout: FiniteDuration, kvPr
           result.map {
             case Right(_) => Ok()
             case Left(_: BadRequestError) => BadRequest()
+            case Left(_: NotFoundError) => NotFound("")
             case _ => InternalServerError()
           }
         }
@@ -108,6 +110,7 @@ class KvStorageServlet(system: ActorSystem, requestTimeout: FiniteDuration, kvPr
                   case Right(value) =>
                     contentType = formats("json")
                     value
+                  case Left(_: NotFoundError) => NotFound("")
                   case _ => InternalServerError()
                 }
               } catch {
@@ -126,6 +129,7 @@ class KvStorageServlet(system: ActorSystem, requestTimeout: FiniteDuration, kvPr
         val result = kvActor ? KvDeleteRequest(params("storage_uuid"), params("key"))
         result.map {
           case Right(_) => Ok()
+          case Left(_: NotFoundError) => NotFound("")
           case _ => InternalServerError()
         }
       }
@@ -144,6 +148,7 @@ class KvStorageServlet(system: ActorSystem, requestTimeout: FiniteDuration, kvPr
                   case Right(value) =>
                     contentType = formats("json")
                     value
+                  case Left(_: NotFoundError) => NotFound("")
                   case _ => InternalServerError()
                 }
               } catch {
@@ -164,6 +169,7 @@ class KvStorageServlet(system: ActorSystem, requestTimeout: FiniteDuration, kvPr
           case Right(value) =>
             contentType = formats("json")
             value
+          case Left(_: NotFoundError) => NotFound("")
           case _ => InternalServerError()
         }
       }
@@ -175,8 +181,9 @@ class KvStorageServlet(system: ActorSystem, requestTimeout: FiniteDuration, kvPr
       val is: Future[_] = {
         val result = kvActor ? KvClearRequest(params("storage_uuid"))
         result.map {
-          case Left(_: ConflictError) => Conflict()
           case Right(_) => Ok()
+          case Left(_: NotFoundError) => NotFound("")
+          case Left(_: ConflictError) => Conflict()
           case _ => InternalServerError()
         }
       }
