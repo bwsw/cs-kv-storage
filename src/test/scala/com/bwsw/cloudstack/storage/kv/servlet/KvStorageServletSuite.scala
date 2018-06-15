@@ -21,7 +21,7 @@ import akka.actor.ActorSystem
 import akka.testkit.TestActorRef
 import com.bwsw.cloudstack.storage.kv.error._
 import com.bwsw.cloudstack.storage.kv.mock.MockActor
-import com.bwsw.cloudstack.storage.kv.mock.MockActor.Expectation
+import com.bwsw.cloudstack.storage.kv.mock.MockActor.ResponsiveExpectation
 import com.bwsw.cloudstack.storage.kv.processor.KvProcessor
 import com.bwsw.cloudstack.storage.kv.message.request._
 import org.scalamock.scalatest.MockFactory
@@ -61,7 +61,7 @@ class KvStorageServletSuite
       val path = s"/get/$storage/$someKey"
 
       it("should return the value if the key exists") {
-        kvActor.underlyingActor.clearAndExpect(Expectation(KvGetRequest(storage, someKey), () => Right(someValue)))
+        kvActor.underlyingActor.clearAndExpect(ResponsiveExpectation(KvGetRequest(storage, someKey), () => Right(someValue)))
         get(path, Seq(), Map()) {
           status should equal(200)
           body should equal(someValue)
@@ -70,14 +70,14 @@ class KvStorageServletSuite
       }
 
       it("should return 404 Not Found if key or storage does not exist") {
-        kvActor.underlyingActor.clearAndExpect(Expectation(KvGetRequest(storage, someKey), () => Left(NotFoundError())))
+        kvActor.underlyingActor.clearAndExpect(ResponsiveExpectation(KvGetRequest(storage, someKey), () => Left(NotFoundError())))
         get(path, Seq(), Map()) {
           status should equal(404)
         }
       }
 
       it("should return 500 Internal Server Error if request processing fails") {
-        kvActor.underlyingActor.clearAndExpect(Expectation(KvGetRequest(storage, someKey), () => internalError))
+        kvActor.underlyingActor.clearAndExpect(ResponsiveExpectation(KvGetRequest(storage, someKey), () => internalError))
         get(path, Seq(), Map()) {
           status should equal(500)
         }
@@ -88,7 +88,7 @@ class KvStorageServletSuite
       val path = s"/get/$storage"
 
       def testSuccess(result: Map[String, Option[String]], expectedBody: String) = {
-        kvActor.underlyingActor.clearAndExpect(Expectation(KvMultiGetRequest(storage, keys), () => Right(result)))
+        kvActor.underlyingActor.clearAndExpect(ResponsiveExpectation(KvMultiGetRequest(storage, keys), () => Right(result)))
         post(path, jsonKeys, jsonHeaders) {
           status should equal(200)
           body should equal(expectedBody)
@@ -123,14 +123,14 @@ class KvStorageServletSuite
       }
 
       it("should return 404 Not Found if storage does not exist") {
-        kvActor.underlyingActor.clearAndExpect(Expectation(KvMultiGetRequest(storage, keys), () => Left(NotFoundError())))
+        kvActor.underlyingActor.clearAndExpect(ResponsiveExpectation(KvMultiGetRequest(storage, keys), () => Left(NotFoundError())))
         post(path, jsonKeys, jsonHeaders) {
           status should equal(404)
         }
       }
 
       it("should return 500 Internal Server Error if request processing fails") {
-        kvActor.underlyingActor.clearAndExpect(Expectation(KvMultiGetRequest(storage, keys), () => internalError))
+        kvActor.underlyingActor.clearAndExpect(ResponsiveExpectation(KvMultiGetRequest(storage, keys), () => internalError))
         post(path, jsonKeys, jsonHeaders) {
           status should equal(500)
         }
@@ -141,7 +141,7 @@ class KvStorageServletSuite
       val path = s"/set/$storage/$someKey"
 
       it("should set the value by the key") {
-        kvActor.underlyingActor.clearAndExpect(Expectation(KvSetRequest(storage, someKey, someValue), () => Right(Unit)))
+        kvActor.underlyingActor.clearAndExpect(ResponsiveExpectation(KvSetRequest(storage, someKey, someValue), () => Right(Unit)))
         put(path, someValue, textHeaders) {
           status should equal(200)
           response.getContentType should include("text/plain")
@@ -156,14 +156,14 @@ class KvStorageServletSuite
 
       it("should return 400 Bad Request Error if the key or value are invalid") {
         kvActor.underlyingActor.clearAndExpect(
-          Expectation(KvSetRequest(storage, someKey, someValue), () => Left(BadRequestError())))
+          ResponsiveExpectation(KvSetRequest(storage, someKey, someValue), () => Left(BadRequestError())))
         put(path, someValue, textHeaders) {
           status should equal(400)
         }
       }
 
       it("should return 404 Not Found if storage does not exist") {
-        kvActor.underlyingActor.clearAndExpect(Expectation(KvSetRequest(storage, someKey, someValue), () => Left(NotFoundError())))
+        kvActor.underlyingActor.clearAndExpect(ResponsiveExpectation(KvSetRequest(storage, someKey, someValue), () => Left(NotFoundError())))
         put(path, someValue, textHeaders) {
           status should equal(404)
         }
@@ -171,7 +171,7 @@ class KvStorageServletSuite
 
       it("should return 500 Internal Server Error if request processing fails") {
         kvActor.underlyingActor.clearAndExpect(
-          Expectation(KvSetRequest(storage, someKey, someValue), () => internalError))
+          ResponsiveExpectation(KvSetRequest(storage, someKey, someValue), () => internalError))
         put(path, someValue, textHeaders) {
           status should equal(500)
         }
@@ -182,7 +182,7 @@ class KvStorageServletSuite
       val path = s"/set/$storage"
 
       def testSuccess(result: Map[String, Boolean], expectedBody: String) = {
-        kvActor.underlyingActor.clearAndExpect(Expectation(KvMultiSetRequest(storage, keyValues), () => Right(result)))
+        kvActor.underlyingActor.clearAndExpect(ResponsiveExpectation(KvMultiSetRequest(storage, keyValues), () => Right(result)))
         put(path, jsonKeyValues, jsonHeaders) {
           status should equal(200)
           body should equal(expectedBody)
@@ -217,14 +217,14 @@ class KvStorageServletSuite
       }
 
       it("should return 404 Not Found if storage does not exist") {
-        kvActor.underlyingActor.clearAndExpect(Expectation(KvMultiSetRequest(storage, keyValues), () => Left(NotFoundError())))
+        kvActor.underlyingActor.clearAndExpect(ResponsiveExpectation(KvMultiSetRequest(storage, keyValues), () => Left(NotFoundError())))
         put(path, jsonKeyValues, jsonHeaders) {
           status should equal(404)
         }
       }
 
       it("should return 500 Internal Server Error if request processing fails") {
-        kvActor.underlyingActor.clearAndExpect(Expectation(KvMultiSetRequest(storage, keyValues), () => internalError))
+        kvActor.underlyingActor.clearAndExpect(ResponsiveExpectation(KvMultiSetRequest(storage, keyValues), () => internalError))
         put(path, jsonKeyValues, jsonHeaders) {
           status should equal(500)
         }
@@ -235,7 +235,7 @@ class KvStorageServletSuite
       val path = s"/delete/$storage/$someKey"
 
       def test(result: Future[Either[StorageError, Unit]], status: Int) = {
-        kvActor.underlyingActor.clearAndExpect(Expectation(KvDeleteRequest(storage, someKey), () => result))
+        kvActor.underlyingActor.clearAndExpect(ResponsiveExpectation(KvDeleteRequest(storage, someKey), () => result))
         delete(path, Seq(), Map()) {
           status should equal(status)
         }
@@ -254,7 +254,7 @@ class KvStorageServletSuite
       val path = s"/delete/$storage"
 
       def testSuccess(result: Map[String, Boolean], expectedBody: String) = {
-        kvActor.underlyingActor.clearAndExpect(Expectation(KvMultiDeleteRequest(storage, keys), () => Right(result)))
+        kvActor.underlyingActor.clearAndExpect(ResponsiveExpectation(KvMultiDeleteRequest(storage, keys), () => Right(result)))
         post(path, jsonKeys, jsonHeaders) {
           status should equal(200)
           body should equal(expectedBody)
@@ -289,14 +289,14 @@ class KvStorageServletSuite
       }
 
       it("should return 404 Not Found if storage does not exist") {
-        kvActor.underlyingActor.clearAndExpect(Expectation(KvMultiDeleteRequest(storage, keys), () => Left(NotFoundError())))
+        kvActor.underlyingActor.clearAndExpect(ResponsiveExpectation(KvMultiDeleteRequest(storage, keys), () => Left(NotFoundError())))
         post(path, jsonKeys, jsonHeaders) {
           status should equal(404)
         }
       }
 
       it("should return 500 Internal Server Error if request processing fails") {
-        kvActor.underlyingActor.clearAndExpect(Expectation(KvMultiDeleteRequest(storage, keys), () => internalError))
+        kvActor.underlyingActor.clearAndExpect(ResponsiveExpectation(KvMultiDeleteRequest(storage, keys), () => internalError))
         post(path, jsonKeys, jsonHeaders) {
           status should equal(500)
         }
@@ -307,7 +307,7 @@ class KvStorageServletSuite
       val path = s"/list/$storage"
 
       it("should returns keys") {
-        kvActor.underlyingActor.clearAndExpect(Expectation(KvListRequest(storage), () => Right(keys)))
+        kvActor.underlyingActor.clearAndExpect(ResponsiveExpectation(KvListRequest(storage), () => Right(keys)))
         get(path, Seq(), Map()) {
           status should equal(200)
           body should equal(jsonKeys)
@@ -316,14 +316,14 @@ class KvStorageServletSuite
       }
 
       it("should return 404 Not Found if storage does not exist") {
-        kvActor.underlyingActor.clearAndExpect(Expectation(KvListRequest(storage), () => Left(NotFoundError())))
+        kvActor.underlyingActor.clearAndExpect(ResponsiveExpectation(KvListRequest(storage), () => Left(NotFoundError())))
         get(path, Seq(), textHeaders) {
           status should equal(404)
         }
       }
 
       it("should return 500 Internal Server Error if request processing fails") {
-        kvActor.underlyingActor.clearAndExpect(Expectation(KvListRequest(storage), () => internalError))
+        kvActor.underlyingActor.clearAndExpect(ResponsiveExpectation(KvListRequest(storage), () => internalError))
         get(path, Seq(), textHeaders) {
           status should equal(500)
         }
@@ -334,7 +334,7 @@ class KvStorageServletSuite
       val path = s"/clear/$storage"
 
       def test(result: Future[Either[StorageError, Unit]], status: Int) = {
-        kvActor.underlyingActor.clearAndExpect(Expectation(KvClearRequest(storage), () => result))
+        kvActor.underlyingActor.clearAndExpect(ResponsiveExpectation(KvClearRequest(storage), () => result))
         post(path, Array[Byte](), Map()) {
           status should equal(status)
         }
@@ -345,7 +345,7 @@ class KvStorageServletSuite
       }
 
       it("should return 404 Not Found if storage does not exist") {
-        kvActor.underlyingActor.clearAndExpect(Expectation(KvListRequest(storage), () => Left(NotFoundError())))
+        kvActor.underlyingActor.clearAndExpect(ResponsiveExpectation(KvListRequest(storage), () => Left(NotFoundError())))
         test(Future(Left(NotFoundError())), 404)
       }
 
