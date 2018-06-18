@@ -46,12 +46,15 @@ class BufferedHistoryKvActor(implicit inj: Injector)
     case HistoryTimeout =>
       self ! flush(buffer)
       self ! flush(retryBuffer)
-    case KvHistoryFlush(histories) =>
-      historyProcessor.save(histories).map {
-        case Some(erroneous) =>
-          self ! HistoryRetry(erroneous)
-        case None => //do nothing
-      }
+    case KvHistoryFlush(histories) => histories match {
+      case List() => //do nothing
+      case list =>
+        historyProcessor.save(histories).map {
+          case Some(erroneous) =>
+            self ! HistoryRetry(erroneous)
+          case None => //do nothing
+        }
+    }
     case HistoryRetry(erroneous) =>
       retry(erroneous)
     case option: Option[_] => option match {

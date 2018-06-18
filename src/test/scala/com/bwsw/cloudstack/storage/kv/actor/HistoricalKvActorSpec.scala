@@ -1,7 +1,7 @@
 package com.bwsw.cloudstack.storage.kv.actor
 
 import akka.actor.{ActorSystem, Props}
-import akka.testkit.{EventFilter, ImplicitSender, TestActorRef, TestKit, TestProbe}
+import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
 import com.bwsw.cloudstack.storage.kv.app.KvStorageModule
 import com.bwsw.cloudstack.storage.kv.cache.StorageCache
 import com.bwsw.cloudstack.storage.kv.entity.Storage
