@@ -17,15 +17,20 @@
 
 package com.bwsw.cloudstack.storage.kv.actor
 
-import akka.actor.Timers
+import akka.actor.{Status, Timers}
+import akka.pattern.pipe
+import com.bwsw.cloudstack.storage.kv.cache.StorageCache
 import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
-import com.bwsw.cloudstack.storage.kv.message.{HistoryRetry, KvHistory, KvHistoryBulk, KvHistoryFlush}
+import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError}
+import com.bwsw.cloudstack.storage.kv.message.request.GetHistoryRequest
+import com.bwsw.cloudstack.storage.kv.message.response.GetHistoryResponse
+import com.bwsw.cloudstack.storage.kv.message.{KvHistory, KvHistoryBulk, KvHistoryFlush, KvHistoryRetry}
 import com.bwsw.cloudstack.storage.kv.processor.HistoryProcessor
 import scaldi.Injector
 import scaldi.akka.AkkaInjectable._
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.collection.mutable.ListBuffer
+import scala.concurrent.Future
 
 /** Actor responsible for history buffering and time or queue size based flushing to storages **/
 class BufferedHistoryKvActor(implicit inj: Injector)
@@ -33,12 +38,14 @@ class BufferedHistoryKvActor(implicit inj: Injector)
     with Timers
     with akka.actor.ActorLogging {
 
+  import context.dispatcher
   import BufferedHistoryKvActor._
 
   private val buffer: ListBuffer[KvHistory] = ListBuffer.empty
   private val retryBuffer: ListBuffer[KvHistory] = ListBuffer.empty
   private val configuration = inject[AppConfig]
   private val historyProcessor = inject[HistoryProcessor]
+  private val storageCache = inject[StorageCache]
 
   timers.startPeriodicTimer(HistoryTimer, HistoryTimeout, configuration.getFlushHistoryTimeout)
 
@@ -49,10 +56,10 @@ class BufferedHistoryKvActor(implicit inj: Injector)
     case KvHistoryFlush(histories) =>
       historyProcessor.save(histories).map {
         case Some(erroneous) =>
-          self ! HistoryRetry(erroneous)
+          self ! KvHistoryRetry(erroneous)
         case None => //do nothing
       }
-    case HistoryRetry(erroneous) =>
+    case KvHistoryRetry(erroneous) =>
       retry(erroneous)
     case option: Option[_] => option match {
       case Some(history: KvHistory) =>
@@ -67,6 +74,28 @@ class BufferedHistoryKvActor(implicit inj: Injector)
         }
       case _ => //do nothing
     }
+    case request: GetHistoryRequest =>
+      storageCache.isHistoryEnabled(request.storageUuid).flatMap {
+        case Some(true) =>
+          historyProcessor.get(
+            request.storageUuid,
+            request.keys,
+            request.operations,
+            request.start,
+            request.end,
+            request.sort,
+            request.page,
+            request.size,
+            request.scroll)
+        case Some(false) =>
+          Future(Left(BadRequestError()))
+        case None =>
+          Future(Left(NotFoundError()))
+      }.map(body => GetHistoryResponse(body)).pipeTo(self)(sender())
+    case GetHistoryResponse(body) =>
+      sender() ! body
+    case failure: Status.Failure =>
+      sender() ! Left(InternalError(failure.cause.getMessage))
   }
 
   private def retry(histories: Iterable[KvHistory]): Unit = {

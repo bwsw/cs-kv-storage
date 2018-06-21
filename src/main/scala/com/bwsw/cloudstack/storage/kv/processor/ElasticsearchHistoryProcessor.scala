@@ -21,7 +21,7 @@ import com.bwsw.cloudstack.storage.kv.configuration.{AppConfig, ElasticsearchCon
 import com.bwsw.cloudstack.storage.kv.entity.History
 import com.bwsw.cloudstack.storage.kv.error.{InternalError, StorageError}
 import com.bwsw.cloudstack.storage.kv.message.response.GetHistoryResponse
-import com.bwsw.cloudstack.storage.kv.message.{Clear, Delete, KvHistory, Operation, Set}
+import com.bwsw.cloudstack.storage.kv.message.{Clear, Delete, GetHistoryResponseBody, KvHistory, Operation, Set}
 import com.bwsw.cloudstack.storage.kv.processor.ElasticsearchKvProcessor.{ValueField, getIds}
 import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils
 import com.sksamuel.elastic4s.http.ElasticDsl.{search, _}
@@ -38,7 +38,7 @@ import scala.concurrent.Future
   *
   * @param client the client to send requests to Elasticsearch
   */
-class ElasticsearchHistoryProcessor(client: HttpClient, elasticsearchConfig: ElasticsearchConfig) extends HistoryProcessor {
+class ElasticsearchHistoryProcessor(client: HttpClient) extends HistoryProcessor {
 
   import ElasticsearchHistoryProcessor._
 
@@ -59,16 +59,16 @@ class ElasticsearchHistoryProcessor(client: HttpClient, elasticsearchConfig: Ela
   }
 
   def get(storageUuid: String,
-          keys: Iterable[String] = List.empty,
-          operations: Iterable[Operation] = List.empty,
-          start: Long = 0,
-          end: Long = 0,
-          sort: Iterable[String] = List.empty,
-          page: Int = 1,
-          size: Int = elasticsearchConfig.getScrollPageSize,
-          scroll: String = elasticsearchConfig.getScrollKeepAlive): Future[Either[StorageError, GetHistoryResponse]] = {
+          keys: Iterable[String],
+          operations: Iterable[Operation],
+          start: Long,
+          end: Long,
+          sort: Iterable[String],
+          page: Int,
+          size: Int,
+          scroll: String): Future[Either[StorageError, GetHistoryResponseBody]] = {
 
-    val searchDef = search(ElasticsearchUtils.getStorageIndex(storageUuid))
+    val searchDef = search(getHistoricalStorage(storageUuid))
     val withKeys = if (keys.nonEmpty) Seq(termsQuery("key", keys)) else Seq.empty
     val withOperations = if (operations.nonEmpty) withKeys :+ termsQuery("operation", operations.map(_.toString)) else withKeys
 
@@ -98,7 +98,12 @@ class ElasticsearchHistoryProcessor(client: HttpClient, elasticsearchConfig: Ela
       else
         withSize
 
-    val withScroll = withPage.scroll(scroll)
+    val withScroll =
+      if (scroll.nonEmpty)
+        withPage.scroll(scroll)
+      else
+        withPage
+
     val withSort =
       if (sort.nonEmpty)
         withScroll.sortBy(sort.map { field =>
@@ -111,9 +116,9 @@ class ElasticsearchHistoryProcessor(client: HttpClient, elasticsearchConfig: Ela
         withScroll
 
     client.execute(withSort).map {
-      case Left(failure) => Left(ElasticsearchUtils.getError(failure))
+      case Left(failure) => Left(InternalError(withSort.toString)) //ElasticsearchUtils.getError(failure))
       case Right(success) =>
-        Right(GetHistoryResponse(
+        Right(GetHistoryResponseBody(
           success.result.totalHits,
           success.result.size,
           page,
@@ -143,14 +148,15 @@ object ElasticsearchHistoryProcessor {
     fields.get(name) match {
       case Some(null) => null
       case Some(s: String) => s
-      case _ => throw new RuntimeException("Invalid result")
+      case _ => throw new RuntimeException("Invalid String result")
     }
   }
 
   protected def getLong(name: String)(implicit fields: Map[String, Any]): Long = {
     fields.get(name) match {
       case Some(s: Long) => s
-      case _ => throw new RuntimeException("Invalid result")
+      case Some(s: Int) => s
+      case _ => throw new RuntimeException("Invalid Long result")
     }
   }
 

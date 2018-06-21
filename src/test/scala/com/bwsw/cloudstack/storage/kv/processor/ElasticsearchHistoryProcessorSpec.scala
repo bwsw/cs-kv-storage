@@ -1,10 +1,25 @@
+// Licensed to the Apache Software Foundation (ASF) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
 package com.bwsw.cloudstack.storage.kv.processor
 
 import com.bwsw.cloudstack.storage.kv.configuration.ElasticsearchConfig
 import com.bwsw.cloudstack.storage.kv.entity.History
-import com.bwsw.cloudstack.storage.kv.message.response.GetHistoryResponse
-import com.bwsw.cloudstack.storage.kv.message.{Clear, Delete, KvHistory, Set}
-import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils
+import com.bwsw.cloudstack.storage.kv.message.{Clear, Delete, GetHistoryResponseBody, KvHistory, Set}
 import com.sksamuel.elastic4s.bulk.BulkDefinition
 import com.sksamuel.elastic4s.http.ElasticDsl.{indexInto, _}
 import com.sksamuel.elastic4s.http._
@@ -18,6 +33,15 @@ import org.scalatest.AsyncFunSpec
 import scala.concurrent.{ExecutionContext, Future}
 
 class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
+  private val defaultKeys = List.empty
+  private val defaultOperations = List.empty
+  private val defaultSort = List.empty
+  private val defaultStart = 0
+  private val defaultEnd = 0
+  private val defaultSize = 50
+  private val defaultPage = 1
+  private val defaultScroll = ""
+  private val defaultScrollId = None
   private val index = "history-storage-someStorage"
   private val `type` = "_doc"
   private val artificalKey = "cbIaz2MBpp4Ypizt4vT5"
@@ -34,8 +58,9 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
   )
   describe("An ElasticsearchHistoryProcessor") {
     val fakeClient = mock[HttpClient]
+    implicit val client: HttpClient = fakeClient
     val elasticsearchConfig = mock[ElasticsearchConfig]
-    val processor = new ElasticsearchHistoryProcessor(fakeClient, elasticsearchConfig)
+    val processor = new ElasticsearchHistoryProcessor(fakeClient)
 
     describe("(save histories)") {
       it("should save a list of historical records") {
@@ -109,270 +134,110 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
       }
     }
 
-    describe("(get kvHistories)") {
+    describe("(get histories)") {
       it("should retrieve by storageUuid only") {
-        val pageSize = 50
-        val keepAlive = "1 second"
-        val scrollId = None
-        val page = 1
-        val searchDefinition = ElasticDsl.search(ElasticsearchUtils.getStorageIndex(storageUuid)).size(pageSize).scroll(keepAlive)
-        val searchResponse = SearchResponse(1, isTimedOut = false, isTerminatedEarly = false, Map.empty, Shards(1, 0, 1), scrollId, Map.empty,
-          SearchHits(3, 1, Array(
-            SearchHit("1", storageUuid, `type`, 1, 1, None, None, None, None, None, sort = None,
-              Map("key" -> historyList.head.key, "value" -> historyList.head.value,
-                "timestamp" -> historyList.head.timestamp.asInstanceOf[AnyRef], "operation" -> historyList.head.operation.toString),
-              Map.empty, Map.empty, Map.empty),
+        val searchDefinition = ElasticDsl.search(getHistoryIndex(storageUuid)).size(defaultSize)
+        val searchResponse = getSearchResponse(historyList, 3, defaultScrollId)
+        expectSearch(searchDefinition).returning(getRequestSuccessFuture(searchResponse))
 
-            SearchHit("2", storageUuid, `type`, 1, 1, None, None, None, None, None, sort = None,
-              Map("key" -> historyList(1).key, "value" -> historyList(1).value,
-                "timestamp" -> historyList(1).timestamp.asInstanceOf[AnyRef], "operation" -> historyList(1).operation.toString),
-              Map.empty, Map.empty, Map.empty),
-
-            SearchHit("3", storageUuid, `type`, 1, 1, None, None, None, None, None, sort = None,
-              Map("key" -> historyList(2).key, "value" -> historyList(2).value,
-                "timestamp" -> historyList(2).timestamp.asInstanceOf[AnyRef], "operation" -> historyList(2).operation.toString),
-              Map.empty, Map.empty, Map.empty)
-          )))
-        (elasticsearchConfig.getScrollPageSize _).expects().returning(pageSize)
-        (elasticsearchConfig.getScrollKeepAlive _).expects().returning(keepAlive)
-        val sets = kvHistories.map(history => indexInto(getHistoryIndex(history.storage) / `type`) fields getFields(history))
-        (fakeClient.execute[SearchDefinition, SearchResponse](_: SearchDefinition)(_: HttpExecutable[SearchDefinition, SearchResponse], _: ExecutionContext))
-          .expects(searchDefinition, SearchHttpExecutable, *)
-          .returning(Future(Right(RequestSuccess(200, Option.empty, Map.empty, searchResponse))))
-
-        processor.get(storageUuid).map {
-          case Right(response) => assert(response == GetHistoryResponse(3, 3, page, scrollId, historyList))
+        processor.get(storageUuid, defaultKeys, defaultOperations, defaultStart, defaultEnd, defaultSort, defaultPage, defaultSize, defaultScroll).map {
+          case Right(response) => assert(response == GetHistoryResponseBody(3, 3, defaultPage, defaultScrollId, historyList))
           case _ => fail
         }
       }
 
-      it("should retrieve by storageUuid and keys") {
-        val pageSize = 50
-        val keepAlive = "1 second"
-        val scrollId = None
-        val page = 1
+      it("should retrieve by keys") {
         val keys = List("key1")
-        val searchDefinition = ElasticDsl.search(ElasticsearchUtils.getStorageIndex(storageUuid))
-          .size(pageSize).scroll(keepAlive).query(termsQuery("key", keys))
-        val searchResponse = SearchResponse(1, isTimedOut = false, isTerminatedEarly = false, Map.empty, Shards(1, 0, 1), scrollId, Map.empty,
-          SearchHits(2, 1, Array(
-            SearchHit("1", storageUuid, `type`, 1, 1, None, None, None, None, None, sort = None,
-              Map("key" -> historyList.head.key, "value" -> historyList.head.value,
-                "timestamp" -> historyList.head.timestamp.asInstanceOf[AnyRef], "operation" -> historyList.head.operation.toString),
-              Map.empty, Map.empty, Map.empty),
+        val searchDefinition = ElasticDsl.search(getHistoryIndex(storageUuid))
+          .size(defaultSize).query(termsQuery("key", keys))
+        val searchResponse = getSearchResponse(historyList.slice(0, 2), 2, defaultScrollId)
+        expectSearch(searchDefinition).returning(getRequestSuccessFuture(searchResponse))
 
-            SearchHit("2", storageUuid, `type`, 1, 1, None, None, None, None, None, sort = None,
-              Map("key" -> historyList(1).key, "value" -> historyList(1).value,
-                "timestamp" -> historyList(1).timestamp.asInstanceOf[AnyRef], "operation" -> historyList(1).operation.toString),
-              Map.empty, Map.empty, Map.empty)
-          )))
-        (elasticsearchConfig.getScrollPageSize _).expects().returning(pageSize)
-        (elasticsearchConfig.getScrollKeepAlive _).expects().returning(keepAlive)
-        val sets = kvHistories.map(history => indexInto(getHistoryIndex(history.storage) / `type`) fields getFields(history))
-        (fakeClient.execute[SearchDefinition, SearchResponse](_: SearchDefinition)(_: HttpExecutable[SearchDefinition, SearchResponse], _: ExecutionContext))
-          .expects(searchDefinition, SearchHttpExecutable, *)
-          .returning(Future(Right(RequestSuccess(200, Option.empty, Map.empty, searchResponse))))
-
-        processor.get(storageUuid, keys).map {
-          case Right(response) => assert(response == GetHistoryResponse(2, 2, page, scrollId, historyList.slice(0, 2)))
+        processor.get(storageUuid, keys, defaultOperations, defaultStart, defaultEnd, defaultSort, defaultPage, defaultSize, defaultScroll).map {
+          case Right(response) => assert(response == GetHistoryResponseBody(2, 2, defaultPage, defaultScrollId, historyList.slice(0, 2)))
           case _ => fail
         }
       }
 
-      it("should retrieve by storageUuid and operations") {
-        val pageSize = 50
-        val keepAlive = "1 second"
-        val scrollId = None
-        val page = 1
+      it("should retrieve by operations") {
         val operations = List(Set)
-        val searchDefinition = ElasticDsl.search(ElasticsearchUtils.getStorageIndex(storageUuid))
-          .size(pageSize).scroll(keepAlive).query(termsQuery("operation", operations.map(_.toString)))
-        val searchResponse = SearchResponse(1, isTimedOut = false, isTerminatedEarly = false, Map.empty, Shards(1, 0, 1), scrollId, Map.empty,
-          SearchHits(1, 1, Array(
-            SearchHit("1", storageUuid, `type`, 1, 1, None, None, None, None, None, sort = None,
-              Map("key" -> historyList.head.key, "value" -> historyList.head.value,
-                "timestamp" -> historyList.head.timestamp.asInstanceOf[AnyRef], "operation" -> historyList.head.operation.toString),
-              Map.empty, Map.empty, Map.empty)
-          )))
-        (elasticsearchConfig.getScrollPageSize _).expects().returning(pageSize)
-        (elasticsearchConfig.getScrollKeepAlive _).expects().returning(keepAlive)
-        val sets = kvHistories.map(history => indexInto(getHistoryIndex(history.storage) / `type`) fields getFields(history))
-        (fakeClient.execute[SearchDefinition, SearchResponse](_: SearchDefinition)(_: HttpExecutable[SearchDefinition, SearchResponse], _: ExecutionContext))
-          .expects(searchDefinition, SearchHttpExecutable, *)
-          .returning(Future(Right(RequestSuccess(200, Option.empty, Map.empty, searchResponse))))
+        val searchDefinition = ElasticDsl.search(getHistoryIndex(storageUuid))
+          .size(defaultSize).query(termsQuery("operation", operations.map(_.toString)))
+        val searchResponse = getSearchResponse(historyList.slice(0, 1), 1, defaultScrollId)
+        expectSearch(searchDefinition).returning(getRequestSuccessFuture(searchResponse))
 
-        processor.get(storageUuid, operations = operations).map {
-          case Right(response) => assert(response == GetHistoryResponse(1, 1, page, scrollId, historyList.slice(0, 1)))
+        processor.get(storageUuid, defaultKeys, operations, defaultStart, defaultEnd, defaultSort, defaultPage, defaultSize, defaultScroll).map {
+          case Right(response) => assert(response == GetHistoryResponseBody(1, 1, defaultPage, defaultScrollId, historyList.slice(0, 1)))
           case _ => fail
         }
       }
 
-      it("should retrieve by storageUuid and timestamp start") {
-        val pageSize = 50
-        val keepAlive = "1 second"
-        val scrollId = None
-        val page = 1
+      it("should retrieve by timestamp start") {
         val start = 2
-        val searchDefinition = ElasticDsl.search(ElasticsearchUtils.getStorageIndex(storageUuid))
-          .size(pageSize).scroll(keepAlive).query(rangeQuery("timestamp").gte(start))
-        val searchResponse = SearchResponse(1, isTimedOut = false, isTerminatedEarly = false, Map.empty, Shards(1, 0, 1), scrollId, Map.empty,
-          SearchHits(2, 1, Array(
-            SearchHit("2", storageUuid, `type`, 1, 1, None, None, None, None, None, sort = None,
-              Map("key" -> historyList(1).key, "value" -> historyList(1).value,
-                "timestamp" -> historyList(1).timestamp.asInstanceOf[AnyRef], "operation" -> historyList(1).operation.toString),
-              Map.empty, Map.empty, Map.empty),
+        val searchDefinition = ElasticDsl.search(getHistoryIndex(storageUuid))
+          .size(defaultSize).query(rangeQuery("timestamp").gte(start))
+        val searchResponse = getSearchResponse(historyList.slice(1, 3), 2, defaultScrollId)
+        expectSearch(searchDefinition).returning(getRequestSuccessFuture(searchResponse))
 
-            SearchHit("3", storageUuid, `type`, 1, 1, None, None, None, None, None, sort = None,
-              Map("key" -> historyList(2).key, "value" -> historyList(2).value,
-                "timestamp" -> historyList(2).timestamp.asInstanceOf[AnyRef], "operation" -> historyList(2).operation.toString),
-              Map.empty, Map.empty, Map.empty)
-          )))
-        (elasticsearchConfig.getScrollPageSize _).expects().returning(pageSize)
-        (elasticsearchConfig.getScrollKeepAlive _).expects().returning(keepAlive)
-        val sets = kvHistories.map(history => indexInto(getHistoryIndex(history.storage) / `type`) fields getFields(history))
-        (fakeClient.execute[SearchDefinition, SearchResponse](_: SearchDefinition)(_: HttpExecutable[SearchDefinition, SearchResponse], _: ExecutionContext))
-          .expects(searchDefinition, SearchHttpExecutable, *)
-          .returning(Future(Right(RequestSuccess(200, Option.empty, Map.empty, searchResponse))))
-
-        processor.get(storageUuid, start = start).map {
-          case Right(response) => assert(response == GetHistoryResponse(2, 2, page, scrollId, historyList.slice(1, 3)))
+        processor.get(storageUuid, defaultKeys, defaultOperations, start, defaultEnd, defaultSort, defaultPage, defaultSize, defaultScroll).map {
+          case Right(response) => assert(response == GetHistoryResponseBody(2, 2, defaultPage, defaultScrollId, historyList.slice(1, 3)))
           case _ => fail
         }
       }
 
-      it("should retrieve by storageUuid and timestamp end") {
-        val pageSize = 50
-        val keepAlive = "1 second"
-        val scrollId = None
-        val page = 1
+      it("should retrieve by timestamp end") {
         val end = 2
-        val searchDefinition = ElasticDsl.search(ElasticsearchUtils.getStorageIndex(storageUuid))
-          .size(pageSize).scroll(keepAlive).query(rangeQuery("timestamp").lte(end))
-        val searchResponse = SearchResponse(1, isTimedOut = false, isTerminatedEarly = false, Map.empty, Shards(1, 0, 1), scrollId, Map.empty,
-          SearchHits(2, 1, Array(
-            SearchHit("1", storageUuid, `type`, 1, 1, None, None, None, None, None, sort = None,
-              Map("key" -> historyList.head.key, "value" -> historyList.head.value,
-                "timestamp" -> historyList.head.timestamp.asInstanceOf[AnyRef], "operation" -> historyList.head.operation.toString),
-              Map.empty, Map.empty, Map.empty),
+        val searchDefinition = ElasticDsl.search(getHistoryIndex(storageUuid))
+          .size(defaultSize).query(rangeQuery("timestamp").lte(end))
+        val searchResponse = getSearchResponse(historyList.slice(0, 2), 2, defaultScrollId)
+        expectSearch(searchDefinition).returning(getRequestSuccessFuture(searchResponse))
 
-            SearchHit("2", storageUuid, `type`, 1, 1, None, None, None, None, None, sort = None,
-              Map("key" -> historyList(1).key, "value" -> historyList(1).value,
-                "timestamp" -> historyList(1).timestamp.asInstanceOf[AnyRef], "operation" -> historyList(1).operation.toString),
-              Map.empty, Map.empty, Map.empty)
-          )))
-        (elasticsearchConfig.getScrollPageSize _).expects().returning(pageSize)
-        (elasticsearchConfig.getScrollKeepAlive _).expects().returning(keepAlive)
-        val sets = kvHistories.map(history => indexInto(getHistoryIndex(history.storage) / `type`) fields getFields(history))
-        (fakeClient.execute[SearchDefinition, SearchResponse](_: SearchDefinition)(_: HttpExecutable[SearchDefinition, SearchResponse], _: ExecutionContext))
-          .expects(searchDefinition, SearchHttpExecutable, *)
-          .returning(Future(Right(RequestSuccess(200, Option.empty, Map.empty, searchResponse))))
-
-        processor.get(storageUuid, end = end).map {
-          case Right(response) => assert(response == GetHistoryResponse(2, 2, page, scrollId, historyList.slice(0, 2)))
+        processor.get(storageUuid, defaultKeys, defaultOperations, defaultStart, end, defaultSort, defaultPage, defaultSize, defaultScroll).map {
+          case Right(response) => assert(response == GetHistoryResponseBody(2, 2, defaultPage, defaultScrollId, historyList.slice(0, 2)))
           case _ => fail
         }
       }
 
-      it("should retrieve by storageUuid with different timestamp start and end") {
-        val pageSize = 50
-        val keepAlive = "1 second"
-        val scrollId = None
-        val page = 1
+      it("should retrieve by different timestamp start and end") {
         val start = 1
         val end = 2
-        val searchDefinition = ElasticDsl.search(ElasticsearchUtils.getStorageIndex(storageUuid))
-          .size(pageSize).scroll(keepAlive).query(rangeQuery("timestamp").gte(start).lte(end))
-        val searchResponse = SearchResponse(1, isTimedOut = false, isTerminatedEarly = false, Map.empty, Shards(1, 0, 1), scrollId, Map.empty,
-          SearchHits(2, 1, Array(
-            SearchHit("1", storageUuid, `type`, 1, 1, None, None, None, None, None, sort = None,
-              Map("key" -> historyList.head.key, "value" -> historyList.head.value,
-                "timestamp" -> historyList.head.timestamp.asInstanceOf[AnyRef], "operation" -> historyList.head.operation.toString),
-              Map.empty, Map.empty, Map.empty),
+        val searchDefinition = ElasticDsl.search(getHistoryIndex(storageUuid))
+          .size(defaultSize).query(rangeQuery("timestamp").gte(start).lte(end))
+        val searchResponse = getSearchResponse(historyList.slice(0, 2), 2, defaultScrollId)
+        expectSearch(searchDefinition).returning(getRequestSuccessFuture(searchResponse))
 
-            SearchHit("2", storageUuid, `type`, 1, 1, None, None, None, None, None, sort = None,
-              Map("key" -> historyList(1).key, "value" -> historyList(1).value,
-                "timestamp" -> historyList(1).timestamp.asInstanceOf[AnyRef], "operation" -> historyList(1).operation.toString),
-              Map.empty, Map.empty, Map.empty)
-          )))
-        (elasticsearchConfig.getScrollPageSize _).expects().returning(pageSize)
-        (elasticsearchConfig.getScrollKeepAlive _).expects().returning(keepAlive)
-        val sets = kvHistories.map(history => indexInto(getHistoryIndex(history.storage) / `type`) fields getFields(history))
-        (fakeClient.execute[SearchDefinition, SearchResponse](_: SearchDefinition)(_: HttpExecutable[SearchDefinition, SearchResponse], _: ExecutionContext))
-          .expects(searchDefinition, SearchHttpExecutable, *)
-          .returning(Future(Right(RequestSuccess(200, Option.empty, Map.empty, searchResponse))))
-
-        processor.get(storageUuid, start = start, end = end).map {
-          case Right(response) => assert(response == GetHistoryResponse(2, 2, page, scrollId, historyList.slice(0, 2)))
+        processor.get(storageUuid, defaultKeys, defaultOperations, start, end, defaultSort, defaultPage, defaultSize, defaultScroll).map {
+          case Right(response) => assert(response == GetHistoryResponseBody(2, 2, defaultPage, defaultScrollId, historyList.slice(0, 2)))
           case _ => fail
         }
       }
 
-      it("should retrieve by storageUuid with same timestamp start and end") {
-        val pageSize = 50
-        val keepAlive = "1 second"
-        val scrollId = None
-        val page = 1
+      it("should retrieve by same timestamp start and end") {
         val startAndEnd = 2
-        val searchDefinition = ElasticDsl.search(ElasticsearchUtils.getStorageIndex(storageUuid))
-          .size(pageSize).scroll(keepAlive).query(termQuery("timestamp", startAndEnd))
-        val searchResponse = SearchResponse(1, isTimedOut = false, isTerminatedEarly = false, Map.empty, Shards(1, 0, 1), scrollId, Map.empty,
-          SearchHits(2, 1, Array(
-            SearchHit("1", storageUuid, `type`, 1, 1, None, None, None, None, None, sort = None,
-              Map("key" -> historyList.head.key, "value" -> historyList.head.value,
-                "timestamp" -> historyList.head.timestamp.asInstanceOf[AnyRef], "operation" -> historyList.head.operation.toString),
-              Map.empty, Map.empty, Map.empty),
+        val searchDefinition = ElasticDsl.search(getHistoryIndex(storageUuid))
+          .size(defaultSize).query(termQuery("timestamp", startAndEnd))
+        val searchResponse = getSearchResponse(historyList.slice(0, 2), 2, defaultScrollId)
+        expectSearch(searchDefinition).returning(getRequestSuccessFuture(searchResponse))
 
-            SearchHit("2", storageUuid, `type`, 1, 1, None, None, None, None, None, sort = None,
-              Map("key" -> historyList(1).key, "value" -> historyList(1).value,
-                "timestamp" -> historyList(1).timestamp.asInstanceOf[AnyRef], "operation" -> historyList(1).operation.toString),
-              Map.empty, Map.empty, Map.empty)
-          )))
-        (elasticsearchConfig.getScrollPageSize _).expects().returning(pageSize)
-        (elasticsearchConfig.getScrollKeepAlive _).expects().returning(keepAlive)
-        val sets = kvHistories.map(history => indexInto(getHistoryIndex(history.storage) / `type`) fields getFields(history))
-        (fakeClient.execute[SearchDefinition, SearchResponse](_: SearchDefinition)(_: HttpExecutable[SearchDefinition, SearchResponse], _: ExecutionContext))
-          .expects(searchDefinition, SearchHttpExecutable, *)
-          .returning(Future(Right(RequestSuccess(200, Option.empty, Map.empty, searchResponse))))
-
-        processor.get(storageUuid, start = startAndEnd, end = startAndEnd).map {
-          case Right(response) => assert(response == GetHistoryResponse(2, 2, page, scrollId, historyList.slice(0, 2)))
+        processor.get(storageUuid, defaultKeys, defaultOperations, startAndEnd, startAndEnd, defaultSort, defaultPage, defaultSize, defaultScroll).map {
+          case Right(response) => assert(response == GetHistoryResponseBody(2, 2, defaultPage, defaultScrollId, historyList.slice(0, 2)))
           case _ => fail
         }
       }
 
-      it("should retrieve by storageUuid, keys, operations and timestamp start and end") {
-        val pageSize = 50
-        val keepAlive = "1 second"
-        val scrollId = None
-        val page = 1
+      it("should retrieve by keys, operations and timestamp start and end") {
         val keys = List("key1")
         val operations = List(Set)
         val start = 1
         val end = 2
-        val searchDefinition = ElasticDsl.search(ElasticsearchUtils.getStorageIndex(storageUuid))
-          .size(pageSize).scroll(keepAlive).query(boolQuery().filter(List(
+        val searchDefinition = ElasticDsl.search(getHistoryIndex(storageUuid))
+          .size(defaultSize).query(boolQuery().filter(List(
           termsQuery("key", keys), termsQuery("operation", operations.map(_.toString)), rangeQuery("timestamp").gte(start).lte(end))))
-        val searchResponse = SearchResponse(1, isTimedOut = false, isTerminatedEarly = false, Map.empty, Shards(1, 0, 1), scrollId, Map.empty,
-          SearchHits(2, 1, Array(
-            SearchHit("1", storageUuid, `type`, 1, 1, None, None, None, None, None, sort = None,
-              Map("key" -> historyList.head.key, "value" -> historyList.head.value,
-                "timestamp" -> historyList.head.timestamp.asInstanceOf[AnyRef], "operation" -> historyList.head.operation.toString),
-              Map.empty, Map.empty, Map.empty),
+        val searchResponse = getSearchResponse(historyList.slice(0, 2), 2, defaultScrollId)
+        expectSearch(searchDefinition).returning(getRequestSuccessFuture(searchResponse))
 
-            SearchHit("2", storageUuid, `type`, 1, 1, None, None, None, None, None, sort = None,
-              Map("key" -> historyList(1).key, "value" -> historyList(1).value,
-                "timestamp" -> historyList(1).timestamp.asInstanceOf[AnyRef], "operation" -> historyList(1).operation.toString),
-              Map.empty, Map.empty, Map.empty)
-          )))
-        (elasticsearchConfig.getScrollPageSize _).expects().returning(pageSize)
-        (elasticsearchConfig.getScrollKeepAlive _).expects().returning(keepAlive)
-        val sets = kvHistories.map(history => indexInto(getHistoryIndex(history.storage) / `type`) fields getFields(history))
-        (fakeClient.execute[SearchDefinition, SearchResponse](_: SearchDefinition)(_: HttpExecutable[SearchDefinition, SearchResponse], _: ExecutionContext))
-          .expects(searchDefinition, SearchHttpExecutable, *)
-          .returning(Future(Right(RequestSuccess(200, Option.empty, Map.empty, searchResponse))))
-
-        processor.get(storageUuid, keys, operations, start, end).map {
-          case Right(response) => assert(response == GetHistoryResponse(2, 2, page, scrollId, historyList.slice(0, 2)))
+        processor.get(storageUuid, keys, operations, start, end, defaultSort, defaultPage, defaultSize, defaultScroll).map {
+          case Right(response) => assert(response == GetHistoryResponseBody(2, 2, defaultPage, defaultScrollId, historyList.slice(0, 2)))
           case _ => fail
         }
       }
@@ -386,40 +251,45 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
         val start = 1
         val end = 2
         val scroll = "2 seconds"
-        val sort = List("key", "-timestamp")
-        val searchDefinition = ElasticDsl.search(ElasticsearchUtils.getStorageIndex(storageUuid)).
+        val sort = Seq("key", "-timestamp")
+        val searchDefinition = ElasticDsl.search(getHistoryIndex(storageUuid)).
           size(pageSize).scroll(scroll).query(boolQuery().filter(List(
           termsQuery("key", keys), termsQuery("operation", operations.map(_.toString)), rangeQuery("timestamp").gte(start).lte(end)))).
           from(pageSize * (page - 1)).sortBy(List(FieldSortDefinition("key", order = SortOrder.ASC), FieldSortDefinition("timestamp", order = SortOrder.DESC)))
-        val searchResponse = SearchResponse(1, isTimedOut = false, isTerminatedEarly = false, Map.empty, Shards(1, 0, 1), scrollId, Map.empty,
-          SearchHits(8, 1, Array(
-            SearchHit("1", storageUuid, `type`, 1, 1, None, None, None, None, None, Some(Seq(historyList.head.key, historyList.head.timestamp.asInstanceOf[AnyRef])),
-              Map("key" -> historyList.head.key, "value" -> historyList.head.value,
-                "timestamp" -> historyList.head.timestamp.asInstanceOf[AnyRef], "operation" -> historyList.head.operation.toString),
-              Map.empty, Map.empty, Map.empty),
+        val searchResponse = getSearchResponse(historyList, 8, scrollId, Seq("key", "timestamp"))
 
-            SearchHit("2", storageUuid, `type`, 1, 1, None, None, None, None, None, Some(Seq(historyList(1).key, historyList(1).timestamp.asInstanceOf[AnyRef])),
-              Map("key" -> historyList(1).key, "value" -> historyList(1).value,
-                "timestamp" -> historyList(1).timestamp.asInstanceOf[AnyRef], "operation" -> historyList(1).operation.toString),
-              Map.empty, Map.empty, Map.empty),
-
-            SearchHit("3", storageUuid, `type`, 1, 1, None, None, None, None, None, Some(Seq(historyList(2).key, historyList(2).timestamp.asInstanceOf[AnyRef])),
-              Map("key" -> historyList(2).key, "value" -> historyList(2).value,
-                "timestamp" -> historyList(2).timestamp.asInstanceOf[AnyRef], "operation" -> historyList(2).operation.toString),
-              Map.empty, Map.empty, Map.empty)
-          )))
-        val sets = kvHistories.map(history => indexInto(getHistoryIndex(history.storage) / `type`) fields getFields(history))
-        (fakeClient.execute[SearchDefinition, SearchResponse](_: SearchDefinition)(_: HttpExecutable[SearchDefinition, SearchResponse], _: ExecutionContext))
-          .expects(searchDefinition, SearchHttpExecutable, *)
-          .returning(Future(Right(RequestSuccess(200, Option.empty, Map.empty, searchResponse))))
+        expectSearch(searchDefinition).returning(getRequestSuccessFuture(searchResponse))
 
         processor.get(storageUuid, keys, operations, start, end, sort, page, pageSize, scroll).map {
-          case Right(response) => assert(response == GetHistoryResponse(8, pageSize, page, scrollId, historyList))
+          case Right(response) => assert(response == GetHistoryResponseBody(8, pageSize, page, scrollId, historyList))
           case _ => fail
         }
       }
     }
   }
+
+  private def getRequestSuccessFuture[T](response: T): Future[Right[RequestFailure, RequestSuccess[T]]] = {
+    Future(Right(RequestSuccess(200, Option.empty, Map.empty, response)))
+  }
+
+  private def getRequestFailureFuture[T]: Future[Left[RequestFailure, RequestSuccess[T]]] = {
+    Future(Left(RequestFailure(404, Option.empty, Map.empty, ElasticError.fromThrowable(new RuntimeException()))))
+  }
+
+  private def expectSearch(searchDefinition: SearchDefinition)(implicit client: HttpClient) =
+    (client.execute[SearchDefinition, SearchResponse](_: SearchDefinition)(_: HttpExecutable[SearchDefinition, SearchResponse], _: ExecutionContext))
+      .expects(searchDefinition, SearchHttpExecutable, *)
+
+  private def getSearchResponse(histories: List[History], total: Int, scrollId: Option[String], sort: Seq[String] = Seq.empty) =
+    SearchResponse(1, isTimedOut = false, isTerminatedEarly = false, Map.empty, Shards(1, 0, 1), scrollId, Map.empty,
+      SearchHits(total, 1, histories.zipWithIndex.map { case (value, key) => getSearchHit(key.toString, value, sort) }.toArray))
+
+  private def getSearchHit(id: String, history: History, sortBy: Seq[String]) = {
+    val source = Map("key" -> history.key, "value" -> history.value, "timestamp" -> history.timestamp.asInstanceOf[AnyRef],
+      "operation" -> history.operation.toString)
+    SearchHit(id, storageUuid, `type`, 1, 1, None, None, None, None, None, if (sortBy.isEmpty) None else Some(sortBy.map(source(_))), source, Map.empty, Map.empty, Map.empty)
+  }
+
 
   private def getHistoryIndex(storage: String) = s"history-storage-$storage"
 
