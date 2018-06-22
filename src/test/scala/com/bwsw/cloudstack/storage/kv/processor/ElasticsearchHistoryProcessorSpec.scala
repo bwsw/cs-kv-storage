@@ -20,7 +20,7 @@ package com.bwsw.cloudstack.storage.kv.processor
 import com.bwsw.cloudstack.storage.kv.configuration.ElasticsearchConfig
 import com.bwsw.cloudstack.storage.kv.entity.History
 import com.bwsw.cloudstack.storage.kv.error.InternalError
-import com.bwsw.cloudstack.storage.kv.message.{Clear, Delete, GetHistoryPagedBody, GetHistoryResponseBody, GetHistoryScrolledBody, KvHistory, Set}
+import com.bwsw.cloudstack.storage.kv.message.{Clear, Delete, HistoryPagedBody, HistoryResponseBody, HistoryScrolledBody, KvHistory, Set}
 import com.sksamuel.elastic4s.bulk.BulkDefinition
 import com.sksamuel.elastic4s.http.ElasticDsl.{indexInto, _}
 import com.sksamuel.elastic4s.http._
@@ -142,7 +142,7 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
         expectSearch(searchDefinition).returning(getRequestSuccessFuture(searchResponse))
 
         processor.get(storageUuid, defaultKeys, defaultOperations, defaultStart, defaultEnd, defaultSort, defaultPage, defaultSize, defaultScroll).map {
-          case Right(response) => assert(response == GetHistoryPagedBody(3, 3, defaultPage, historyList))
+          case Right(response) => assert(response == HistoryPagedBody(3, 3, defaultPage, historyList))
           case _ => fail
         }
       }
@@ -155,7 +155,7 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
         expectSearch(searchDefinition).returning(getRequestSuccessFuture(searchResponse))
 
         processor.get(storageUuid, keys, defaultOperations, defaultStart, defaultEnd, defaultSort, defaultPage, defaultSize, defaultScroll).map {
-          case Right(response) => assert(response == GetHistoryPagedBody(2, 2, defaultPage, historyList.slice(0, 2)))
+          case Right(response) => assert(response == HistoryPagedBody(2, 2, defaultPage, historyList.slice(0, 2)))
           case _ => fail
         }
       }
@@ -168,7 +168,7 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
         expectSearch(searchDefinition).returning(getRequestSuccessFuture(searchResponse))
 
         processor.get(storageUuid, defaultKeys, operations, defaultStart, defaultEnd, defaultSort, defaultPage, defaultSize, defaultScroll).map {
-          case Right(response) => assert(response == GetHistoryPagedBody(1, 1, defaultPage, historyList.slice(0, 1)))
+          case Right(response) => assert(response == HistoryPagedBody(1, 1, defaultPage, historyList.slice(0, 1)))
           case _ => fail
         }
       }
@@ -181,7 +181,7 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
         expectSearch(searchDefinition).returning(getRequestSuccessFuture(searchResponse))
 
         processor.get(storageUuid, defaultKeys, defaultOperations, start, defaultEnd, defaultSort, defaultPage, defaultSize, defaultScroll).map {
-          case Right(response) => assert(response == GetHistoryPagedBody(2, 2, defaultPage, historyList.slice(1, 3)))
+          case Right(response) => assert(response == HistoryPagedBody(2, 2, defaultPage, historyList.slice(1, 3)))
           case _ => fail
         }
       }
@@ -194,7 +194,7 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
         expectSearch(searchDefinition).returning(getRequestSuccessFuture(searchResponse))
 
         processor.get(storageUuid, defaultKeys, defaultOperations, defaultStart, end, defaultSort, defaultPage, defaultSize, defaultScroll).map {
-          case Right(response) => assert(response == GetHistoryPagedBody(2, 2, defaultPage, historyList.slice(0, 2)))
+          case Right(response) => assert(response == HistoryPagedBody(2, 2, defaultPage, historyList.slice(0, 2)))
           case _ => fail
         }
       }
@@ -208,7 +208,7 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
         expectSearch(searchDefinition).returning(getRequestSuccessFuture(searchResponse))
 
         processor.get(storageUuid, defaultKeys, defaultOperations, start, end, defaultSort, defaultPage, defaultSize, defaultScroll).map {
-          case Right(response) => assert(response == GetHistoryPagedBody(2, 2, defaultPage, historyList.slice(0, 2)))
+          case Right(response) => assert(response == HistoryPagedBody(2, 2, defaultPage, historyList.slice(0, 2)))
           case _ => fail
         }
       }
@@ -221,7 +221,7 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
         expectSearch(searchDefinition).returning(getRequestSuccessFuture(searchResponse))
 
         processor.get(storageUuid, defaultKeys, defaultOperations, startAndEnd, startAndEnd, defaultSort, defaultPage, defaultSize, defaultScroll).map {
-          case Right(response) => assert(response == GetHistoryPagedBody(2, 2, defaultPage, historyList.slice(0, 2)))
+          case Right(response) => assert(response == HistoryPagedBody(2, 2, defaultPage, historyList.slice(0, 2)))
           case _ => fail
         }
       }
@@ -238,7 +238,7 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
         expectSearch(searchDefinition).returning(getRequestSuccessFuture(searchResponse))
 
         processor.get(storageUuid, keys, operations, start, end, defaultSort, defaultPage, defaultSize, defaultScroll).map {
-          case Right(response) => assert(response == GetHistoryPagedBody(2, 2, defaultPage, historyList.slice(0, 2)))
+          case Right(response) => assert(response == HistoryPagedBody(2, 2, defaultPage, historyList.slice(0, 2)))
           case _ => fail
         }
       }
@@ -262,7 +262,7 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
         expectSearch(searchDefinition).returning(getRequestSuccessFuture(searchResponse))
 
         processor.get(storageUuid, keys, operations, start, end, sort, page, pageSize, scroll).map {
-          case Right(response) => assert(response == GetHistoryScrolledBody(8, pageSize, scrollId.get, historyList))
+          case Right(response) => assert(response == HistoryScrolledBody(8, pageSize, scrollId.get, historyList))
           case _ => fail
         }
       }

@@ -15,12 +15,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package com.bwsw.cloudstack.storage.kv.message
+package com.bwsw.cloudstack.storage.kv.message.response
 
-import com.bwsw.cloudstack.storage.kv.entity.History
+import com.bwsw.cloudstack.storage.kv.error.StorageError
+import com.bwsw.cloudstack.storage.kv.message.HistoryResponseBody
 
-sealed trait GetHistoryResponseBody
-
-case class GetHistoryScrolledBody(total: Long, size: Long, scrollId: String, items: List[History]) extends GetHistoryResponseBody
-
-case class GetHistoryPagedBody(total: Long, size: Long, page: Long, items: List[History]) extends GetHistoryResponseBody
+case class HistoryResponse(body: Either[StorageError, HistoryResponseBody])

@@ -23,10 +23,11 @@ import akka.util.Timeout
 import com.bwsw.cloudstack.storage.kv.configuration.ElasticsearchConfig
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError}
 import com.bwsw.cloudstack.storage.kv.message.{Clear, Delete, Operation, Set}
-import com.bwsw.cloudstack.storage.kv.message.request.GetHistoryRequest
+import com.bwsw.cloudstack.storage.kv.message.request.{GetHistoryRequest, KvMultiGetRequest, ScrollHistoryRequest}
 import com.bwsw.cloudstack.storage.kv.processor.HistoryProcessor
-import org.json4s.JsonAST.{JObject, JString}
-import org.json4s.{CustomSerializer, DefaultFormats, Formats}
+import com.fasterxml.jackson.core.JsonParseException
+import org.json4s.JsonAST._
+import org.json4s.{CustomSerializer, DefaultFormats, Formats, MappingException}
 import org.scalatra._
 import org.scalatra.json.JacksonJsonSupport
 
@@ -80,14 +81,37 @@ class KvHistoryServlet(system: ActorSystem, requestTimeout: FiniteDuration, proc
     }
   }
 
+  post("/") {
+    new AsyncResult() {
+      val is: Future[_] =
+        if (request.getHeader("Content-Type") == formats("json")) {
+          parsedBody match {
+            case JObject(List(("scrollId", scrollId: JString), ("timeout", timeout: JInt))) =>
+              val scrollRequest = ScrollHistoryRequest(scrollId.values, timeout.values.toLong)
+              (historyKvActor ? scrollRequest).map {
+                case Right(value) =>
+                  contentType = formats("json")
+                  value
+                case Left(_: BadRequestError) => BadRequest("")
+                case _ => InternalServerError("")
+              }
+            case _ => Future(BadRequest(""))
+          }
+        }
+        else
+          Future(BadRequest(""))
+    }
+  }
+
   private class OperationFormatException extends Exception
 
-  private class OperationSerializer extends CustomSerializer[Operation](format => ( {
-    case JString("set") => Set
-    case JString("delete") => Delete
-    case JString("clear") => Clear
-  }, {
-    case op: Operation => JString(op.toString)
-  })
-  )
+  private class OperationSerializer extends CustomSerializer[Operation](
+    format => ( {
+      case JString("set") => Set
+      case JString("delete") => Delete
+      case JString("clear") => Clear
+    }, {
+      case op: Operation => JString(op.toString)
+    }))
+
 }

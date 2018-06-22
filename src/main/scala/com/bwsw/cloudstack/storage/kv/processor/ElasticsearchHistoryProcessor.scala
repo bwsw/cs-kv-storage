@@ -18,8 +18,9 @@
 package com.bwsw.cloudstack.storage.kv.processor
 
 import com.bwsw.cloudstack.storage.kv.entity.History
-import com.bwsw.cloudstack.storage.kv.error.{StorageError, InternalError}
-import com.bwsw.cloudstack.storage.kv.message.{Clear, Delete, GetHistoryPagedBody, GetHistoryResponseBody, GetHistoryScrolledBody, KvHistory, Operation, Set}
+import com.bwsw.cloudstack.storage.kv.error.{InternalError, StorageError}
+import com.bwsw.cloudstack.storage.kv.message.{Clear, Delete, HistoryPagedBody, HistoryResponseBody, HistoryScrolledBody, KvHistory, Operation, Set}
+import com.bwsw.cloudstack.storage.kv.processor.ElasticsearchKvProcessor.getIds
 import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils
 import com.sksamuel.elastic4s.http.ElasticDsl.{search, _}
 import com.sksamuel.elastic4s.http.HttpClient
@@ -61,7 +62,7 @@ class ElasticsearchHistoryProcessor(client: HttpClient) extends HistoryProcessor
           sort: Iterable[String],
           page: Int,
           size: Int,
-          scroll: Int): Future[Either[StorageError, GetHistoryResponseBody]] = {
+          scroll: Int): Future[Either[StorageError, HistoryResponseBody]] = {
 
     val searchDef = search(getHistoricalStorage(storageUuid))
     val withKeys = if (keys.nonEmpty) Seq(termsQuery("key", keys)) else Seq.empty
@@ -116,14 +117,14 @@ class ElasticsearchHistoryProcessor(client: HttpClient) extends HistoryProcessor
         try {
           success.result.scrollId match {
             case Some(scrollId) =>
-              Right(GetHistoryScrolledBody(
+              Right(HistoryScrolledBody(
                 success.result.totalHits,
                 success.result.size,
                 scrollId,
                 getItems(success.result.hits)
               ))
             case None =>
-              Right(GetHistoryPagedBody(
+              Right(HistoryPagedBody(
                 success.result.totalHits,
                 success.result.size,
                 page,
@@ -135,6 +136,25 @@ class ElasticsearchHistoryProcessor(client: HttpClient) extends HistoryProcessor
           case ParseError(message) => Left(InternalError(message))
         }
     }
+  }
+
+  def scroll(scrollId: String, timeout: Long): Future[Either[StorageError, HistoryScrolledBody]] = {
+    client.execute(searchScroll(scrollId).keepAlive(timeout + "ms"))
+      .map {
+        case Left(failure) => Left(ElasticsearchUtils.getError(failure))
+        case Right(success) =>
+          try {
+            Right(HistoryScrolledBody(
+              success.result.totalHits,
+              success.result.size,
+              success.result.scrollId.get,
+              getItems(success.result.hits)
+            ))
+          }
+          catch {
+            case ParseError(message) => Left(InternalError(message))
+          }
+      }
   }
 }
 
@@ -183,4 +203,5 @@ object ElasticsearchHistoryProcessor {
   }.toList
 
   private case class ParseError(message: String) extends Exception
+
 }

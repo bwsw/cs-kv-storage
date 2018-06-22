@@ -22,8 +22,8 @@ import akka.pattern.pipe
 import com.bwsw.cloudstack.storage.kv.cache.StorageCache
 import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError}
-import com.bwsw.cloudstack.storage.kv.message.request.GetHistoryRequest
-import com.bwsw.cloudstack.storage.kv.message.response.GetHistoryResponse
+import com.bwsw.cloudstack.storage.kv.message.request.{GetHistoryRequest, ScrollHistoryRequest}
+import com.bwsw.cloudstack.storage.kv.message.response.HistoryResponse
 import com.bwsw.cloudstack.storage.kv.message.{KvHistory, KvHistoryBulk, KvHistoryFlush, KvHistoryRetry}
 import com.bwsw.cloudstack.storage.kv.processor.HistoryProcessor
 import scaldi.Injector
@@ -91,8 +91,10 @@ class BufferedHistoryKvActor(implicit inj: Injector)
           Future(Left(BadRequestError()))
         case None =>
           Future(Left(NotFoundError()))
-      }.map(body => GetHistoryResponse(body)).pipeTo(self)(sender())
-    case GetHistoryResponse(body) =>
+      }.map(body => HistoryResponse(body)).pipeTo(self)(sender())
+    case request: ScrollHistoryRequest =>
+      historyProcessor.scroll(request.scrollId, request.timeout).map(body => HistoryResponse(body)).pipeTo(self)(sender())
+    case HistoryResponse(body) =>
       sender() ! body
     case failure: Status.Failure =>
       sender() ! Left(InternalError(failure.cause.getMessage))

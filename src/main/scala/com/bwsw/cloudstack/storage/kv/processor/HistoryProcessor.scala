@@ -44,5 +44,13 @@ trait HistoryProcessor {
           sort: Iterable[String],
           page: Int,
           size: Int,
-          scroll: Int): Future[Either[StorageError, GetHistoryResponseBody]]
+          scroll: Int): Future[Either[StorageError, HistoryResponseBody]]
+
+  /** Retrieves a single page of the request
+    *
+    * @param scrollId Id of the scroll
+    * @param timeout  time to keep the search context open for in milliseconds
+    * @return a [[Future]] of response body or StorageError if any error occurred
+    */
+  def scroll(scrollId: String, timeout: Long): Future[Either[StorageError, HistoryScrolledBody]]
 }
