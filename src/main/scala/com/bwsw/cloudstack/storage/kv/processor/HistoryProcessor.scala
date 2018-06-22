@@ -44,5 +44,5 @@ trait HistoryProcessor {
           sort: Iterable[String],
           page: Int,
           size: Int,
-          scroll: String): Future[Either[StorageError, GetHistoryResponseBody]]
+          scroll: Int): Future[Either[StorageError, GetHistoryResponseBody]]
 }

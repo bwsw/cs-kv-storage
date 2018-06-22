@@ -19,4 +19,8 @@ package com.bwsw.cloudstack.storage.kv.message
 
 import com.bwsw.cloudstack.storage.kv.entity.History
 
-case class GetHistoryResponseBody(total: Long, size: Long, page: Long, scrollId: Option[String], items: List[History])
+sealed trait GetHistoryResponseBody
+
+case class GetHistoryScrolledBody(total: Long, size: Long, scrollId: String, items: List[History]) extends GetHistoryResponseBody
+
+case class GetHistoryPagedBody(total: Long, size: Long, page: Long, items: List[History]) extends GetHistoryResponseBody

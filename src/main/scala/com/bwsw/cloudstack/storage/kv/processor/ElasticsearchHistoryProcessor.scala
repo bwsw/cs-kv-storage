@@ -17,19 +17,14 @@
 
 package com.bwsw.cloudstack.storage.kv.processor
 
-import com.bwsw.cloudstack.storage.kv.configuration.{AppConfig, ElasticsearchConfig}
 import com.bwsw.cloudstack.storage.kv.entity.History
-import com.bwsw.cloudstack.storage.kv.error.{InternalError, StorageError}
-import com.bwsw.cloudstack.storage.kv.message.response.GetHistoryResponse
-import com.bwsw.cloudstack.storage.kv.message.{Clear, Delete, GetHistoryResponseBody, KvHistory, Operation, Set}
-import com.bwsw.cloudstack.storage.kv.processor.ElasticsearchKvProcessor.{ValueField, getIds}
+import com.bwsw.cloudstack.storage.kv.error.{StorageError, InternalError}
+import com.bwsw.cloudstack.storage.kv.message.{Clear, Delete, GetHistoryPagedBody, GetHistoryResponseBody, GetHistoryScrolledBody, KvHistory, Operation, Set}
 import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils
 import com.sksamuel.elastic4s.http.ElasticDsl.{search, _}
 import com.sksamuel.elastic4s.http.HttpClient
 import com.sksamuel.elastic4s.http.search.SearchHits
-import com.sksamuel.elastic4s.searches.SearchDefinition
-import com.sksamuel.elastic4s.searches.queries.QueryDefinition
-import com.sksamuel.elastic4s.searches.sort.{FieldSortDefinition, SortDefinition, SortOrder}
+import com.sksamuel.elastic4s.searches.sort.{FieldSortDefinition, SortOrder}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -66,7 +61,7 @@ class ElasticsearchHistoryProcessor(client: HttpClient) extends HistoryProcessor
           sort: Iterable[String],
           page: Int,
           size: Int,
-          scroll: String): Future[Either[StorageError, GetHistoryResponseBody]] = {
+          scroll: Int): Future[Either[StorageError, GetHistoryResponseBody]] = {
 
     val searchDef = search(getHistoricalStorage(storageUuid))
     val withKeys = if (keys.nonEmpty) Seq(termsQuery("key", keys)) else Seq.empty
@@ -99,8 +94,8 @@ class ElasticsearchHistoryProcessor(client: HttpClient) extends HistoryProcessor
         withSize
 
     val withScroll =
-      if (scroll.nonEmpty)
-        withPage.scroll(scroll)
+      if (scroll > 0)
+        withPage.scroll(scroll + "ms")
       else
         withPage
 
@@ -116,15 +111,29 @@ class ElasticsearchHistoryProcessor(client: HttpClient) extends HistoryProcessor
         withScroll
 
     client.execute(withSort).map {
-      case Left(failure) => Left(InternalError(withSort.toString)) //ElasticsearchUtils.getError(failure))
+      case Left(failure) => Left(ElasticsearchUtils.getError(failure))
       case Right(success) =>
-        Right(GetHistoryResponseBody(
-          success.result.totalHits,
-          success.result.size,
-          page,
-          success.result.scrollId,
-          getItems(success.result.hits)
-        ))
+        try {
+          success.result.scrollId match {
+            case Some(scrollId) =>
+              Right(GetHistoryScrolledBody(
+                success.result.totalHits,
+                success.result.size,
+                scrollId,
+                getItems(success.result.hits)
+              ))
+            case None =>
+              Right(GetHistoryPagedBody(
+                success.result.totalHits,
+                success.result.size,
+                page,
+                getItems(success.result.hits)
+              ))
+          }
+        }
+        catch {
+          case ParseError(message) => Left(InternalError(message))
+        }
     }
   }
 }
@@ -147,16 +156,16 @@ object ElasticsearchHistoryProcessor {
   protected def getString(name: String)(implicit fields: Map[String, Any]): String = {
     fields.get(name) match {
       case Some(null) => null
-      case Some(s: String) => s
-      case _ => throw new RuntimeException("Invalid String result")
+      case Some(value: String) => value
+      case _ => throw ParseError("Invalid String result")
     }
   }
 
   protected def getLong(name: String)(implicit fields: Map[String, Any]): Long = {
     fields.get(name) match {
-      case Some(s: Long) => s
-      case Some(s: Int) => s
-      case _ => throw new RuntimeException("Invalid Long result")
+      case Some(value: Long) => value
+      case Some(value: Int) => value
+      case _ => throw ParseError("Invalid Long result")
     }
   }
 
@@ -164,7 +173,7 @@ object ElasticsearchHistoryProcessor {
     case "set" => Set
     case "delete" => Delete
     case "clear" => Clear
-    case _ => throw new RuntimeException("Invalid result")
+    case _ => throw ParseError("Invalid Operation result")
   }
 
   protected def getItems(searchHits: SearchHits): List[History] = searchHits.hits.map {
@@ -173,4 +182,5 @@ object ElasticsearchHistoryProcessor {
       History(getString("key"), getString("value"), getLong("timestamp"), getOperation(getString("operation")))
   }.toList
 
+  private case class ParseError(message: String) extends Exception
 }

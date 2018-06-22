@@ -27,4 +27,4 @@ case class GetHistoryRequest(storageUuid: String,
                              sort: Iterable[String],
                              page: Int,
                              size: Int,
-                             scroll: String)
+                             scroll: Int)

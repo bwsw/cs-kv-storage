@@ -21,11 +21,12 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.util.Timeout
 import com.bwsw.cloudstack.storage.kv.configuration.ElasticsearchConfig
-import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, NotFoundError, InternalError}
-import com.bwsw.cloudstack.storage.kv.message.{Clear, Delete, Set}
+import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError}
+import com.bwsw.cloudstack.storage.kv.message.{Clear, Delete, Operation, Set}
 import com.bwsw.cloudstack.storage.kv.message.request.GetHistoryRequest
 import com.bwsw.cloudstack.storage.kv.processor.HistoryProcessor
-import org.json4s.{DefaultFormats, Formats}
+import org.json4s.JsonAST.{JObject, JString}
+import org.json4s.{CustomSerializer, DefaultFormats, Formats}
 import org.scalatra._
 import org.scalatra.json.JacksonJsonSupport
 
@@ -37,8 +38,9 @@ class KvHistoryServlet(system: ActorSystem, requestTimeout: FiniteDuration, proc
     with FutureSupport
     with JacksonJsonSupport {
 
-  protected implicit lazy val jsonFormats: Formats = DefaultFormats.preservingEmptyValues
+  protected implicit lazy val jsonFormats: Formats = DefaultFormats.preservingEmptyValues + new OperationSerializer
   protected implicit val akkaTimeout: Timeout = requestTimeout
+  protected val fieldList = List("key", "value", "timestamp", "operation")
 
   protected implicit def executor: ExecutionContext = system.dispatcher
 
@@ -47,8 +49,8 @@ class KvHistoryServlet(system: ActorSystem, requestTimeout: FiniteDuration, proc
       val is: Future[_] = {
         try {
           val getHistoryRequest = GetHistoryRequest(params("storage_uuid"),
-            multiParams.getOrElse("keys", List.empty),
-            multiParams.getOrElse("operations", List.empty).map {
+            params.getOrElse("keys", "").split(",").filter(_.nonEmpty),
+            params.getOrElse("operations", "").split(",").filter(_.nonEmpty).map {
               case "set" => Set
               case "delete" => Delete
               case "clear" => Clear
@@ -56,10 +58,10 @@ class KvHistoryServlet(system: ActorSystem, requestTimeout: FiniteDuration, proc
             },
             params.getOrElse("start", "0").toLong,
             params.getOrElse("end", "0").toLong,
-            multiParams.getOrElse("sort", List.empty),
+            params.getOrElse("sort", "").split(",").filter(fieldList.contains(_)),
             params.getOrElse("page", "1").toInt,
             params.getOrElse("size", elasticsearchConfig.getScrollPageSize.toString).toInt,
-            params.getOrElse("scroll", ""))
+            params.getOrElse("scroll", "0").toInt)
 
           (historyKvActor ? getHistoryRequest)
             .map {
@@ -68,7 +70,6 @@ class KvHistoryServlet(system: ActorSystem, requestTimeout: FiniteDuration, proc
                 value
               case Left(_: NotFoundError) => NotFound("")
               case Left(_: BadRequestError) => BadRequest("")
-              case Left(error: InternalError) => InternalServerError(error.message)
               case _ => InternalServerError()
             }
         } catch {
@@ -81,4 +82,12 @@ class KvHistoryServlet(system: ActorSystem, requestTimeout: FiniteDuration, proc
 
   private class OperationFormatException extends Exception
 
+  private class OperationSerializer extends CustomSerializer[Operation](format => ( {
+    case JString("set") => Set
+    case JString("delete") => Delete
+    case JString("clear") => Clear
+  }, {
+    case op: Operation => JString(op.toString)
+  })
+  )
 }

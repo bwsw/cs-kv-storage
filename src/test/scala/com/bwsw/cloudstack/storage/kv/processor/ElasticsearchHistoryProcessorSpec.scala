@@ -19,7 +19,8 @@ package com.bwsw.cloudstack.storage.kv.processor
 
 import com.bwsw.cloudstack.storage.kv.configuration.ElasticsearchConfig
 import com.bwsw.cloudstack.storage.kv.entity.History
-import com.bwsw.cloudstack.storage.kv.message.{Clear, Delete, GetHistoryResponseBody, KvHistory, Set}
+import com.bwsw.cloudstack.storage.kv.error.InternalError
+import com.bwsw.cloudstack.storage.kv.message.{Clear, Delete, GetHistoryPagedBody, GetHistoryResponseBody, GetHistoryScrolledBody, KvHistory, Set}
 import com.sksamuel.elastic4s.bulk.BulkDefinition
 import com.sksamuel.elastic4s.http.ElasticDsl.{indexInto, _}
 import com.sksamuel.elastic4s.http._
@@ -40,7 +41,7 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
   private val defaultEnd = 0
   private val defaultSize = 50
   private val defaultPage = 1
-  private val defaultScroll = ""
+  private val defaultScroll = 0
   private val defaultScrollId = None
   private val index = "history-storage-someStorage"
   private val `type` = "_doc"
@@ -141,7 +142,7 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
         expectSearch(searchDefinition).returning(getRequestSuccessFuture(searchResponse))
 
         processor.get(storageUuid, defaultKeys, defaultOperations, defaultStart, defaultEnd, defaultSort, defaultPage, defaultSize, defaultScroll).map {
-          case Right(response) => assert(response == GetHistoryResponseBody(3, 3, defaultPage, defaultScrollId, historyList))
+          case Right(response) => assert(response == GetHistoryPagedBody(3, 3, defaultPage, historyList))
           case _ => fail
         }
       }
@@ -154,7 +155,7 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
         expectSearch(searchDefinition).returning(getRequestSuccessFuture(searchResponse))
 
         processor.get(storageUuid, keys, defaultOperations, defaultStart, defaultEnd, defaultSort, defaultPage, defaultSize, defaultScroll).map {
-          case Right(response) => assert(response == GetHistoryResponseBody(2, 2, defaultPage, defaultScrollId, historyList.slice(0, 2)))
+          case Right(response) => assert(response == GetHistoryPagedBody(2, 2, defaultPage, historyList.slice(0, 2)))
           case _ => fail
         }
       }
@@ -167,7 +168,7 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
         expectSearch(searchDefinition).returning(getRequestSuccessFuture(searchResponse))
 
         processor.get(storageUuid, defaultKeys, operations, defaultStart, defaultEnd, defaultSort, defaultPage, defaultSize, defaultScroll).map {
-          case Right(response) => assert(response == GetHistoryResponseBody(1, 1, defaultPage, defaultScrollId, historyList.slice(0, 1)))
+          case Right(response) => assert(response == GetHistoryPagedBody(1, 1, defaultPage, historyList.slice(0, 1)))
           case _ => fail
         }
       }
@@ -180,7 +181,7 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
         expectSearch(searchDefinition).returning(getRequestSuccessFuture(searchResponse))
 
         processor.get(storageUuid, defaultKeys, defaultOperations, start, defaultEnd, defaultSort, defaultPage, defaultSize, defaultScroll).map {
-          case Right(response) => assert(response == GetHistoryResponseBody(2, 2, defaultPage, defaultScrollId, historyList.slice(1, 3)))
+          case Right(response) => assert(response == GetHistoryPagedBody(2, 2, defaultPage, historyList.slice(1, 3)))
           case _ => fail
         }
       }
@@ -193,7 +194,7 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
         expectSearch(searchDefinition).returning(getRequestSuccessFuture(searchResponse))
 
         processor.get(storageUuid, defaultKeys, defaultOperations, defaultStart, end, defaultSort, defaultPage, defaultSize, defaultScroll).map {
-          case Right(response) => assert(response == GetHistoryResponseBody(2, 2, defaultPage, defaultScrollId, historyList.slice(0, 2)))
+          case Right(response) => assert(response == GetHistoryPagedBody(2, 2, defaultPage, historyList.slice(0, 2)))
           case _ => fail
         }
       }
@@ -207,7 +208,7 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
         expectSearch(searchDefinition).returning(getRequestSuccessFuture(searchResponse))
 
         processor.get(storageUuid, defaultKeys, defaultOperations, start, end, defaultSort, defaultPage, defaultSize, defaultScroll).map {
-          case Right(response) => assert(response == GetHistoryResponseBody(2, 2, defaultPage, defaultScrollId, historyList.slice(0, 2)))
+          case Right(response) => assert(response == GetHistoryPagedBody(2, 2, defaultPage, historyList.slice(0, 2)))
           case _ => fail
         }
       }
@@ -220,7 +221,7 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
         expectSearch(searchDefinition).returning(getRequestSuccessFuture(searchResponse))
 
         processor.get(storageUuid, defaultKeys, defaultOperations, startAndEnd, startAndEnd, defaultSort, defaultPage, defaultSize, defaultScroll).map {
-          case Right(response) => assert(response == GetHistoryResponseBody(2, 2, defaultPage, defaultScrollId, historyList.slice(0, 2)))
+          case Right(response) => assert(response == GetHistoryPagedBody(2, 2, defaultPage, historyList.slice(0, 2)))
           case _ => fail
         }
       }
@@ -237,7 +238,7 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
         expectSearch(searchDefinition).returning(getRequestSuccessFuture(searchResponse))
 
         processor.get(storageUuid, keys, operations, start, end, defaultSort, defaultPage, defaultSize, defaultScroll).map {
-          case Right(response) => assert(response == GetHistoryResponseBody(2, 2, defaultPage, defaultScrollId, historyList.slice(0, 2)))
+          case Right(response) => assert(response == GetHistoryPagedBody(2, 2, defaultPage, historyList.slice(0, 2)))
           case _ => fail
         }
       }
@@ -250,10 +251,10 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
         val operations = List(Set)
         val start = 1
         val end = 2
-        val scroll = "2 seconds"
+        val scroll = 2000
         val sort = Seq("key", "-timestamp")
         val searchDefinition = ElasticDsl.search(getHistoryIndex(storageUuid)).
-          size(pageSize).scroll(scroll).query(boolQuery().filter(List(
+          size(pageSize).scroll(scroll + "ms").query(boolQuery().filter(List(
           termsQuery("key", keys), termsQuery("operation", operations.map(_.toString)), rangeQuery("timestamp").gte(start).lte(end)))).
           from(pageSize * (page - 1)).sortBy(List(FieldSortDefinition("key", order = SortOrder.ASC), FieldSortDefinition("timestamp", order = SortOrder.DESC)))
         val searchResponse = getSearchResponse(historyList, 8, scrollId, Seq("key", "timestamp"))
@@ -261,7 +262,51 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
         expectSearch(searchDefinition).returning(getRequestSuccessFuture(searchResponse))
 
         processor.get(storageUuid, keys, operations, start, end, sort, page, pageSize, scroll).map {
-          case Right(response) => assert(response == GetHistoryResponseBody(8, pageSize, page, scrollId, historyList))
+          case Right(response) => assert(response == GetHistoryScrolledBody(8, pageSize, scrollId.get, historyList))
+          case _ => fail
+        }
+      }
+
+      it("should return InternalError if Elasticsearch request fails") {
+        val searchDefinition = ElasticDsl.search(getHistoryIndex(storageUuid)).size(defaultSize)
+        expectSearch(searchDefinition).returning(getRequestFailureFuture)
+
+        processor.get(storageUuid, defaultKeys, defaultOperations, defaultStart, defaultEnd, defaultSort, defaultPage, defaultSize, defaultScroll).map {
+          case Left(_: InternalError) => succeed
+          case _ => fail
+        }
+      }
+
+      it("should return InternalError if bad value of String field returned form Elasticsearch") {
+        val searchDefinition = ElasticDsl.search(getHistoryIndex(storageUuid)).size(defaultSize)
+        val searchResponse = getBadResponse(Map("key" -> "someKey", "value" -> 1.asInstanceOf[AnyRef], "timestamp" -> 1.asInstanceOf[AnyRef], "operation" -> "set"))
+        expectSearch(searchDefinition).returning(getRequestSuccessFuture(searchResponse))
+
+
+        processor.get(storageUuid, defaultKeys, defaultOperations, defaultStart, defaultEnd, defaultSort, defaultPage, defaultSize, defaultScroll).map {
+          case Left(_: InternalError) => succeed
+          case _ => fail
+        }
+      }
+
+      it("should return InternalError if bad value of Long field returned form Elasticsearch") {
+        val searchDefinition = ElasticDsl.search(getHistoryIndex(storageUuid)).size(defaultSize)
+        val searchResponse = getBadResponse(Map("key" -> "someKey", "value" -> "someValue", "timestamp" -> "1", "operation" -> "set"))
+        expectSearch(searchDefinition).returning(getRequestSuccessFuture(searchResponse))
+
+        processor.get(storageUuid, defaultKeys, defaultOperations, defaultStart, defaultEnd, defaultSort, defaultPage, defaultSize, defaultScroll).map {
+          case Left(_: InternalError) => succeed
+          case _ => fail
+        }
+      }
+
+      it("should return InternalError if bad value of Operation returned form Elasticsearch") {
+        val searchDefinition = ElasticDsl.search(getHistoryIndex(storageUuid)).size(defaultSize)
+        val searchResponse = getBadResponse(Map("key" -> "someKey", "value" -> "someValue", "timestamp" -> 1.asInstanceOf[AnyRef], "operation" -> "CL33Я"))
+        expectSearch(searchDefinition).returning(getRequestSuccessFuture(searchResponse))
+
+        processor.get(storageUuid, defaultKeys, defaultOperations, defaultStart, defaultEnd, defaultSort, defaultPage, defaultSize, defaultScroll).map {
+          case Left(_: InternalError) => succeed
           case _ => fail
         }
       }
@@ -290,6 +335,10 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
     SearchHit(id, storageUuid, `type`, 1, 1, None, None, None, None, None, if (sortBy.isEmpty) None else Some(sortBy.map(source(_))), source, Map.empty, Map.empty, Map.empty)
   }
 
+  private def getBadResponse(map: Map[String, AnyRef]) =
+    SearchResponse(1, isTimedOut = false, isTerminatedEarly = false, Map.empty, Shards(1, 0, 1), None, Map.empty,
+      SearchHits(1, 1,
+        Array(SearchHit("1", storageUuid, `type`, 1, 1, None, None, None, None, None, None, map, Map.empty, Map.empty, Map.empty))))
 
   private def getHistoryIndex(storage: String) = s"history-storage-$storage"
 
