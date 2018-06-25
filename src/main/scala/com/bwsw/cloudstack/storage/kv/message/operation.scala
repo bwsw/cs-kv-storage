@@ -15,19 +15,19 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package com.bwsw.cloudstack.storage.kv.util
+package com.bwsw.cloudstack.storage.kv.message
 
-import com.bwsw.cloudstack.storage.kv.error.InternalError
-import com.sksamuel.elastic4s.http.RequestFailure
+/** Operation that where used to change data existing in some storage **/
+sealed trait Operation
 
-/** An utility for Elasticsearch operations **/
-object ElasticsearchUtils {
+object Set extends Operation {
+  override def toString: String = "set"
+}
 
-  def getStorageIndex(storage: String): String = "storage-" + storage
+object Delete extends Operation {
+  override def toString: String = "delete"
+}
 
-  def getError(requestFailure: RequestFailure): InternalError = {
-    if (requestFailure.error == null)
-      InternalError("Elasticsearch error")
-    else InternalError(requestFailure.error.reason)
-  }
+object Clear extends Operation {
+  override def toString: String = "clear"
 }
