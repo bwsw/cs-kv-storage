@@ -20,6 +20,7 @@ package com.bwsw.cloudstack.storage.kv.actor
 import akka.actor.Status
 import akka.pattern.pipe
 import com.bwsw.cloudstack.storage.kv.cache.StorageCache
+import com.bwsw.cloudstack.storage.kv.entity.Storage
 import com.bwsw.cloudstack.storage.kv.error.{InternalError, NotFoundError, StorageError}
 import com.bwsw.cloudstack.storage.kv.message._
 import com.bwsw.cloudstack.storage.kv.message.request._
@@ -33,7 +34,7 @@ import scala.concurrent.Future
 /** Actor handling users requests and logging history of changes **/
 class HistoricalKvActor(implicit inj: Injector)
   extends KvActor
-    with akka.actor.ActorLogging {
+  with akka.actor.ActorLogging {
 
   import context.dispatcher
 
@@ -43,59 +44,60 @@ class HistoricalKvActor(implicit inj: Injector)
 
   override def receive: Receive = {
     case request: KvGetRequest =>
-      process(request, (request: KvGetRequest) => {
+      process(request, (request: KvGetRequest, storage: Storage) => {
         kvProcessor.get(request.storage, request.key).map(r => KvGetResponse(r))
       })
     case KvGetResponse(response) =>
       sender() ! response
     case request: KvMultiGetRequest =>
-      process(request, (request: KvMultiGetRequest) => {
+      process(request, (request: KvMultiGetRequest, storage: Storage) => {
         kvProcessor.get(request.storage, request.keys).map(r => KvMultiGetResponse(r))
       })
     case KvMultiGetResponse(response) =>
       sender() ! response
     case request: KvSetRequest =>
       val timestamp = System.currentTimeMillis()
-      process(request, (request: KvSetRequest) => {
-        kvProcessor.set(request.storage, request.key, request.value).map(r => KvSetResponse(request.storage, request.key, request.value, timestamp, r))
+      process(request, (request: KvSetRequest, storage: Storage) => {
+        kvProcessor.set(request.storage, request.key, request.value)
+          .map(r => KvSetResponse(storage, request.key, request.value, timestamp, r))
       })
-    case KvSetResponse(storage: String, key: String, value: String, timestamp: Long, response: Either[StorageError, Unit]) =>
+    case KvSetResponse(storage, key, value, timestamp, response) =>
       logHistory(response, storage, key, value, timestamp, Set)
       sender() ! response
     case request: KvMultiSetRequest =>
       val timestamp = System.currentTimeMillis()
-      process(request, (request: KvMultiSetRequest) => {
-        kvProcessor.set(request.storage, request.kvs).map(r => KvMultiSetResponse(request.storage, request.kvs, timestamp, r))
+      process(request, (request: KvMultiSetRequest, storage: Storage) => {
+        kvProcessor.set(request.storage, request.kvs).map(r => KvMultiSetResponse(storage, request.kvs, timestamp, r))
       })
-    case KvMultiSetResponse(storage: String, kvs: Map[String, String], timestamp: Long, response: Either[StorageError, Map[String, Boolean]]) =>
+    case KvMultiSetResponse(storage, kvs, timestamp, response) =>
       logHistory(response, storage, timestamp, Set, kvs)
       sender() ! response
     case request: KvDeleteRequest =>
       val timestamp = System.currentTimeMillis()
-      process(request, (request: KvDeleteRequest) => {
-        kvProcessor.delete(request.storage, request.key).map(r => KvDeleteResponse(request.storage, request.key, timestamp, r))
+      process(request, (request: KvDeleteRequest, storage: Storage) => {
+        kvProcessor.delete(request.storage, request.key).map(r => KvDeleteResponse(storage, request.key, timestamp, r))
       })
-    case KvDeleteResponse(storage: String, key: String, timestamp: Long, response: Either[StorageError, Unit]) =>
+    case KvDeleteResponse(storage, key, timestamp, response) =>
       logHistory(response, storage, key, null, timestamp, Delete)
       sender() ! response
     case request: KvMultiDeleteRequest =>
       val timestamp = System.currentTimeMillis()
-      process(request, (request: KvMultiDeleteRequest) => {
-        kvProcessor.delete(request.storage, request.keys).map(r => KvMultiDeleteResponse(request.storage, timestamp, r))
+      process(request, (request: KvMultiDeleteRequest, storage: Storage) => {
+        kvProcessor.delete(request.storage, request.keys).map(r => KvMultiDeleteResponse(storage, timestamp, r))
       })
-    case KvMultiDeleteResponse(storage: String, timestamp: Long, response: Either[StorageError, Map[String, Boolean]]) =>
+    case KvMultiDeleteResponse(storage, timestamp, response) =>
       logHistory(response, storage, timestamp, Delete)
       sender() ! response
     case request: KvListRequest =>
-      process(request, (request: KvListRequest) => {
+      process(request, (request: KvListRequest, storage: Storage) => {
         kvProcessor.list(request.storage).map(r => KvListResponse(r))
       })
     case KvListResponse(response) =>
       sender() ! response
     case request: KvClearRequest =>
       val timestamp = System.currentTimeMillis()
-      process(request, (request: KvClearRequest) => {
-        kvProcessor.clear(request.storage).map(r => KvClearResponse(request.storage, timestamp, r))
+      process(request, (request: KvClearRequest, storage: Storage) => {
+        kvProcessor.clear(request.storage).map(r => KvClearResponse(storage, timestamp, r))
       })
     case KvClearResponse(storage, timestamp, response) =>
       logHistory(response, storage, null, null, timestamp, Clear)
@@ -106,41 +108,42 @@ class HistoricalKvActor(implicit inj: Injector)
       sender() ! Left(InternalError(failure.cause.getMessage))
   }
 
-  protected def process[S <: KvRequest](r: S, producer: S => Future[KvResponse]): Future[KvResponse] = {
+  protected def process[S <: KvRequest](r: S, producer: (S, Storage) => Future[KvResponse]): Future[KvResponse] = {
     storageCache.get(r.storage).flatMap {
-      case Some(_) => producer.apply(r)
+      case Some(storage) => producer.apply(r, storage)
       case None => Future(KvErrorResponse(NotFoundError()))
     }.pipeTo(self)(sender())
   }
 
-  protected def logHistory(response: Either[StorageError, Unit], storage: String, key: String, value: String, timestamp: Long, operation: Operation): Unit = {
-    response match {
-      case Right(_) =>
-        storageCache.isHistoryEnabled(storage).map {
-          case Some(true) => Some(KvHistory(storage, key, value, timestamp, operation))
-          case Some(false) => None
-          case None =>
-            logError(storage)
-            None
-        }.pipeTo(historyKvActor)
-      case Left(_) => // do nothing
-    }
+  protected def logHistory(
+      response: Either[StorageError, Unit],
+      storage: Storage,
+      key: String,
+      value: String,
+      timestamp: Long,
+      operation: Operation): Unit = {
+    if (storage.keepHistory)
+      response match {
+        case Right(_) =>
+          historyKvActor ! KvHistory(storage.uUID, key, value, timestamp, operation)
+        case Left(_) => // do nothing
+      }
   }
 
-  protected def logHistory(response: Either[StorageError, Map[String, Boolean]], storage: String, timestamp: Long, operation: Operation, values: Map[String, String] = Map()): Unit = {
-    response match {
-      case Right(results) =>
-        storageCache.isHistoryEnabled(storage).map {
-          case Some(true) => Some(KvHistoryBulk(results.filter(_._2).map {
-            case (key, _) => KvHistory(storage, key, values.getOrElse(key, null), timestamp, operation)
-          }))
-          case Some(false) => None
-          case None =>
-            logError(storage)
-            None
-        }.pipeTo(historyKvActor)
-      case Left(_) => // do nothing
-    }
+  protected def logHistory(
+      response: Either[StorageError, Map[String, Boolean]],
+      storage: Storage,
+      timestamp: Long,
+      operation: Operation,
+      values: Map[String, String] = Map()): Unit = {
+    if (storage.keepHistory)
+      response match {
+        case Right(results) =>
+          historyKvActor ! KvHistoryBulk(results.filter(_._2).map {
+            case (key, _) => KvHistory(storage.uUID, key, values.getOrElse(key, null), timestamp, operation)
+          })
+        case Left(_) => // do nothing
+      }
   }
 
   protected def logError(storage: String): Unit = {

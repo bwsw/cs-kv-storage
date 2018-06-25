@@ -18,9 +18,9 @@
 package com.bwsw.cloudstack.storage.kv.cache
 
 import com.bwsw.cloudstack.storage.kv.entity.Storage
-import com.sksamuel.elastic4s.http.ElasticDsl.get
-import com.sksamuel.elastic4s.http.ElasticDsl._
+import com.sksamuel.elastic4s.http.ElasticDsl.{get, _}
 import com.sksamuel.elastic4s.http.HttpClient
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -35,7 +35,8 @@ class ElasticsearchStorageLoader(client: HttpClient) extends StorageLoader {
         case Left(_) => throw new RuntimeException("Storage info loading failed")
         case Right(success) =>
           if (success.result.found) {
-            Some(Storage(success.result.id, getValue(success.result.source, "type"), getValue(success.result.source, "is_history_enabled").toBoolean))
+            Some(Storage(success.result.id, getValue(success.result.source, "type").toString,
+              getValue(success.result.source, "is_history_enabled").asInstanceOf[Boolean]))
           }
           else None
       }
@@ -43,8 +44,8 @@ class ElasticsearchStorageLoader(client: HttpClient) extends StorageLoader {
 
   private def getValue(source: Map[String, Any], key: String) = {
     source.get(key) match {
-      case Some(s: String) => s
-      case _ => throw new RuntimeException("Invalid result")
+      case Some(s) => s
+      case None => throw new RuntimeException("Invalid result")
     }
   }
 }
