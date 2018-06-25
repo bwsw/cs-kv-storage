@@ -23,11 +23,10 @@ import akka.util.Timeout
 import com.bwsw.cloudstack.storage.kv.configuration.ElasticsearchConfig
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError}
 import com.bwsw.cloudstack.storage.kv.message.{Clear, Delete, Operation, Set}
-import com.bwsw.cloudstack.storage.kv.message.request.{GetHistoryRequest, KvMultiGetRequest, ScrollHistoryRequest}
+import com.bwsw.cloudstack.storage.kv.message.request.{GetHistoryRequest, ScrollHistoryRequest}
 import com.bwsw.cloudstack.storage.kv.processor.HistoryProcessor
-import com.fasterxml.jackson.core.JsonParseException
 import org.json4s.JsonAST._
-import org.json4s.{CustomSerializer, DefaultFormats, Formats, MappingException}
+import org.json4s.{CustomSerializer, DefaultFormats, Formats}
 import org.scalatra._
 import org.scalatra.json.JacksonJsonSupport
 

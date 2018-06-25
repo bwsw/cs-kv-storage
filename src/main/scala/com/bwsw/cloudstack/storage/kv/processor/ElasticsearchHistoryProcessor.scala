@@ -18,12 +18,11 @@
 package com.bwsw.cloudstack.storage.kv.processor
 
 import com.bwsw.cloudstack.storage.kv.entity.History
-import com.bwsw.cloudstack.storage.kv.error.{InternalError, StorageError}
+import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, StorageError}
 import com.bwsw.cloudstack.storage.kv.message.{Clear, Delete, HistoryPagedBody, HistoryResponseBody, HistoryScrolledBody, KvHistory, Operation, Set}
-import com.bwsw.cloudstack.storage.kv.processor.ElasticsearchKvProcessor.getIds
 import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils
 import com.sksamuel.elastic4s.http.ElasticDsl.{search, _}
-import com.sksamuel.elastic4s.http.HttpClient
+import com.sksamuel.elastic4s.http.{HttpClient, RequestFailure}
 import com.sksamuel.elastic4s.http.search.SearchHits
 import com.sksamuel.elastic4s.searches.sort.{FieldSortDefinition, SortOrder}
 
@@ -141,7 +140,12 @@ class ElasticsearchHistoryProcessor(client: HttpClient) extends HistoryProcessor
   def scroll(scrollId: String, timeout: Long): Future[Either[StorageError, HistoryScrolledBody]] = {
     client.execute(searchScroll(scrollId).keepAlive(timeout + "ms"))
       .map {
-        case Left(failure) => Left(ElasticsearchUtils.getError(failure))
+        case Left(RequestFailure(404, _, _, _)) =>
+          Left(BadRequestError())
+        case Left(RequestFailure(400, _, _, _)) =>
+          Left(BadRequestError())
+        case Left(failure) =>
+          Left(ElasticsearchUtils.getError(failure))
         case Right(success) =>
           try {
             Right(HistoryScrolledBody(
