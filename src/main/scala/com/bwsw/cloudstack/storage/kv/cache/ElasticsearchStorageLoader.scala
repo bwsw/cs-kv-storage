@@ -18,9 +18,9 @@
 package com.bwsw.cloudstack.storage.kv.cache
 
 import com.bwsw.cloudstack.storage.kv.entity.Storage
-import com.sksamuel.elastic4s.http.ElasticDsl.get
-import com.sksamuel.elastic4s.http.ElasticDsl._
+import com.sksamuel.elastic4s.http.ElasticDsl.{get, _}
 import com.sksamuel.elastic4s.http.HttpClient
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 

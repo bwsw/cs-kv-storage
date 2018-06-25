@@ -31,14 +31,14 @@ import scaldi.akka.AkkaInjectable._
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /** Actor responsible for history buffering and time or queue size based flushing to storages **/
 class BufferedHistoryKvActor(implicit inj: Injector)
   extends HistoryKvActor
-    with Timers
-    with akka.actor.ActorLogging {
+  with Timers
+  with akka.actor.ActorLogging {
 
-  import context.dispatcher
   import BufferedHistoryKvActor._
 
   private val buffer: ListBuffer[KvHistory] = ListBuffer.empty
@@ -61,19 +61,16 @@ class BufferedHistoryKvActor(implicit inj: Injector)
       }
     case KvHistoryRetry(erroneous) =>
       retry(erroneous)
-    case option: Option[_] => option match {
-      case Some(history: KvHistory) =>
-        buffer += history
-        if (buffer.length >= configuration.getFlushHistorySize) {
-          self ! flush(buffer)
-        }
-      case Some(bulk: KvHistoryBulk) =>
-        buffer.appendAll(bulk.values)
-        if (buffer.length >= configuration.getFlushHistorySize) {
-          self ! flush(buffer)
-        }
-      case _ => //do nothing
-    }
+    case history: KvHistory =>
+      buffer += history
+      if (buffer.length >= configuration.getFlushHistorySize) {
+        self ! flush(buffer)
+      }
+    case bulk: KvHistoryBulk =>
+      buffer.appendAll(bulk.values)
+      if (buffer.length >= configuration.getFlushHistorySize) {
+        self ! flush(buffer)
+      }
     case request: GetHistoryRequest =>
       storageCache.isHistoryEnabled(request.storageUuid).flatMap {
         case Some(true) =>
