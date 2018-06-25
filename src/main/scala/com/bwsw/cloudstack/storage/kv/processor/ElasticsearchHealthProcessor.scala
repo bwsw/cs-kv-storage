@@ -1,13 +1,12 @@
-package com.bwsw.cloudstack.storage.kv.util
+package com.bwsw.cloudstack.storage.kv.processor
 
-import com.bwsw.cloudstack.storage.kv.configuration.ElasticsearchConfig
 import com.bwsw.cloudstack.storage.kv.error.{InternalError, StorageError}
-import com.sksamuel.elastic4s.http.HttpClient
 import com.sksamuel.elastic4s.http.ElasticDsl._
+import com.sksamuel.elastic4s.http.HttpClient
 
 import scala.concurrent.Future
 
-class HealthChecker(client: HttpClient, conf: ElasticsearchConfig) {
+class ElasticsearchHealthProcessor(client: HttpClient) extends HealthProcessor {
   private val registryIndex = "storage-registry"
 
   import scala.concurrent.ExecutionContext.Implicits.global

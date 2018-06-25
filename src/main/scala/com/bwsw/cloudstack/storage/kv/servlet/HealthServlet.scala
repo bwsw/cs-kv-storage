@@ -1,12 +1,12 @@
 package com.bwsw.cloudstack.storage.kv.servlet
 
 import akka.actor.ActorSystem
-import com.bwsw.cloudstack.storage.kv.util.HealthChecker
+import com.bwsw.cloudstack.storage.kv.processor.HealthProcessor
 import org.scalatra._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class HealthServlet(system: ActorSystem, checker: HealthChecker)
+class HealthServlet(system: ActorSystem, healthProcessor: HealthProcessor)
   extends ScalatraServlet
     with FutureSupport {
 
@@ -14,7 +14,7 @@ class HealthServlet(system: ActorSystem, checker: HealthChecker)
 
   get("/") {
     new AsyncResult() {
-      val is: Future[_] = checker.check
+      val is: Future[_] = healthProcessor.check
         .map {
           case Right(true) =>
             Ok("")
