@@ -29,8 +29,7 @@
         <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
             <evaluator>
                 <expression>
-                    return (throwable instanceof com.fasterxml.jackson.core.io.JsonEOFException || throwable instanceof
-                    com.fasterxml.jackson.core.JsonParseException);
+                    return message.contains("Parsing the request body failed, because:");
                 </expression>
             </evaluator>
             <OnMismatch>NEUTRAL</OnMismatch>
@@ -46,8 +45,7 @@
         <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
             <evaluator>
                 <expression>
-                    return (throwable instanceof com.fasterxml.jackson.core.io.JsonEOFException || throwable instanceof
-                    com.fasterxml.jackson.core.JsonParseException);
+                    return message.contains("Parsing the request body failed, because:");
                 </expression>
             </evaluator>
             <OnMismatch>NEUTRAL</OnMismatch>
