@@ -1,14 +1,12 @@
 package com.bwsw.cloudstack.storage.kv.actor
 
 import akka.actor.{ActorSystem, Props}
-import akka.testkit.{ImplicitSender, TestKit, TestProbe}
-import com.bwsw.cloudstack.storage.kv.app.KvStorageModule
+import akka.testkit.{ImplicitSender, TestKit, _}
 import com.bwsw.cloudstack.storage.kv.cache.StorageCache
 import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
 import com.bwsw.cloudstack.storage.kv.entity.Storage
 import com.bwsw.cloudstack.storage.kv.message.{Delete, Set, Clear, KvHistory, KvHistoryBulk}
-import com.bwsw.cloudstack.storage.kv.message.request.KvGetRequest
-import com.bwsw.cloudstack.storage.kv.processor.{HistoryProcessor, KvProcessor}
+import com.bwsw.cloudstack.storage.kv.processor.HistoryProcessor
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FunSpecLike}
 import scaldi.{Injector, Module}
@@ -26,7 +24,7 @@ class BufferedHistoryKvActorSpec
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  private implicit val testModule: Injector = mocksModule :: new KvStorageModule
+  private implicit val testModule: Injector = mocksModule
   private val historyProcessor = mock[HistoryProcessor]
   private val storageCache = mock[StorageCache]
   private val appConf = mock[AppConfig]
@@ -57,8 +55,9 @@ class BufferedHistoryKvActorSpec
   describe("a BufferedHistoryKvActor") {
     describe("KvHistory") {
       it("should process just-in-time") {
-        within(1 second) {
-          (appConf.getFlushHistoryTimeout _).expects().returning(2 seconds)
+        within(400.millis.dilated) {
+          println(TestKitExtension(system).TestTimeFactor)
+          (appConf.getFlushHistoryTimeout _).expects().returning(800.millis.dilated)
           (appConf.getFlushHistorySize _).expects().returning(1)
           (historyProcessor.save _).expects(List(history)).returning(Future(None))
           val bufferedHistoryKvActor = system.actorOf(Props(new BufferedHistoryKvActor))
@@ -68,8 +67,8 @@ class BufferedHistoryKvActorSpec
       }
 
       it("should process by timeout") {
-        within(1 second) {
-          (appConf.getFlushHistoryTimeout _).expects().returning(500 millis)
+        within(200.millis.dilated) {
+          (appConf.getFlushHistoryTimeout _).expects().returning(100.millis.dilated)
           (appConf.getFlushHistorySize _).expects().returning(10)
           (historyProcessor.save _).expects(List(history)).returning(Future(None))
           val bufferedHistoryKvActor = system.actorOf(Props(new BufferedHistoryKvActor))
@@ -79,8 +78,8 @@ class BufferedHistoryKvActorSpec
       }
 
       it("should process just-in-time with retry") {
-        within(1 second) {
-          (appConf.getFlushHistoryTimeout _).expects().returning(2 seconds)
+        within(100.millis.dilated) {
+          (appConf.getFlushHistoryTimeout _).expects().returning(200.millis.dilated)
           (appConf.getFlushHistorySize _).expects().returning(1).anyNumberOfTimes
           (historyProcessor.save _).expects(List(history)).returning(Future(Some(List(history))))
           (appConf.getHistoryRetryLimit _).expects().returning(1)
@@ -92,8 +91,8 @@ class BufferedHistoryKvActorSpec
       }
 
       it("should process with retry by timeout") {
-        within(1500 millis) {
-          (appConf.getFlushHistoryTimeout _).expects().returning(500 millis)
+        within(300.millis.dilated) {
+          (appConf.getFlushHistoryTimeout _).expects().returning(100.millis.dilated)
           (appConf.getFlushHistorySize _).expects().returning(10).anyNumberOfTimes
           (historyProcessor.save _).expects(List(history)).returning(Future(Some(List(history))))
           (appConf.getHistoryRetryLimit _).expects().returning(1)
@@ -107,8 +106,8 @@ class BufferedHistoryKvActorSpec
 
     describe("KvHistoryBulk") {
       it("should process just-in-time") {
-        within(1 second) {
-          (appConf.getFlushHistoryTimeout _).expects().returning(2 seconds)
+        within(100.millis.dilated) {
+          (appConf.getFlushHistoryTimeout _).expects().returning(200.millis.dilated)
           (appConf.getFlushHistorySize _).expects().returning(3)
           (historyProcessor.save _).expects(historyList).returning(Future(None))
           val bufferedHistoryKvActor = system.actorOf(Props(new BufferedHistoryKvActor))
@@ -118,8 +117,8 @@ class BufferedHistoryKvActorSpec
       }
 
       it("should process by timeout") {
-        within(1 second) {
-          (appConf.getFlushHistoryTimeout _).expects().returning(500 millis)
+        within(200.millis.dilated) {
+          (appConf.getFlushHistoryTimeout _).expects().returning(100.millis.dilated)
           (appConf.getFlushHistorySize _).expects().returning(10)
           (historyProcessor.save _).expects(historyList).returning(Future(None))
           val bufferedHistoryKvActor = system.actorOf(Props(new BufferedHistoryKvActor))
@@ -129,8 +128,8 @@ class BufferedHistoryKvActorSpec
       }
 
       it("should process just-in-time with retry") {
-        within(1 second) {
-          (appConf.getFlushHistoryTimeout _).expects().returning(2 seconds)
+        within(100.millis.dilated) {
+          (appConf.getFlushHistoryTimeout _).expects().returning(200.millis.dilated)
           (appConf.getFlushHistorySize _).expects().returning(1).anyNumberOfTimes
           (historyProcessor.save _).expects(historyList).returning(Future(Some(historyList)))
           (appConf.getHistoryRetryLimit _).expects().returning(1).repeat(3).times
@@ -142,8 +141,8 @@ class BufferedHistoryKvActorSpec
       }
 
       it("should process with retry by timeout") {
-        within(1500 millis) {
-          (appConf.getFlushHistoryTimeout _).expects().returning(500 millis)
+        within(300.millis.dilated) {
+          (appConf.getFlushHistoryTimeout _).expects().returning(100.millis.dilated)
           (appConf.getFlushHistorySize _).expects().returning(3).anyNumberOfTimes
           (historyProcessor.save _).expects(historyList).returning(Future(Some(List(
             KvHistory(storage.uUID, someKey, someValue, timestamp, Set),

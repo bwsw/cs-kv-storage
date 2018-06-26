@@ -2,10 +2,9 @@ package com.bwsw.cloudstack.storage.kv.actor
 
 import akka.actor.{ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
-import com.bwsw.cloudstack.storage.kv.app.KvStorageModule
 import com.bwsw.cloudstack.storage.kv.cache.StorageCache
 import com.bwsw.cloudstack.storage.kv.entity.Storage
-import com.bwsw.cloudstack.storage.kv.error.{InternalError, NotFoundError}
+import com.bwsw.cloudstack.storage.kv.error.NotFoundError
 import com.bwsw.cloudstack.storage.kv.message._
 import com.bwsw.cloudstack.storage.kv.message.request._
 import com.bwsw.cloudstack.storage.kv.mock.HistoryKvActorMock
@@ -20,6 +19,7 @@ import scaldi.{Injector, Module}
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
+
 class HistoricalKvActorSpec
   extends TestKit(ActorSystem("cs-kv-storage"))
     with FunSpecLike
@@ -30,7 +30,7 @@ class HistoricalKvActorSpec
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  private implicit val testModule: Injector = mocksModule :: new KvStorageModule
+  private implicit val testModule: Injector = mocksModule
   private val historyKvActor = TestActorRef(new HistoryKvActorMock()).underlyingActor
   private val kvProcessor = mock[KvProcessor]
   private val storageCache = mock[StorageCache]
@@ -38,13 +38,7 @@ class HistoricalKvActorSpec
   private val someKey = "someKey"
   private val someValue = "someValue"
   private val keyValues = Map("key1" -> "value1", "key2" -> "value2", "key3" -> "value3")
-  private val keys = List("key1", "key2", "key3")
-  private val jsonKeys = "[\"key1\",\"key2\",\"key3\"]"
-  private val jsonKeyValues = "{\"key1\":\"value1\",\"key2\":\"value2\",\"key3\":\"value3\"}"
-  private val jsonNullValues = "{\"key1\":null,\"key2\":null,\"key3\":null}"
-  private val jsonKeyResult = "{\"key1\":true,\"key2\":true,\"key3\":true}"
   private val storage = Storage("someStorage", "ACC", keepHistory = true)
-  private val internalError = Future(Left(InternalError("some reason")))
   private val timeout = 200 millis
   private val timestamp = System.currentTimeMillis()
 
@@ -116,11 +110,11 @@ class HistoricalKvActorSpec
         }
       }
 
-      def processWithoutLogging(reason: CallHandler1[String, Future[Option[Boolean]]]): Unit = {
+      def processWithoutLogging(reason: () => CallHandler1[String, Future[Option[Boolean]]]): Unit = {
         within(timeout) {
           (clock.currentTimeMillis _).expects().returning(timestamp)
           val sender = TestProbe()
-          reason
+          reason()
           val answer = Right(())
           historyKvActor.expect(SilentExpectation(None))
           (kvProcessor.set(_: String, _: String, _: String)).expects(storage.uUID, someKey, someValue).returning(Future(answer))
@@ -172,11 +166,11 @@ class HistoricalKvActorSpec
         }
       }
 
-      def processWithoutLogging(reason: CallHandler1[String, Future[Option[Boolean]]]): Unit = {
+      def processWithoutLogging(reason: () => CallHandler1[String, Future[Option[Boolean]]]): Unit = {
         within(timeout) {
           (clock.currentTimeMillis _).expects().returning(timestamp)
           val sender = TestProbe()
-          reason
+          reason()
           val answer = Right(keyValues.map(kv => kv._1 -> true))
           historyKvActor.expect(SilentExpectation(None))
           (kvProcessor.set(_: String, _: Map[String, String])).expects(storage.uUID, keyValues).returning(Future(answer))
@@ -225,11 +219,11 @@ class HistoricalKvActorSpec
         }
       }
 
-      def processWithoutLogging(reason: CallHandler1[String, Future[Option[Boolean]]]): Unit = {
+      def processWithoutLogging(reason: () => CallHandler1[String, Future[Option[Boolean]]]): Unit = {
         within(timeout) {
           (clock.currentTimeMillis _).expects().returning(timestamp)
           val sender = TestProbe()
-          reason
+          reason()
           val answer = Right(())
           historyKvActor.expect(SilentExpectation(None))
           (kvProcessor.delete(_: String, _: String)).expects(storage.uUID, someKey).returning(Future(answer))
@@ -281,11 +275,11 @@ class HistoricalKvActorSpec
         }
       }
 
-      def processWithoutLogging(reason: CallHandler1[String, Future[Option[Boolean]]]): Unit = {
+      def processWithoutLogging(reason: () => CallHandler1[String, Future[Option[Boolean]]]): Unit = {
         within(timeout) {
           (clock.currentTimeMillis _).expects().returning(timestamp)
           val sender = TestProbe()
-          reason
+          reason()
           val answer = Right(keyValues.map(kv => kv._1 -> true))
           historyKvActor.expect(SilentExpectation(None))
           (kvProcessor.delete(_: String, _: Iterable[String])).expects(storage.uUID, keyValues.keys).returning(Future(answer))
@@ -361,11 +355,11 @@ class HistoricalKvActorSpec
         }
       }
 
-      def processWithoutLogging(reason: CallHandler1[String, Future[Option[Boolean]]]): Unit = {
+      def processWithoutLogging(reason: () => CallHandler1[String, Future[Option[Boolean]]]): Unit = {
         within(timeout) {
           (clock.currentTimeMillis _).expects().returning(timestamp)
           val sender = TestProbe()
-          reason
+          reason()
           val answer = Right(())
           historyKvActor.expect(SilentExpectation(None))
           (kvProcessor.clear _).expects(storage.uUID).returning(Future(answer))
@@ -412,12 +406,12 @@ class HistoricalKvActorSpec
     (storageCache.isHistoryEnabled _).expects(storage.uUID).returning(Future(Some(true)))
   }
 
-  def storageHistoryDisabled: CallHandler1[String, Future[Option[Boolean]]] = {
+  def storageHistoryDisabled(): CallHandler1[String, Future[Option[Boolean]]] = {
     storageExistingCheckPass
     (storageCache.isHistoryEnabled _).expects(storage.uUID).returning(Future(Some(false)))
   }
 
-  def storageHistoryCheckFailed: CallHandler1[String, Future[Option[Boolean]]] = {
+  def storageHistoryCheckFailed(): CallHandler1[String, Future[Option[Boolean]]] = {
     storageExistingCheckPass
     (storageCache.isHistoryEnabled _).expects(storage.uUID).returning(Future(None))
   }
