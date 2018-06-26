@@ -24,14 +24,14 @@ import com.bwsw.cloudstack.storage.kv.processor.HistoryProcessor
 import scaldi.Injector
 import scaldi.akka.AkkaInjectable._
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.collection.mutable.ListBuffer
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /** Actor responsible for history buffering and time or queue size based flushing to storages **/
 class BufferedHistoryKvActor(implicit inj: Injector)
   extends HistoryKvActor
-    with Timers
-    with akka.actor.ActorLogging {
+  with Timers
+  with akka.actor.ActorLogging {
 
   import BufferedHistoryKvActor._
 
@@ -57,19 +57,16 @@ class BufferedHistoryKvActor(implicit inj: Injector)
     }
     case HistoryRetry(erroneous) =>
       retry(erroneous)
-    case option: Option[_] => option match {
-      case Some(history: KvHistory) =>
-        buffer += history
-        if (buffer.length >= configuration.getFlushHistorySize) {
-          self ! flush(buffer)
-        }
-      case Some(bulk: KvHistoryBulk) =>
-        buffer.appendAll(bulk.values)
-        if (buffer.length >= configuration.getFlushHistorySize) {
-          self ! flush(buffer)
-        }
-      case _ => //do nothing
-    }
+    case history: KvHistory =>
+      buffer += history
+      if (buffer.length >= configuration.getFlushHistorySize) {
+        self ! flush(buffer)
+      }
+    case bulk: KvHistoryBulk =>
+      buffer.appendAll(bulk.values)
+      if (buffer.length >= configuration.getFlushHistorySize) {
+        self ! flush(buffer)
+      }
   }
 
   private def retry(histories: Iterable[KvHistory]): Unit = {
