@@ -37,8 +37,10 @@ class HistoricalKvActorSpec
   private val clock = mock[Clock]
   private val someKey = "someKey"
   private val someValue = "someValue"
+  private val storageUuid = "someStorage"
   private val keyValues = Map("key1" -> "value1", "key2" -> "value2", "key3" -> "value3")
-  private val storage = Storage("someStorage", "ACC", keepHistory = true)
+  private val storageKeep = Storage("someStorage", "ACC", keepHistory = true)
+  private val storageDiscard = Storage("someStorage", "ACC", keepHistory = false)
   private val timeout = 200 millis
   private val timestamp = System.currentTimeMillis()
 
@@ -57,8 +59,8 @@ class HistoricalKvActorSpec
         val sender = TestProbe()
         storageExistingCheckPass
         val answer = Right(someValue)
-        (kvProcessor.get(_: String, _: String)).expects(storage.uUID, someKey).returning(Future(answer))
-        sender.send(historicalKvActor, KvGetRequest(storage.uUID, someKey))
+        (kvProcessor.get(_: String, _: String)).expects(storageUuid, someKey).returning(Future(answer))
+        sender.send(historicalKvActor, KvGetRequest(storageUuid, someKey))
         sender.expectMsg(answer)
         historyKvActor.check()
       }
@@ -66,8 +68,8 @@ class HistoricalKvActorSpec
       it("should return NotFoundError if storage does not exist") {
         val sender = TestProbe()
         storageExistingCheckFail
-        (kvProcessor.get(_: String, _: String)).expects(storage.uUID, someKey).never()
-        sender.send(historicalKvActor, KvGetRequest(storage.uUID, someKey))
+        (kvProcessor.get(_: String, _: String)).expects(storageUuid, someKey).never()
+        sender.send(historicalKvActor, KvGetRequest(storageUuid, someKey))
         sender.expectMsg(Left(NotFoundError()))
         historyKvActor.check()
       }
@@ -78,8 +80,8 @@ class HistoricalKvActorSpec
         val sender = TestProbe()
         storageExistingCheckPass
         val answer = Right(keyValues.map(kv => kv._1 -> Some(kv._2)))
-        (kvProcessor.get(_: String, _: Iterable[String])).expects(storage.uUID, keyValues.keys).returning(Future(answer))
-        sender.send(historicalKvActor, KvMultiGetRequest(storage.uUID, keyValues.keys))
+        (kvProcessor.get(_: String, _: Iterable[String])).expects(storageUuid, keyValues.keys).returning(Future(answer))
+        sender.send(historicalKvActor, KvMultiGetRequest(storageUuid, keyValues.keys))
         sender.expectMsg(answer)
         historyKvActor.check()
       }
@@ -87,8 +89,8 @@ class HistoricalKvActorSpec
       it("should return NotFoundError if storage does not exist") {
         val sender = TestProbe()
         storageExistingCheckFail
-        (kvProcessor.get(_: String, _: Iterable[String])).expects(storage.uUID, keyValues.keys).never()
-        sender.send(historicalKvActor, KvMultiGetRequest(storage.uUID, keyValues.keys))
+        (kvProcessor.get(_: String, _: Iterable[String])).expects(storageUuid, keyValues.keys).never()
+        sender.send(historicalKvActor, KvMultiGetRequest(storageUuid, keyValues.keys))
         sender.expectMsg(Left(NotFoundError()))
         historyKvActor.check()
       }
@@ -101,36 +103,26 @@ class HistoricalKvActorSpec
           val sender = TestProbe()
           storageHistoryEnabled
           val answer = Right(())
-          historyKvActor.expect(SilentExpectation(Some(KvHistory(storage.uUID, someKey, someValue, timestamp, Set))))
-          (kvProcessor.set(_: String, _: String, _: String)).expects(storage.uUID, someKey, someValue).returning(Future(answer))
-          sender.send(historicalKvActor, KvSetRequest(storage.uUID, someKey, someValue))
+          historyKvActor.expect(SilentExpectation(KvHistory(storageUuid, someKey, someValue, timestamp, Set)))
+          (kvProcessor.set(_: String, _: String, _: String)).expects(storageUuid, someKey, someValue).returning(Future(answer))
+          sender.send(historicalKvActor, KvSetRequest(storageUuid, someKey, someValue))
           sender.expectMsg(answer)
           expectNoMessage
           historyKvActor.check()
         }
       }
 
-      def processWithoutLogging(reason: () => CallHandler1[String, Future[Option[Boolean]]]): Unit = {
+      it("should process a request and discard history") {
         within(timeout) {
           (clock.currentTimeMillis _).expects().returning(timestamp)
           val sender = TestProbe()
-          reason()
+          storageHistoryDisabled
           val answer = Right(())
-          historyKvActor.expect(SilentExpectation(None))
-          (kvProcessor.set(_: String, _: String, _: String)).expects(storage.uUID, someKey, someValue).returning(Future(answer))
-          sender.send(historicalKvActor, KvSetRequest(storage.uUID, someKey, someValue))
+          (kvProcessor.set(_: String, _: String, _: String)).expects(storageUuid, someKey, someValue).returning(Future(answer))
+          sender.send(historicalKvActor, KvSetRequest(storageUuid, someKey, someValue))
           sender.expectMsg(answer)
           expectNoMessage
-          historyKvActor.check()
         }
-      }
-
-      it("should process a request but not log history") {
-        processWithoutLogging(storageHistoryDisabled)
-      }
-
-      it("should process a request and log error if storage data inaccessible") {
-        processWithoutLogging(storageHistoryCheckFailed)
       }
 
       it("should return NotFoundError if storage does not exist") {
@@ -138,8 +130,8 @@ class HistoricalKvActorSpec
           (clock.currentTimeMillis _).expects().returning(timestamp)
           val sender = TestProbe()
           storageExistingCheckFail
-          (kvProcessor.set(_: String, _: String, _: String)).expects(storage.uUID, someKey, someValue).never()
-          sender.send(historicalKvActor, KvSetRequest(storage.uUID, someKey, someValue))
+          (kvProcessor.set(_: String, _: String, _: String)).expects(storageUuid, someKey, someValue).never()
+          sender.send(historicalKvActor, KvSetRequest(storageUuid, someKey, someValue))
           sender.expectMsg(Left(NotFoundError()))
           expectNoMessage
           historyKvActor.check()
@@ -155,38 +147,28 @@ class HistoricalKvActorSpec
           storageHistoryEnabled
           val answer = Right(keyValues.map(kv => kv._1 -> true))
           historyKvActor.expect(
-            SilentExpectation(Some(KvHistoryBulk(keyValues.map {
-              case (key, value) => KvHistory(storage.uUID, key, value, timestamp, Set)
-            }))))
-          (kvProcessor.set(_: String, _: Map[String, String])).expects(storage.uUID, keyValues).returning(Future(answer))
-          sender.send(historicalKvActor, KvMultiSetRequest(storage.uUID, keyValues))
+            SilentExpectation(KvHistoryBulk(keyValues.map {
+              case (key, value) => KvHistory(storageUuid, key, value, timestamp, Set)
+            })))
+          (kvProcessor.set(_: String, _: Map[String, String])).expects(storageUuid, keyValues).returning(Future(answer))
+          sender.send(historicalKvActor, KvMultiSetRequest(storageUuid, keyValues))
           sender.expectMsg(answer)
           expectNoMessage
           historyKvActor.check()
         }
       }
 
-      def processWithoutLogging(reason: () => CallHandler1[String, Future[Option[Boolean]]]): Unit = {
+      it("should process a request and discard history") {
         within(timeout) {
           (clock.currentTimeMillis _).expects().returning(timestamp)
           val sender = TestProbe()
-          reason()
+          storageHistoryDisabled
           val answer = Right(keyValues.map(kv => kv._1 -> true))
-          historyKvActor.expect(SilentExpectation(None))
-          (kvProcessor.set(_: String, _: Map[String, String])).expects(storage.uUID, keyValues).returning(Future(answer))
-          sender.send(historicalKvActor, KvMultiSetRequest(storage.uUID, keyValues))
+          (kvProcessor.set(_: String, _: Map[String, String])).expects(storageUuid, keyValues).returning(Future(answer))
+          sender.send(historicalKvActor, KvMultiSetRequest(storageUuid, keyValues))
           sender.expectMsg(answer)
           expectNoMessage
-          historyKvActor.check()
         }
-      }
-
-      it("should process a request but not log history") {
-        processWithoutLogging(storageHistoryDisabled)
-      }
-
-      it("should process a request and log error if storage data inaccessible") {
-        processWithoutLogging(storageHistoryCheckFailed)
       }
 
       it("should return NotFoundError if storage does not exist") {
@@ -194,8 +176,8 @@ class HistoricalKvActorSpec
           (clock.currentTimeMillis _).expects().returning(timestamp)
           val sender = TestProbe()
           storageExistingCheckFail
-          (kvProcessor.set(_: String, _: Map[String, String])).expects(storage.uUID, keyValues).never()
-          sender.send(historicalKvActor, KvMultiSetRequest(storage.uUID, keyValues))
+          (kvProcessor.set(_: String, _: Map[String, String])).expects(storageUuid, keyValues).never()
+          sender.send(historicalKvActor, KvMultiSetRequest(storageUuid, keyValues))
           sender.expectMsg(Left(NotFoundError()))
           expectNoMessage
           historyKvActor.check()
@@ -210,36 +192,26 @@ class HistoricalKvActorSpec
           val sender = TestProbe()
           storageHistoryEnabled
           val answer = Right(())
-          historyKvActor.expect(SilentExpectation(Some(KvHistory(storage.uUID, someKey, null, timestamp, Delete))))
-          (kvProcessor.delete(_: String, _: String)).expects(storage.uUID, someKey).returning(Future(answer))
-          sender.send(historicalKvActor, KvDeleteRequest(storage.uUID, someKey))
+          historyKvActor.expect(SilentExpectation(KvHistory(storageUuid, someKey, null, timestamp, Delete)))
+          (kvProcessor.delete(_: String, _: String)).expects(storageUuid, someKey).returning(Future(answer))
+          sender.send(historicalKvActor, KvDeleteRequest(storageUuid, someKey))
           sender.expectMsg(answer)
           expectNoMessage
           historyKvActor.check()
         }
       }
 
-      def processWithoutLogging(reason: () => CallHandler1[String, Future[Option[Boolean]]]): Unit = {
+      it("should process a request and discard history") {
         within(timeout) {
           (clock.currentTimeMillis _).expects().returning(timestamp)
           val sender = TestProbe()
-          reason()
+          storageHistoryDisabled
           val answer = Right(())
-          historyKvActor.expect(SilentExpectation(None))
-          (kvProcessor.delete(_: String, _: String)).expects(storage.uUID, someKey).returning(Future(answer))
-          sender.send(historicalKvActor, KvDeleteRequest(storage.uUID, someKey))
+          (kvProcessor.delete(_: String, _: String)).expects(storageUuid, someKey).returning(Future(answer))
+          sender.send(historicalKvActor, KvDeleteRequest(storageUuid, someKey))
           sender.expectMsg(answer)
           expectNoMessage
-          historyKvActor.check()
         }
-      }
-
-      it("should process a request but not log history") {
-        processWithoutLogging(storageHistoryDisabled)
-      }
-
-      it("should process a request and log error if storage data inaccessible") {
-        processWithoutLogging(storageHistoryCheckFailed)
       }
 
       it("should return NotFoundError if storage does not exist") {
@@ -247,8 +219,8 @@ class HistoricalKvActorSpec
           (clock.currentTimeMillis _).expects().returning(timestamp)
           val sender = TestProbe()
           storageExistingCheckFail
-          (kvProcessor.delete(_: String, _: String)).expects(storage.uUID, someKey).never()
-          sender.send(historicalKvActor, KvDeleteRequest(storage.uUID, someKey))
+          (kvProcessor.delete(_: String, _: String)).expects(storageUuid, someKey).never()
+          sender.send(historicalKvActor, KvDeleteRequest(storageUuid, someKey))
           sender.expectMsg(Left(NotFoundError()))
           expectNoMessage
           historyKvActor.check()
@@ -264,38 +236,28 @@ class HistoricalKvActorSpec
           storageHistoryEnabled
           val answer = Right(keyValues.map(kv => kv._1 -> true))
           historyKvActor.expect(
-            SilentExpectation(Some(KvHistoryBulk(keyValues.map {
-              case (key, _) => KvHistory(storage.uUID, key, null, timestamp, Delete)
-            }))))
-          (kvProcessor.delete(_: String, _: Iterable[String])).expects(storage.uUID, keyValues.keys).returning(Future(answer))
-          sender.send(historicalKvActor, KvMultiDeleteRequest(storage.uUID, keyValues.keys))
+            SilentExpectation(KvHistoryBulk(keyValues.map {
+              case (key, _) => KvHistory(storageUuid, key, null, timestamp, Delete)
+            })))
+          (kvProcessor.delete(_: String, _: Iterable[String])).expects(storageUuid, keyValues.keys).returning(Future(answer))
+          sender.send(historicalKvActor, KvMultiDeleteRequest(storageUuid, keyValues.keys))
           sender.expectMsg(answer)
           expectNoMessage
           historyKvActor.check()
         }
       }
 
-      def processWithoutLogging(reason: () => CallHandler1[String, Future[Option[Boolean]]]): Unit = {
+      it("should process a request and discard history") {
         within(timeout) {
           (clock.currentTimeMillis _).expects().returning(timestamp)
           val sender = TestProbe()
-          reason()
+          storageHistoryDisabled
           val answer = Right(keyValues.map(kv => kv._1 -> true))
-          historyKvActor.expect(SilentExpectation(None))
-          (kvProcessor.delete(_: String, _: Iterable[String])).expects(storage.uUID, keyValues.keys).returning(Future(answer))
-          sender.send(historicalKvActor, KvMultiDeleteRequest(storage.uUID, keyValues.keys))
+          (kvProcessor.delete(_: String, _: Iterable[String])).expects(storageUuid, keyValues.keys).returning(Future(answer))
+          sender.send(historicalKvActor, KvMultiDeleteRequest(storageUuid, keyValues.keys))
           sender.expectMsg(answer)
           expectNoMessage
-          historyKvActor.check()
         }
-      }
-
-      it("should process a request but not log history") {
-        processWithoutLogging(storageHistoryDisabled)
-      }
-
-      it("should process a request and log error if storage data inaccessible") {
-        processWithoutLogging(storageHistoryCheckFailed)
       }
 
       it("should return NotFoundError if storage does not exist") {
@@ -303,8 +265,8 @@ class HistoricalKvActorSpec
           (clock.currentTimeMillis _).expects().returning(timestamp)
           val sender = TestProbe()
           storageExistingCheckFail
-          (kvProcessor.delete(_: String, _: String)).expects(storage.uUID, someKey).never()
-          sender.send(historicalKvActor, KvMultiDeleteRequest(storage.uUID, keyValues.keys))
+          (kvProcessor.delete(_: String, _: String)).expects(storageUuid, someKey).never()
+          sender.send(historicalKvActor, KvMultiDeleteRequest(storageUuid, keyValues.keys))
           sender.expectMsg(Left(NotFoundError()))
           expectNoMessage
           historyKvActor.check()
@@ -318,8 +280,8 @@ class HistoricalKvActorSpec
           val sender = TestProbe()
           storageExistingCheckPass
           val answer = Right(keyValues.keys.toList)
-          (kvProcessor.list _).expects(storage.uUID).returning(Future(answer))
-          sender.send(historicalKvActor, KvListRequest(storage.uUID))
+          (kvProcessor.list _).expects(storageUuid).returning(Future(answer))
+          sender.send(historicalKvActor, KvListRequest(storageUuid))
           sender.expectMsg(answer)
           expectNoMessage
           historyKvActor.check()
@@ -330,8 +292,8 @@ class HistoricalKvActorSpec
         within(timeout) {
           val sender = TestProbe()
           storageExistingCheckFail
-          (kvProcessor.list _).expects(storage.uUID).never()
-          sender.send(historicalKvActor, KvListRequest(storage.uUID))
+          (kvProcessor.list _).expects(storageUuid).never()
+          sender.send(historicalKvActor, KvListRequest(storageUuid))
           sender.expectMsg(Left(NotFoundError()))
           expectNoMessage
           historyKvActor.check()
@@ -346,36 +308,26 @@ class HistoricalKvActorSpec
           val sender = TestProbe()
           storageHistoryEnabled
           val answer = Right(())
-          historyKvActor.expect(SilentExpectation(Some(KvHistory(storage.uUID, null, null, timestamp, Clear))))
-          (kvProcessor.clear _).expects(storage.uUID).returning(Future(answer))
-          sender.send(historicalKvActor, KvClearRequest(storage.uUID))
+          historyKvActor.expect(SilentExpectation(KvHistory(storageUuid, null, null, timestamp, Clear)))
+          (kvProcessor.clear _).expects(storageUuid).returning(Future(answer))
+          sender.send(historicalKvActor, KvClearRequest(storageUuid))
           sender.expectMsg(answer)
           expectNoMessage
           historyKvActor.check()
         }
       }
 
-      def processWithoutLogging(reason: () => CallHandler1[String, Future[Option[Boolean]]]): Unit = {
+      it("should process a request and discard history") {
+        (clock.currentTimeMillis _).expects().returning(timestamp)
         within(timeout) {
-          (clock.currentTimeMillis _).expects().returning(timestamp)
           val sender = TestProbe()
-          reason()
+          storageHistoryDisabled
           val answer = Right(())
-          historyKvActor.expect(SilentExpectation(None))
-          (kvProcessor.clear _).expects(storage.uUID).returning(Future(answer))
-          sender.send(historicalKvActor, KvClearRequest(storage.uUID))
+          (kvProcessor.clear _).expects(storageUuid).returning(Future(answer))
+          sender.send(historicalKvActor, KvClearRequest(storageUuid))
           sender.expectMsg(answer)
           expectNoMessage
-          historyKvActor.check()
         }
-      }
-
-      it("should process a request but not log history") {
-        processWithoutLogging(storageHistoryDisabled)
-      }
-
-      it("should process a request and log error if storage data inaccessible") {
-        processWithoutLogging(storageHistoryCheckFailed)
       }
 
       it("should return NotFoundError if storage does not exist") {
@@ -383,8 +335,8 @@ class HistoricalKvActorSpec
           (clock.currentTimeMillis _).expects().returning(timestamp)
           val sender = TestProbe()
           storageExistingCheckFail
-          (kvProcessor.clear _).expects(storage.uUID).never()
-          sender.send(historicalKvActor, KvClearRequest(storage.uUID))
+          (kvProcessor.clear _).expects(storageUuid).never()
+          sender.send(historicalKvActor, KvClearRequest(storageUuid))
           sender.expectMsg(Left(NotFoundError()))
           expectNoMessage
           historyKvActor.check()
@@ -394,26 +346,19 @@ class HistoricalKvActorSpec
   }
 
   private def storageExistingCheckPass = {
-    (storageCache.get _).expects(storage.uUID).returning(Future(Some(storage)))
+    (storageCache.get _).expects(storageUuid).returning(Future(Some(storageKeep)))
   }
 
   private def storageExistingCheckFail = {
-    (storageCache.get _).expects(storage.uUID).returning(Future(None))
+    (storageCache.get _).expects(storageUuid).returning(Future(None))
   }
 
   private def storageHistoryEnabled = {
-    storageExistingCheckPass
-    (storageCache.isHistoryEnabled _).expects(storage.uUID).returning(Future(Some(true)))
+    (storageCache.get _).expects(storageUuid).returning(Future(Some(storageKeep)))
   }
 
-  def storageHistoryDisabled(): CallHandler1[String, Future[Option[Boolean]]] = {
-    storageExistingCheckPass
-    (storageCache.isHistoryEnabled _).expects(storage.uUID).returning(Future(Some(false)))
-  }
-
-  def storageHistoryCheckFailed(): CallHandler1[String, Future[Option[Boolean]]] = {
-    storageExistingCheckPass
-    (storageCache.isHistoryEnabled _).expects(storage.uUID).returning(Future(None))
+  private def storageHistoryDisabled = {
+    (storageCache.get _).expects(storageUuid).returning(Future(Some(storageDiscard)))
   }
 
   override def beforeEach: Unit = {

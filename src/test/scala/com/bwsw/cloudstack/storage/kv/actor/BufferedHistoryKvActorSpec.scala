@@ -56,12 +56,11 @@ class BufferedHistoryKvActorSpec
     describe("KvHistory") {
       it("should process just-in-time") {
         within(400.millis.dilated) {
-          println(TestKitExtension(system).TestTimeFactor)
           (appConf.getFlushHistoryTimeout _).expects().returning(800.millis.dilated)
           (appConf.getFlushHistorySize _).expects().returning(1)
           (historyProcessor.save _).expects(List(history)).returning(Future(None))
           val bufferedHistoryKvActor = system.actorOf(Props(new BufferedHistoryKvActor))
-          bufferedHistoryKvActor ! Some(history)
+          bufferedHistoryKvActor ! history
           expectNoMessage()
         }
       }
@@ -72,7 +71,7 @@ class BufferedHistoryKvActorSpec
           (appConf.getFlushHistorySize _).expects().returning(10)
           (historyProcessor.save _).expects(List(history)).returning(Future(None))
           val bufferedHistoryKvActor = system.actorOf(Props(new BufferedHistoryKvActor))
-          bufferedHistoryKvActor ! Some(history)
+          bufferedHistoryKvActor ! history
           expectNoMessage()
         }
       }
@@ -85,7 +84,7 @@ class BufferedHistoryKvActorSpec
           (appConf.getHistoryRetryLimit _).expects().returning(1)
           (historyProcessor.save _).expects(List(history.makeAttempt)).returning(Future(None))
           val bufferedHistoryKvActor = system.actorOf(Props(new BufferedHistoryKvActor))
-          bufferedHistoryKvActor ! Some(history)
+          bufferedHistoryKvActor ! history
           expectNoMessage()
         }
       }
@@ -98,7 +97,7 @@ class BufferedHistoryKvActorSpec
           (appConf.getHistoryRetryLimit _).expects().returning(1)
           (historyProcessor.save _).expects(List(history.makeAttempt)).returning(Future(None))
           val bufferedHistoryKvActor = system.actorOf(Props(new BufferedHistoryKvActor))
-          bufferedHistoryKvActor ! Some(history)
+          bufferedHistoryKvActor ! history
           expectNoMessage()
         }
       }
@@ -111,7 +110,7 @@ class BufferedHistoryKvActorSpec
           (appConf.getFlushHistorySize _).expects().returning(3)
           (historyProcessor.save _).expects(historyList).returning(Future(None))
           val bufferedHistoryKvActor = system.actorOf(Props(new BufferedHistoryKvActor))
-          bufferedHistoryKvActor ! Some(historyBulk)
+          bufferedHistoryKvActor ! historyBulk
           expectNoMessage()
         }
       }
@@ -122,7 +121,7 @@ class BufferedHistoryKvActorSpec
           (appConf.getFlushHistorySize _).expects().returning(10)
           (historyProcessor.save _).expects(historyList).returning(Future(None))
           val bufferedHistoryKvActor = system.actorOf(Props(new BufferedHistoryKvActor))
-          bufferedHistoryKvActor ! Some(historyBulk)
+          bufferedHistoryKvActor ! historyBulk
           expectNoMessage()
         }
       }
@@ -135,7 +134,7 @@ class BufferedHistoryKvActorSpec
           (appConf.getHistoryRetryLimit _).expects().returning(1).repeat(3).times
           (historyProcessor.save _).expects(historyListRetry).returning(Future(None))
           val bufferedHistoryKvActor = system.actorOf(Props(new BufferedHistoryKvActor))
-          bufferedHistoryKvActor ! Some(historyBulk)
+          bufferedHistoryKvActor ! historyBulk
           expectNoMessage()
         }
       }
@@ -154,7 +153,7 @@ class BufferedHistoryKvActorSpec
             KvHistory(storage.uUID, someKey, null, timestamp, Delete, 1)
           )).returning(Future(None))
           val bufferedHistoryKvActor = system.actorOf(Props(new BufferedHistoryKvActor))
-          bufferedHistoryKvActor ! Some(historyBulk)
+          bufferedHistoryKvActor ! historyBulk
           expectNoMessage()
         }
       }

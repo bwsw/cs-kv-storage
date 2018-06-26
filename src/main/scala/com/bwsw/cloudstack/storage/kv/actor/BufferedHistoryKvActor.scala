@@ -30,8 +30,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 /** Actor responsible for history buffering and time or queue size based flushing to storages **/
 class BufferedHistoryKvActor(implicit inj: Injector)
   extends HistoryKvActor
-  with Timers
-  with akka.actor.ActorLogging {
+    with Timers
+    with akka.actor.ActorLogging {
 
   import BufferedHistoryKvActor._
 
