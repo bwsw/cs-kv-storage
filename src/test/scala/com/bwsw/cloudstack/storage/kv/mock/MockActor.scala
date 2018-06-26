@@ -10,7 +10,6 @@ import scala.collection.mutable
 class MockActor() extends Actor with Matchers {
 
   private val queue = mutable.Queue.empty[Expectation]
-  private val errors = mutable.ListBuffer.empty[Exception]
 
   override def receive: Receive = {
     case message: Any =>
@@ -27,8 +26,7 @@ class MockActor() extends Actor with Matchers {
         }
       } catch {
         case e: Exception =>
-          errors += e
-          sender ! Failure(e)
+           sender ! Failure(e)
       }
   }
 
@@ -40,15 +38,13 @@ class MockActor() extends Actor with Matchers {
   }
 
   def check(): Unit = {
-    errors.foreach(e => throw e)
-    queue.foreach(expectation =>
-      fail("Unsatisfied expectation " + expectation)
-    )
+    if (queue.nonEmpty) {
+      fail("Unsatisfied expectations:\n" + queue.mkString("\n"))
+    }
   }
 
   def clear(): Unit = {
     queue.clear()
-    errors.clear()
   }
 }
 
