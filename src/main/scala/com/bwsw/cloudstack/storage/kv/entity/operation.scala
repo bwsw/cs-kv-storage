@@ -15,7 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package com.bwsw.cloudstack.storage.kv.message
+package com.bwsw.cloudstack.storage.kv.entity
 
 /** Operation that where used to change data existing in some storage **/
 sealed trait Operation

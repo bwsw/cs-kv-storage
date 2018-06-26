@@ -15,24 +15,18 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package com.bwsw.cloudstack.storage.kv.processor
+package com.bwsw.cloudstack.storage.kv.entity
 
-import com.bwsw.cloudstack.storage.kv.entity.{HealthResponseBody, HealthStatus}
-import com.bwsw.cloudstack.storage.kv.error.StorageError
+sealed trait CheckName
 
-import scala.concurrent.Future
+object StorageRegistry extends CheckName {
+  override def toString: String = "STORAGE_REGISTRY"
+}
 
-/** A processor of health checks **/
-trait HealthProcessor {
-  /** Returns boolean response if storage system is running and set up properly
-    *
-    * @return a [[Future]] of HealthStatus of the system
-    */
-  def check: Future[HealthStatus]
+object StorageTemplate extends CheckName {
+  override def toString: String = "STORAGE_TEMPLATE"
+}
 
-  /** Returns detailed response if storage system is running and set up properly
-    *
-    * @return a [[Future]] of HealthResponseBody
-    */
-  def checkDetailed: Future[HealthResponseBody]
+object HistoryStorageTemplate extends CheckName {
+  override def toString: String = "HISTORY_STORAGE_TEMPLATE"
 }

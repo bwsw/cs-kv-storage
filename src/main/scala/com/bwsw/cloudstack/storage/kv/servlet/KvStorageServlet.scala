@@ -31,7 +31,6 @@ import org.scalatra.json.JacksonJsonSupport
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import com.bwsw.cloudstack.storage.kv.message.request._
-import com.fasterxml.jackson.core.JsonParseException
 
 class KvStorageServlet(system: ActorSystem, requestTimeout: FiniteDuration, kvProcessor: KvProcessor, kvActor: ActorRef)
   extends ScalatraServlet

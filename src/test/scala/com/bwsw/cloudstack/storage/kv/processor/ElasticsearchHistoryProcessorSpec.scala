@@ -17,7 +17,9 @@
 
 package com.bwsw.cloudstack.storage.kv.processor
 
-import com.bwsw.cloudstack.storage.kv.message.{Clear, Delete, KvHistory, Set}
+import com.bwsw.cloudstack.storage.kv.entity
+import com.bwsw.cloudstack.storage.kv.entity.{Clear, Delete}
+import com.bwsw.cloudstack.storage.kv.message.KvHistory
 import com.sksamuel.elastic4s.bulk.BulkDefinition
 import com.sksamuel.elastic4s.http.ElasticDsl.{indexInto, _}
 import com.sksamuel.elastic4s.http._
@@ -31,9 +33,9 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
   private val index = "history-storage-someStorage"
   private val `type` = "_doc"
   private val artificalKey = "cbIaz2MBpp4Ypizt4vT5"
-  private val history = KvHistory("someStorage", "someKey", "someValue", 1, Set)
+  private val history = KvHistory("someStorage", "someKey", "someValue", 1, entity.Set)
   private val histories = List(
-    KvHistory("someStorage2", "someKey", "someValue", 1, Set),
+    KvHistory("someStorage2", "someKey", "someValue", 1, entity.Set),
     KvHistory("someStorage", "someKey1", "someValue", 1, Delete),
     KvHistory("someStorage2", "someKey1", "someValue2", 1, Clear)
   )

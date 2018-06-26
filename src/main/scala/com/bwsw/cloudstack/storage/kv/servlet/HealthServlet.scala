@@ -18,27 +18,65 @@
 package com.bwsw.cloudstack.storage.kv.servlet
 
 import akka.actor.ActorSystem
+import com.bwsw.cloudstack.storage.kv.entity._
 import com.bwsw.cloudstack.storage.kv.processor.HealthProcessor
+import org.json4s.JsonAST.JString
+import org.json4s.{CustomSerializer, DefaultFormats, Formats}
 import org.scalatra._
+import org.scalatra.json.JacksonJsonSupport
 
 import scala.concurrent.{ExecutionContext, Future}
 
 class HealthServlet(system: ActorSystem, healthProcessor: HealthProcessor)
   extends ScalatraServlet
-    with FutureSupport {
+    with FutureSupport
+    with JacksonJsonSupport {
+
+  protected implicit lazy val jsonFormats: Formats = DefaultFormats.preservingEmptyValues + new HealthStatusSerializer + new NameSerializer
 
   protected implicit def executor: ExecutionContext = system.dispatcher
 
   get("/") {
     new AsyncResult() {
-      val is: Future[_] = healthProcessor.check
-        .map {
-          case Right(true) =>
-            Ok("")
-          case Right(false) =>
-            InternalServerError("")
-          case _ => InternalServerError()
+      val is: Future[_] =
+        if (params.getOrElse("detailed", "false").toBoolean) {
+          contentType = formats("json")
+          healthProcessor.checkDetailed.map { body =>
+            body.status match {
+              case Unhealthy =>
+                InternalServerError(body)
+              case Healthy =>
+                body
+            }
+          }
+        }
+        else {
+          healthProcessor.check
+            .map {
+              case Healthy =>
+                Ok("")
+              case Unhealthy =>
+                InternalServerError("")
+            }
         }
     }
   }
+
+  private class HealthStatusSerializer extends CustomSerializer[HealthStatus](
+    format => ( {
+      case JString("HEALTHY") => Healthy
+      case JString("UNHEALTHY") => Unhealthy
+    }, {
+      case op: HealthStatus => JString(op.toString)
+    }))
+
+  private class NameSerializer extends CustomSerializer[CheckName](
+    format => ( {
+      case JString("STORAGE_REGISTRY") => StorageRegistry
+      case JString("STORAGE_TEMPLATE") => StorageTemplate
+      case JString("HISTORY_STORAGE_TEMPLATE") => HistoryStorageTemplate
+    }, {
+      case op: CheckName => JString(op.toString)
+    }))
+
 }

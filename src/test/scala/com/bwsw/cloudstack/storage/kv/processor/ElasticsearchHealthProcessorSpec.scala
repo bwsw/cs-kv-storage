@@ -17,6 +17,7 @@
 
 package com.bwsw.cloudstack.storage.kv.processor
 
+import com.bwsw.cloudstack.storage.kv.entity.{Healthy, Unhealthy}
 import com.sksamuel.elastic4s.admin.IndicesExists
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http._
@@ -25,11 +26,10 @@ import com.sksamuel.elastic4s.http.index.{GetIndexTemplates, IndexTemplate}
 import com.sksamuel.elastic4s.indexes.GetIndexTemplateDefinition
 import org.scalamock.scalatest.AsyncMockFactory
 import org.scalatest.AsyncFunSpec
-import com.bwsw.cloudstack.storage.kv.error.InternalError
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class ElasticsearchHealthProcessorSuite extends AsyncFunSpec with AsyncMockFactory {
+class ElasticsearchHealthProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
   private val registryIndex = "storage-registry"
   describe("a HealthChecker") {
     val fakeClient = mock[HttpClient]
@@ -41,7 +41,7 @@ class ElasticsearchHealthProcessorSuite extends AsyncFunSpec with AsyncMockFacto
       expectHistoryTemplateExists
       expectStorageRegistryExists
       healthProcessor.check.map {
-        case Right(true) => succeed
+        case Healthy => succeed
         case _ => fail
       }
     }
@@ -52,7 +52,7 @@ class ElasticsearchHealthProcessorSuite extends AsyncFunSpec with AsyncMockFacto
       expectIndexExistsRequest.returning(getRequestSuccessFuture(IndexExistsResponse(false)))
 
       healthProcessor.check.map {
-        case Right(false) => succeed
+        case Unhealthy => succeed
         case _ => fail
       }
     }
@@ -64,7 +64,7 @@ class ElasticsearchHealthProcessorSuite extends AsyncFunSpec with AsyncMockFacto
       expectStorageRegistryExists
 
       healthProcessor.check.map {
-        case Right(false) => succeed
+        case Unhealthy => succeed
         case _ => fail
       }
     }
@@ -76,7 +76,7 @@ class ElasticsearchHealthProcessorSuite extends AsyncFunSpec with AsyncMockFacto
       expectStorageRegistryExists
 
       healthProcessor.check.map {
-        case Right(false) => succeed
+        case Unhealthy => succeed
         case _ => fail
       }
     }
@@ -87,7 +87,7 @@ class ElasticsearchHealthProcessorSuite extends AsyncFunSpec with AsyncMockFacto
       expectIndexExistsRequest.returning(getRequestFailureFuture)
 
       healthProcessor.check.map {
-        case Left(_: InternalError) => succeed
+        case Unhealthy => succeed
         case _ => fail
       }
     }
@@ -99,7 +99,7 @@ class ElasticsearchHealthProcessorSuite extends AsyncFunSpec with AsyncMockFacto
       expectStorageRegistryExists
 
       healthProcessor.check.map {
-        case Left(_: InternalError) => succeed
+        case Unhealthy => succeed
         case _ => fail
       }
     }
@@ -111,7 +111,7 @@ class ElasticsearchHealthProcessorSuite extends AsyncFunSpec with AsyncMockFacto
       expectStorageRegistryExists
 
       healthProcessor.check.map {
-        case Left(_: InternalError) => succeed
+        case Unhealthy => succeed
         case _ => fail
       }
     }

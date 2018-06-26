@@ -17,9 +17,11 @@
 
 package com.bwsw.cloudstack.storage.kv.processor
 
-import com.bwsw.cloudstack.storage.kv.error.{InternalError, StorageError}
+import com.bwsw.cloudstack.storage.kv.entity._
 import com.sksamuel.elastic4s.http.ElasticDsl._
-import com.sksamuel.elastic4s.http.HttpClient
+import com.sksamuel.elastic4s.http.index.GetIndexTemplates
+import com.sksamuel.elastic4s.http.index.admin.IndexExistsResponse
+import com.sksamuel.elastic4s.http.{HttpClient, RequestFailure, RequestSuccess}
 
 import scala.concurrent.Future
 
@@ -28,17 +30,57 @@ class ElasticsearchHealthProcessor(client: HttpClient) extends HealthProcessor {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  def check: Future[Either[StorageError, Boolean]] = {
-    val response = for {
-      registry <- client.execute(indexExists(registryIndex))
-      storageTemplate <- client.execute(getIndexTemplate("storage"))
-      historyTemplate <- client.execute(getIndexTemplate("history-storage"))
-    } yield (registry, storageTemplate, historyTemplate)
-    response.map {
-      case (Right(registry), Right(storageTemplate), Right(historyTemplate)) =>
-        Right(registry.result.exists && storageTemplate.result.templates.nonEmpty && historyTemplate.result.templates.nonEmpty)
-      case _ => Left(InternalError("Elasticsearch error"))
+  def check: Future[HealthStatus] = {
+    getResponses.map {
+      case (Right(registry), Right(storageTemplate), Right(historyStorageTemplate)) =>
+        if (registry.result.exists && storageTemplate.result.templates.nonEmpty && historyStorageTemplate.result.templates.nonEmpty)
+          Healthy
+        else
+          Unhealthy
+      case _ => Unhealthy
     }
+  }
 
+  def checkDetailed: Future[HealthResponseBody] = {
+    getResponses.map {
+      case (registry, storageTemplate, historyStorageTemplate) =>
+        val checks = Seq(
+          indexExistsCheck(StorageRegistry, registry),
+          templateExistsCheck(StorageTemplate, storageTemplate),
+          templateExistsCheck(HistoryStorageTemplate, historyStorageTemplate)
+        )
+        val status = if (checks.forall(_.status == Healthy)) Healthy else Unhealthy
+        HealthResponseBody(status, checks)
+    }
+  }
+
+  private def getResponses = for {
+    registry <- client.execute(indexExists(registryIndex))
+    storageTemplate <- client.execute(getIndexTemplate("storage"))
+    historyStorageTemplate <- client.execute(getIndexTemplate("history-storage"))
+  } yield (registry, storageTemplate, historyStorageTemplate)
+
+  private def indexExistsCheck(name: CheckName, response: Either[RequestFailure, RequestSuccess[IndexExistsResponse]]): Check = {
+    response match {
+      case Left(failure) =>
+        val message = if (failure.error == null) "Elasticsearch error" else failure.error.reason
+        Check(name, Unhealthy, message)
+      case Right(success) =>
+        val status = if (success.result.exists) Healthy else Unhealthy
+        val message = if (success.result.exists) "" else "Not found"
+        Check(name, status, message)
+    }
+  }
+
+  private def templateExistsCheck(name: CheckName, response: Either[RequestFailure, RequestSuccess[GetIndexTemplates]]): Check = {
+    response match {
+      case Left(failure) =>
+        val message = if (failure.error == null) "Elasticsearch error" else failure.error.reason
+        Check(name, Unhealthy, message)
+      case Right(success) =>
+        val status = if (success.result.templates.nonEmpty) Healthy else Unhealthy
+        val message = if (success.result.templates.nonEmpty) "" else "Not found"
+        Check(name, status, message)
+    }
   }
 }
