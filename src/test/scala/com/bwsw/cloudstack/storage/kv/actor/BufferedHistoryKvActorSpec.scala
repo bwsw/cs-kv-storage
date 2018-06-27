@@ -89,18 +89,18 @@ class BufferedHistoryKvActorSpec
         val bufferedHistoryKvActor = system.actorOf(Props(new BufferedHistoryKvActor))
         bufferedHistoryKvActor ! history
 
-        eventually(timeout(scaled(flushTimeout * 2.5))) {
+        eventually(timeout(scaled(flushTimeout * 2.9))) {
           historyAttempt.isCompleted should be(true)
           historyRetry.isCompleted should be(true)
         }
       }
 
       it("should process just-in-time") {
-        test(1, 0.5)
+        test(1, 0.9)
       }
 
       it("should process by timeout") {
-        test(10, 1.5)
+        test(10, 1.9)
       }
 
 
@@ -139,18 +139,18 @@ class BufferedHistoryKvActorSpec
         val bufferedHistoryKvActor = system.actorOf(Props(new BufferedHistoryKvActor))
         bufferedHistoryKvActor ! historyBulk
 
-        eventually(timeout(scaled(flushTimeout * 2.5))) {
+        eventually(timeout(scaled(flushTimeout * 2.9))) {
           historyAttempt.isCompleted should be(true)
           historyRetry.isCompleted should be(true)
         }
       }
 
       it("should process just-in-time") {
-        test(1, 0.5)
+        test(1, 0.9)
       }
 
       it("should process by timeout") {
-        test(2, 1.5)
+        test(2, 1.9)
       }
 
       it("should process just-in-time with retry") {
