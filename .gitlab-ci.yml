@@ -30,7 +30,7 @@ build:
 test:
   stage: test
   script:
-    - sbt -Dakka.test.timefactor=3 test
+    - sbt test
   tags:
     - build-in-docker
     - cs-eco-builder
