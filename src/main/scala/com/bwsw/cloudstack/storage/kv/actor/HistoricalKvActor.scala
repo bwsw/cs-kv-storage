@@ -35,7 +35,7 @@ import scala.concurrent.Future
 /** Actor handling users requests and logging history of changes **/
 class HistoricalKvActor(implicit inj: Injector)
   extends KvActor
-    with akka.actor.ActorLogging {
+  with akka.actor.ActorLogging {
 
   import context.dispatcher
 
