@@ -19,11 +19,11 @@ package com.bwsw.cloudstack.storage.kv.cache
 
 import com.bwsw.cloudstack.storage.kv.entity.Storage
 import com.sksamuel.elastic4s.get.GetDefinition
+import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http._
 import com.sksamuel.elastic4s.http.get.GetResponse
 import org.scalamock.scalatest.AsyncMockFactory
 import org.scalatest.AsyncFunSpec
-import com.sksamuel.elastic4s.http.ElasticDsl._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -32,9 +32,6 @@ class ElasticsearchStorageLoaderSpec extends AsyncFunSpec with AsyncMockFactory 
   private val registry = "storage-registry"
   private val `type` = "_doc"
   private val storageUuid = "someStorage"
-  private val value = "someValue"
-  private val keyValues = Map("key1" -> "value1", "key2" -> "value2", "key3" -> "value3")
-  private val index = "storage-someStorage"
   private val storage = Storage(storageUuid, "ACC", keepHistory = true)
   private val source = Map(
     "type" -> storage.storageType,
@@ -42,8 +39,10 @@ class ElasticsearchStorageLoaderSpec extends AsyncFunSpec with AsyncMockFactory 
   ).asInstanceOf[Map[String, AnyRef]]
 
   describe("An ElasticsearchStorageLoader") {
+
     val fakeClient = mock[HttpClient]
     val loader = new ElasticsearchStorageLoader(fakeClient)
+
     it("should load value from Elasticsearch") {
       val getResponse = GetResponse(storageUuid, registry, `type`, 1, found = true, Map.empty, source)
       expectGetRequest(fakeClient).returning(getRequestSuccessFuture(getResponse))
@@ -87,7 +86,10 @@ class ElasticsearchStorageLoaderSpec extends AsyncFunSpec with AsyncMockFactory 
   }
 
   private def expectGetRequest(client: HttpClient) = {
-    (client.execute[GetDefinition, GetResponse](_: GetDefinition)(_: HttpExecutable[GetDefinition, GetResponse], _: ExecutionContext))
+    (client
+      .execute[GetDefinition, GetResponse]
+        (_: GetDefinition)
+        (_: HttpExecutable[GetDefinition, GetResponse], _: ExecutionContext))
       .expects(ElasticDsl.get(storageUuid).from(registry / `type`), GetHttpExecutable, *)
   }
 }
