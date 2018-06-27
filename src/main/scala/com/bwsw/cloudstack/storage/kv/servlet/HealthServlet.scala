@@ -17,48 +17,46 @@
 
 package com.bwsw.cloudstack.storage.kv.servlet
 
-import akka.actor.ActorSystem
+import akka.actor.{ActorRef, ActorSystem}
+import akka.pattern.ask
+import akka.util.Timeout
+import com.bwsw.cloudstack.storage.kv.actor.HealthActor
 import com.bwsw.cloudstack.storage.kv.entity._
-import com.bwsw.cloudstack.storage.kv.processor.HealthProcessor
+import com.bwsw.cloudstack.storage.kv.message.request.HealthCheckRequest
 import org.json4s.JsonAST.JString
 import org.json4s.{CustomSerializer, DefaultFormats, Formats}
 import org.scalatra._
 import org.scalatra.json.JacksonJsonSupport
 
+import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future}
 
-class HealthServlet(system: ActorSystem, healthProcessor: HealthProcessor)
+class HealthServlet(system: ActorSystem, requestTimeout: FiniteDuration, healthActor: ActorRef)
   extends ScalatraServlet
-    with FutureSupport
-    with JacksonJsonSupport {
+  with FutureSupport
+  with JacksonJsonSupport {
 
   protected implicit lazy val jsonFormats: Formats = DefaultFormats.preservingEmptyValues + new HealthStatusSerializer + new NameSerializer
+
+  protected implicit val akkaTimeout: Timeout = requestTimeout
 
   protected implicit def executor: ExecutionContext = system.dispatcher
 
   get("/") {
     new AsyncResult() {
-      val is: Future[_] =
-        if (params.getOrElse("detailed", "false").toBoolean) {
-          contentType = formats("json")
-          healthProcessor.checkDetailed.map { body =>
+      val is: Future[_] = {
+        val detailed = params.getOrElse("detailed", "false").toBoolean
+        (healthActor ? HealthCheckRequest(detailed)).map {
+          case HealthCheckShortResponseBody(Healthy) => Ok("")
+          case HealthCheckShortResponseBody(Unhealthy) => InternalServerError("")
+          case body: HealthCheckDetailedResponseBody =>
+            contentType = formats("json")
             body.status match {
-              case Unhealthy =>
-                InternalServerError(body)
-              case Healthy =>
-                body
-            }
-          }
-        }
-        else {
-          healthProcessor.check
-            .map {
-              case Healthy =>
-                Ok("")
-              case Unhealthy =>
-                InternalServerError("")
+              case Healthy => Ok(body)
+              case Unhealthy => InternalServerError(body)
             }
         }
+      }
     }
   }
 

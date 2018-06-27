@@ -116,12 +116,12 @@ class HistoricalKvActor(implicit inj: Injector)
   }
 
   protected def logHistory(
-      response: Either[StorageError, Unit],
-      storage: Storage,
-      key: String,
-      value: String,
-      timestamp: Long,
-      operation: Operation): Unit = {
+    response: Either[StorageError, Unit],
+    storage: Storage,
+    key: String,
+    value: String,
+    timestamp: Long,
+    operation: Operation): Unit = {
     if (storage.keepHistory)
       response match {
         case Right(_) =>
@@ -131,11 +131,11 @@ class HistoricalKvActor(implicit inj: Injector)
   }
 
   protected def logHistory(
-      response: Either[StorageError, Map[String, Boolean]],
-      storage: Storage,
-      timestamp: Long,
-      operation: Operation,
-      values: Map[String, String] = Map()): Unit = {
+    response: Either[StorageError, Map[String, Boolean]],
+    storage: Storage,
+    timestamp: Long,
+    operation: Operation,
+    values: Map[String, String] = Map()): Unit = {
     if (storage.keepHistory)
       response match {
         case Right(results) =>

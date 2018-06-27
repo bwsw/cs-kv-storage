@@ -15,11 +15,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package com.bwsw.cloudstack.storage.kv.entity
+package com.bwsw.cloudstack.storage.kv.message.response
 
-/** Contains detailed information about health checks performed to calculate overall health status
-  *
-  * @param status overall health status
-  * @param checks detailed information about checks
-  */
-case class HealthResponseBody(status: HealthStatus, checks: Seq[Check])
+import akka.http.scaladsl.model.HttpResponse
+
+case class CheckTemplateExistsResponse(httpResponse: HttpResponse)

@@ -15,24 +15,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package com.bwsw.cloudstack.storage.kv.processor
+package com.bwsw.cloudstack.storage.kv.message.request
 
-import com.bwsw.cloudstack.storage.kv.entity.{HealthResponseBody, HealthStatus}
-import com.bwsw.cloudstack.storage.kv.error.StorageError
-
-import scala.concurrent.Future
-
-/** A processor of health checks **/
-trait HealthProcessor {
-  /** Returns boolean response if storage system is running and set up properly
-    *
-    * @return a [[Future]] of HealthStatus of the system
-    */
-  def check: Future[HealthStatus]
-
-  /** Returns detailed response if storage system is running and set up properly
-    *
-    * @return a [[Future]] of HealthResponseBody
-    */
-  def checkDetailed: Future[HealthResponseBody]
-}
+case class CheckTemplateExistsRequest(name: String)

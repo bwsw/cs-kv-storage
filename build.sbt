@@ -38,6 +38,8 @@ libraryDependencies ++= Seq(
   "com.sksamuel.elastic4s" % "elastic4s-http_2.12" % elastic4sVersion,
   "com.typesafe" % "config" % "1.3.3",
   "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+  "com.typesafe.akka" %% "akka-http" % "10.1.3",
+  "com.typesafe.akka" %% "akka-stream" % "2.5.13",
   "org.scalatra" %% "scalatra-json" % ScalatraVersion,
   "org.json4s" %% "json4s-jackson" % "3.5.4",
   "com.github.blemale" % "scaffeine_2.12" % "2.5.0",
