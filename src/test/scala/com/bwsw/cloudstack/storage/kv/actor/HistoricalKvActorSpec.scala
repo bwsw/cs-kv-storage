@@ -55,7 +55,6 @@ class HistoricalKvActorSpec
   private val timeout = 1000.millis
   private val timestamp = System.currentTimeMillis()
   private val exception = new RuntimeException("test exception")
-  private val internalError = Left(InternalError("some reason"))
 
   class HistoryKvActorMock(testProbe: TestProbe) extends HistoryKvActor {
 
