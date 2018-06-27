@@ -26,6 +26,7 @@ import com.bwsw.cloudstack.storage.kv.message._
 import com.bwsw.cloudstack.storage.kv.message.request._
 import com.bwsw.cloudstack.storage.kv.message.response._
 import com.bwsw.cloudstack.storage.kv.processor.KvProcessor
+import com.bwsw.cloudstack.storage.kv.util.Clock
 import scaldi.Injector
 import scaldi.akka.AkkaInjectable._
 
@@ -38,6 +39,7 @@ class HistoricalKvActor(implicit inj: Injector)
 
   import context.dispatcher
 
+  private val clock = inject[Clock]
   private val historyKvActor = injectActorRef[HistoryKvActor]
   private val kvProcessor = inject[KvProcessor]
   private val storageCache = inject[StorageCache]
@@ -56,7 +58,7 @@ class HistoricalKvActor(implicit inj: Injector)
     case KvMultiGetResponse(response) =>
       sender() ! response
     case request: KvSetRequest =>
-      val timestamp = System.currentTimeMillis()
+      val timestamp = clock.currentTimeMillis
       process(request, (request: KvSetRequest, storage: Storage) => {
         kvProcessor.set(request.storage, request.key, request.value)
           .map(r => KvSetResponse(storage, request.key, request.value, timestamp, r))
@@ -65,7 +67,7 @@ class HistoricalKvActor(implicit inj: Injector)
       logHistory(response, storage, key, value, timestamp, Set)
       sender() ! response
     case request: KvMultiSetRequest =>
-      val timestamp = System.currentTimeMillis()
+      val timestamp = clock.currentTimeMillis
       process(request, (request: KvMultiSetRequest, storage: Storage) => {
         kvProcessor.set(request.storage, request.kvs).map(r => KvMultiSetResponse(storage, request.kvs, timestamp, r))
       })
@@ -73,7 +75,7 @@ class HistoricalKvActor(implicit inj: Injector)
       logHistory(response, storage, timestamp, Set, kvs)
       sender() ! response
     case request: KvDeleteRequest =>
-      val timestamp = System.currentTimeMillis()
+      val timestamp = clock.currentTimeMillis
       process(request, (request: KvDeleteRequest, storage: Storage) => {
         kvProcessor.delete(request.storage, request.key).map(r => KvDeleteResponse(storage, request.key, timestamp, r))
       })
@@ -81,7 +83,7 @@ class HistoricalKvActor(implicit inj: Injector)
       logHistory(response, storage, key, null, timestamp, Delete)
       sender() ! response
     case request: KvMultiDeleteRequest =>
-      val timestamp = System.currentTimeMillis()
+      val timestamp = clock.currentTimeMillis
       process(request, (request: KvMultiDeleteRequest, storage: Storage) => {
         kvProcessor.delete(request.storage, request.keys).map(r => KvMultiDeleteResponse(storage, timestamp, r))
       })
@@ -95,7 +97,7 @@ class HistoricalKvActor(implicit inj: Injector)
     case KvListResponse(response) =>
       sender() ! response
     case request: KvClearRequest =>
-      val timestamp = System.currentTimeMillis()
+      val timestamp = clock.currentTimeMillis
       process(request, (request: KvClearRequest, storage: Storage) => {
         kvProcessor.clear(request.storage).map(r => KvClearResponse(storage, timestamp, r))
       })

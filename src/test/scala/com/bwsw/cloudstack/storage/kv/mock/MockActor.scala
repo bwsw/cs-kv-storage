@@ -18,7 +18,8 @@
 package com.bwsw.cloudstack.storage.kv.mock
 
 import akka.actor.Actor
-import com.bwsw.cloudstack.storage.kv.mock.MockActor.Expectation
+import akka.actor.Status.Failure
+import com.bwsw.cloudstack.storage.kv.mock.MockActor._
 import org.scalatest.Matchers
 
 import scala.collection.mutable
@@ -29,12 +30,21 @@ class MockActor() extends Actor with Matchers {
 
   override def receive: Receive = {
     case message: Any =>
-      if (queue.isEmpty) {
-        fail("Unexpected message " + message)
+      try {
+        if (queue.isEmpty) {
+          fail("Unexpected message " + message)
+        }
+        queue.dequeue() match {
+          case expectation: ResponsiveExpectation =>
+            message should equal(expectation.message)
+            sender ! expectation.responseProducer.apply()
+          case expectation =>
+            message should equal(expectation.message)
+        }
+      } catch {
+        case e: Exception =>
+          sender ! Failure(e)
       }
-      val expectation = queue.dequeue()
-      message should equal(expectation.message)
-      sender ! expectation.responseProducer.apply()
   }
 
   def expect(expectation: Expectation): Unit = queue.enqueue(expectation)
@@ -44,11 +54,25 @@ class MockActor() extends Actor with Matchers {
     expect(expectation)
   }
 
-  def clear(): Unit = queue.clear()
+  def check(): Unit = {
+    if (queue.nonEmpty) {
+      fail("Unsatisfied expectations:\n" + queue.mkString("\n"))
+    }
+  }
+
+  def clear(): Unit = {
+    queue.clear()
+  }
 }
 
 object MockActor {
 
-  case class Expectation(message: Any, responseProducer: () => Any)
+  sealed trait Expectation {
+    val message: Any
+  }
+
+  case class ResponsiveExpectation(message: Any, responseProducer: () => Any) extends Expectation
+
+  case class SilentExpectation(message: Any) extends Expectation
 
 }
