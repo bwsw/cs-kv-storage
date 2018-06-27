@@ -18,21 +18,23 @@
 package com.bwsw.cloudstack.storage.kv.actor
 
 import akka.actor.{ActorSystem, Props}
-import akka.testkit.{ImplicitSender, TestKit, _}
-import com.bwsw.cloudstack.storage.kv.cache.StorageCache
+import akka.testkit.{ImplicitSender, TestKit}
 import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
 import com.bwsw.cloudstack.storage.kv.entity.Storage
 import com.bwsw.cloudstack.storage.kv.message.{Clear, Delete, KvHistory, KvHistoryBulk, Set}
 import com.bwsw.cloudstack.storage.kv.processor.HistoryProcessor
 import org.scalamock.scalatest.MockFactory
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FunSpecLike}
+import org.scalatest.concurrent.Eventually
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FunSpecLike, Matchers}
 import scaldi.{Injector, Module}
 
-import scala.concurrent.Future
 import scala.concurrent.duration._
+import scala.concurrent.{Future, Promise}
 
 class BufferedHistoryKvActorSpec
   extends TestKit(ActorSystem("cs-kv-storage"))
+  with Matchers
+  with Eventually
   with FunSpecLike
   with MockFactory
   with ImplicitSender
@@ -41,139 +43,134 @@ class BufferedHistoryKvActorSpec
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  private implicit val testModule: Injector = mocksModule
   private val historyProcessor = mock[HistoryProcessor]
-  private val storageCache = mock[StorageCache]
   private val appConf = mock[AppConfig]
   private val storage = Storage("someStorage", "ACC", keepHistory = true)
   private val someKey = "someKey"
   private val someValue = "someValue"
   private val timestamp = System.currentTimeMillis()
-  private val operation = Delete
-  private val history = KvHistory(storage.uUID, someKey, someValue, timestamp, operation)
-  private val historyList = List(
-    KvHistory(storage.uUID, someKey, someValue, timestamp, Set),
-    KvHistory(storage.uUID, someKey, null, timestamp, Delete),
-    KvHistory(storage.uUID, null, null, timestamp, Clear)
-  )
-  private val historyListRetry = List(
-    KvHistory(storage.uUID, someKey, someValue, timestamp, Set, 1),
-    KvHistory(storage.uUID, someKey, null, timestamp, Delete, 1),
-    KvHistory(storage.uUID, null, null, timestamp, Clear, 1)
-  )
-  private val historyBulk = KvHistoryBulk(historyList)
-
-  private def mocksModule = new Module {
-    bind[HistoryProcessor] to historyProcessor
-    bind[StorageCache] to storageCache
-    bind[AppConfig] toNonLazy appConf
-  }
+  private val history = KvHistory(storage.uUID, someKey, someValue, timestamp, Set)
+  private val historyListRetry =
+    List(
+          KvHistory(storage.uUID, someKey, null, timestamp, Delete),
+          KvHistory(storage.uUID, null, null, timestamp, Clear))
+  private val historyBulk = KvHistoryBulk(history :: historyListRetry)
+  private val flushTimeout = 1000.millis
 
   describe("a BufferedHistoryKvActor") {
-    describe("KvHistory") {
-      it("should process just-in-time") {
-        within(400.millis.dilated) {
-          (appConf.getFlushHistoryTimeout _).expects().returning(800.millis.dilated)
-          (appConf.getFlushHistorySize _).expects().returning(1)
-          (historyProcessor.save _).expects(List(history)).returning(Future(None))
-          val bufferedHistoryKvActor = system.actorOf(Props(new BufferedHistoryKvActor))
-          bufferedHistoryKvActor ! history
-          expectNoMessage()
+
+    implicit val testModule: Injector = new Module {
+      bind[HistoryProcessor] to historyProcessor
+      bind[AppConfig] toNonLazy appConf
+    }
+
+    describe("(KvHistory)") {
+
+      def test(flushSize: Int, verifyTimeoutFactor: Double) = {
+        (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout)
+        (appConf.getFlushHistorySize _).expects().returning(flushSize)
+        val historyLogged = Promise[Boolean]
+        expectHistoryProcessing(List(history), Future(None), historyLogged)
+        val bufferedHistoryKvActor = system.actorOf(Props(new BufferedHistoryKvActor))
+        bufferedHistoryKvActor ! history
+        eventually(timeout(scaled(flushTimeout * verifyTimeoutFactor))) {historyLogged.isCompleted should be(true)}
+      }
+
+      def testRetry(flushSize: Int) = {
+        (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout)
+        (appConf.getFlushHistorySize _).expects().returning(flushSize).anyNumberOfTimes
+        (appConf.getHistoryRetryLimit _).expects().returning(1)
+
+        val historyAttempt = Promise[Boolean]
+        expectHistoryProcessing(List(history), Future(Some(List(history))), historyAttempt)
+
+        val historyRetry = Promise[Boolean]
+        expectHistoryProcessing(List(history.makeAttempt), Future(None), historyRetry)
+
+        val bufferedHistoryKvActor = system.actorOf(Props(new BufferedHistoryKvActor))
+        bufferedHistoryKvActor ! history
+
+        eventually(timeout(scaled(flushTimeout * 2.5))) {
+          historyAttempt.isCompleted should be(true)
+          historyRetry.isCompleted should be(true)
         }
+      }
+
+      it("should process just-in-time") {
+        test(1, 0.5)
       }
 
       it("should process by timeout") {
-        within(200.millis.dilated) {
-          (appConf.getFlushHistoryTimeout _).expects().returning(100.millis.dilated)
-          (appConf.getFlushHistorySize _).expects().returning(10)
-          (historyProcessor.save _).expects(List(history)).returning(Future(None))
-          val bufferedHistoryKvActor = system.actorOf(Props(new BufferedHistoryKvActor))
-          bufferedHistoryKvActor ! history
-          expectNoMessage()
-        }
+        test(10, 1.5)
       }
+
 
       it("should process just-in-time with retry") {
-        within(100.millis.dilated) {
-          (appConf.getFlushHistoryTimeout _).expects().returning(200.millis.dilated)
-          (appConf.getFlushHistorySize _).expects().returning(1).anyNumberOfTimes
-          (historyProcessor.save _).expects(List(history)).returning(Future(Some(List(history))))
-          (appConf.getHistoryRetryLimit _).expects().returning(1)
-          (historyProcessor.save _).expects(List(history.makeAttempt)).returning(Future(None))
-          val bufferedHistoryKvActor = system.actorOf(Props(new BufferedHistoryKvActor))
-          bufferedHistoryKvActor ! history
-          expectNoMessage()
-        }
+        testRetry(1)
       }
 
-      it("should process with retry by timeout") {
-        within(300.millis.dilated) {
-          (appConf.getFlushHistoryTimeout _).expects().returning(100.millis.dilated)
-          (appConf.getFlushHistorySize _).expects().returning(10).anyNumberOfTimes
-          (historyProcessor.save _).expects(List(history)).returning(Future(Some(List(history))))
-          (appConf.getHistoryRetryLimit _).expects().returning(1)
-          (historyProcessor.save _).expects(List(history.makeAttempt)).returning(Future(None))
-          val bufferedHistoryKvActor = system.actorOf(Props(new BufferedHistoryKvActor))
-          bufferedHistoryKvActor ! history
-          expectNoMessage()
-        }
+      it("should process by timeout with retry") {
+        testRetry(10)
       }
     }
 
     describe("KvHistoryBulk") {
-      it("should process just-in-time") {
-        within(100.millis.dilated) {
-          (appConf.getFlushHistoryTimeout _).expects().returning(200.millis.dilated)
-          (appConf.getFlushHistorySize _).expects().returning(3)
-          (historyProcessor.save _).expects(historyList).returning(Future(None))
-          val bufferedHistoryKvActor = system.actorOf(Props(new BufferedHistoryKvActor))
-          bufferedHistoryKvActor ! historyBulk
-          expectNoMessage()
+
+      def test(flushSizeFactor: Int, verifyTimeoutFactor: Double) = {
+        (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout)
+        (appConf.getFlushHistorySize _).expects().returning(historyBulk.values.size * flushSizeFactor)
+        val historyLogged = Promise[Boolean]
+        expectHistoryProcessing(historyBulk.values.toList, Future(None), historyLogged)
+        val bufferedHistoryKvActor = system.actorOf(Props(new BufferedHistoryKvActor))
+        bufferedHistoryKvActor ! historyBulk
+        eventually(timeout(scaled(flushTimeout * verifyTimeoutFactor))) {historyLogged.isCompleted should be(true)}
+      }
+
+      def testRetry(flushSizeFactor: Int) = {
+        (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout)
+        (appConf.getFlushHistorySize _).expects().returning(historyBulk.values.size * flushSizeFactor).anyNumberOfTimes
+
+        val historyAttempt = Promise[Boolean]
+        expectHistoryProcessing(historyBulk.values.toList, Future(Some(historyListRetry)), historyAttempt)
+        (appConf.getHistoryRetryLimit _).expects().returning(1).repeat(historyListRetry.size)
+
+        val historyRetry = Promise[Boolean]
+        expectHistoryProcessing(historyListRetry.map(h => h.makeAttempt), Future(None), historyRetry)
+
+        val bufferedHistoryKvActor = system.actorOf(Props(new BufferedHistoryKvActor))
+        bufferedHistoryKvActor ! historyBulk
+
+        eventually(timeout(scaled(flushTimeout * 2.5))) {
+          historyAttempt.isCompleted should be(true)
+          historyRetry.isCompleted should be(true)
         }
+      }
+
+      it("should process just-in-time") {
+        test(1, 0.5)
       }
 
       it("should process by timeout") {
-        within(200.millis.dilated) {
-          (appConf.getFlushHistoryTimeout _).expects().returning(100.millis.dilated)
-          (appConf.getFlushHistorySize _).expects().returning(10)
-          (historyProcessor.save _).expects(historyList).returning(Future(None))
-          val bufferedHistoryKvActor = system.actorOf(Props(new BufferedHistoryKvActor))
-          bufferedHistoryKvActor ! historyBulk
-          expectNoMessage()
-        }
+        test(2, 1.5)
       }
 
       it("should process just-in-time with retry") {
-        within(100.millis.dilated) {
-          (appConf.getFlushHistoryTimeout _).expects().returning(200.millis.dilated)
-          (appConf.getFlushHistorySize _).expects().returning(1).anyNumberOfTimes
-          (historyProcessor.save _).expects(historyList).returning(Future(Some(historyList)))
-          (appConf.getHistoryRetryLimit _).expects().returning(1).repeat(3).times
-          (historyProcessor.save _).expects(historyListRetry).returning(Future(None))
-          val bufferedHistoryKvActor = system.actorOf(Props(new BufferedHistoryKvActor))
-          bufferedHistoryKvActor ! historyBulk
-          expectNoMessage()
-        }
+        testRetry(1)
       }
 
       it("should process with retry by timeout") {
-        within(300.millis.dilated) {
-          (appConf.getFlushHistoryTimeout _).expects().returning(100.millis.dilated)
-          (appConf.getFlushHistorySize _).expects().returning(3).anyNumberOfTimes
-          (historyProcessor.save _).expects(historyList).returning(Future(Some(List(
-            KvHistory(storage.uUID, someKey, someValue, timestamp, Set),
-            KvHistory(storage.uUID, someKey, null, timestamp, Delete)
-          ))))
-          (appConf.getHistoryRetryLimit _).expects().returning(1).repeat(2).times
-          (historyProcessor.save _).expects(List(
-            KvHistory(storage.uUID, someKey, someValue, timestamp, Set, 1),
-            KvHistory(storage.uUID, someKey, null, timestamp, Delete, 1)
-          )).returning(Future(None))
-          val bufferedHistoryKvActor = system.actorOf(Props(new BufferedHistoryKvActor))
-          bufferedHistoryKvActor ! historyBulk
-          expectNoMessage()
-        }
+        testRetry(2)
       }
+    }
+  }
+
+  private def expectHistoryProcessing(
+      expected: List[KvHistory],
+      result: Future[Option[List[KvHistory]]],
+      verifier: Promise[Boolean]): Unit = {
+    (historyProcessor.save _).expects(expected).onCall { histories: List[KvHistory] =>
+      verifier.success(true)
+      result
     }
   }
 }
