@@ -75,7 +75,7 @@ class ElasticsearchCheckActorSpec
     }
 
     it("should return true if template exists") {
-      test(200, msg = true, 3000.millis)
+      test(200, msg = true, 5000.millis)
     }
 
     it("should return false if template does not exist") {
