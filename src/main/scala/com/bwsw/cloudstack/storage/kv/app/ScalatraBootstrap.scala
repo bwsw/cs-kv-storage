@@ -18,6 +18,7 @@
 package com.bwsw.cloudstack.storage.kv.app
 
 import akka.actor.ActorSystem
+import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 import com.bwsw.cloudstack.storage.kv.actor.{CheckActor, HealthActor, KvActor}
 import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
 import com.bwsw.cloudstack.storage.kv.manager.KvStorageManager
@@ -32,6 +33,7 @@ class ScalatraBootstrap extends LifeCycle {
 
   implicit val system: ActorSystem = ActorSystem("cs-kv-storage")
   implicit val module: KvStorageModule = new KvStorageModule
+  implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system))
 
   private val kvManager = inject[KvStorageManager]
   private val kvProcessor = inject[KvProcessor]

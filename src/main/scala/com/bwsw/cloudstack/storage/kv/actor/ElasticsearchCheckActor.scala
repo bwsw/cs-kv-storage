@@ -19,25 +19,22 @@ package com.bwsw.cloudstack.storage.kv.actor
 
 import akka.actor.ActorLogging
 import akka.pattern.pipe
-import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
+import akka.stream.ActorMaterializer
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.HttpMethods.HEAD
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse, StatusCodes}
 import com.bwsw.cloudstack.storage.kv.configuration.ElasticsearchConfig
 import com.bwsw.cloudstack.storage.kv.message.request.CheckTemplateExistsRequest
-import com.bwsw.cloudstack.storage.kv.message.response.CheckTemplateExistsResponse
 import scaldi.Injector
 import scaldi.akka.AkkaInjectable._
 
 /** Performs checks under Elasticsearch **/
-class ElasticsearchCheckActor(implicit inj: Injector)
+class ElasticsearchCheckActor(implicit inj: Injector, materializer: ActorMaterializer)
   extends CheckActor
   with ActorLogging {
 
   private val http = Http(context.system)
   private val elasticsearchConfig = inject[ElasticsearchConfig]
-
-  final implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(context.system))
 
   import context.dispatcher
 
@@ -45,16 +42,7 @@ class ElasticsearchCheckActor(implicit inj: Injector)
     case CheckTemplateExistsRequest(name) =>
       val uri = elasticsearchConfig.getUri + "/_template/" + name
       http.singleRequest(HttpRequest(HEAD, uri))
-        //        .map(_ => CheckTemplateExistsResponse(_))
         .pipeTo(self)(sender())
-    case CheckTemplateExistsResponse(httpResponse) =>
-      val answer = httpResponse.status.intValue() match {
-        case 200 => true
-        case 404 => false
-        case _ => false
-      }
-      httpResponse.discardEntityBytes()
-      sender() ! answer
 
     case resp@HttpResponse(code, _, _, _) =>
       val answer = code match {

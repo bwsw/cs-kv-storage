@@ -51,7 +51,8 @@ libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "3.0.5" % Test,
   "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % Test,
   "org.scalamock" %% "scalamock" % "4.1.0" % Test,
-  "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test
+  "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
+  "com.github.tomakehurst" % "wiremock" % "2.18.0" % Test
 )
 
 assemblyJarName := s"${name.value}-${version.value}-jar-with-dependencies.jar"
