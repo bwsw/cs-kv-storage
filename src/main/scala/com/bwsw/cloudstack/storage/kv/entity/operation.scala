@@ -15,12 +15,19 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package com.bwsw.cloudstack.storage.kv.message
+package com.bwsw.cloudstack.storage.kv.entity
 
-import com.bwsw.cloudstack.storage.kv.entity.History
+/** Operation that where used to change data existing in some storage **/
+sealed trait Operation
 
-sealed trait HistoryResponseBody
+object Set extends Operation {
+  override def toString: String = "set"
+}
 
-case class HistoryScrolledBody(total: Long, size: Long, scrollId: String, items: List[History]) extends HistoryResponseBody
+object Delete extends Operation {
+  override def toString: String = "delete"
+}
 
-case class HistoryPagedBody(total: Long, size: Long, page: Long, items: List[History]) extends HistoryResponseBody
+object Clear extends Operation {
+  override def toString: String = "clear"
+}

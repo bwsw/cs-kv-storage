@@ -17,6 +17,7 @@
 
 package com.bwsw.cloudstack.storage.kv.processor
 
+import com.bwsw.cloudstack.storage.kv.entity.{HistoryResponseBody, HistoryScrolledBody, Operation}
 import com.bwsw.cloudstack.storage.kv.error.StorageError
 import com.bwsw.cloudstack.storage.kv.message._
 

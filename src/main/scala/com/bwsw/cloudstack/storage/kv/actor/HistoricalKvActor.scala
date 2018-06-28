@@ -20,7 +20,8 @@ package com.bwsw.cloudstack.storage.kv.actor
 import akka.actor.Status
 import akka.pattern.pipe
 import com.bwsw.cloudstack.storage.kv.cache.StorageCache
-import com.bwsw.cloudstack.storage.kv.entity.Storage
+import com.bwsw.cloudstack.storage.kv.entity
+import com.bwsw.cloudstack.storage.kv.entity.{Clear, Delete, Operation, Storage}
 import com.bwsw.cloudstack.storage.kv.error.{InternalError, NotFoundError, StorageError}
 import com.bwsw.cloudstack.storage.kv.message._
 import com.bwsw.cloudstack.storage.kv.message.request._
@@ -64,7 +65,7 @@ class HistoricalKvActor(implicit inj: Injector)
           .map(r => KvSetResponse(storage, request.key, request.value, timestamp, r))
       })
     case KvSetResponse(storage, key, value, timestamp, response) =>
-      logHistory(response, storage, key, value, timestamp, Set)
+      logHistory(response, storage, key, value, timestamp, entity.Set)
       sender() ! response
     case request: KvMultiSetRequest =>
       val timestamp = clock.currentTimeMillis
@@ -72,7 +73,7 @@ class HistoricalKvActor(implicit inj: Injector)
         kvProcessor.set(request.storage, request.kvs).map(r => KvMultiSetResponse(storage, request.kvs, timestamp, r))
       })
     case KvMultiSetResponse(storage, kvs, timestamp, response) =>
-      logHistory(response, storage, timestamp, Set, kvs)
+      logHistory(response, storage, timestamp, entity.Set, kvs)
       sender() ! response
     case request: KvDeleteRequest =>
       val timestamp = clock.currentTimeMillis

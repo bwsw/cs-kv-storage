@@ -17,7 +17,7 @@
 
 package com.bwsw.cloudstack.storage.kv.message.response
 
+import com.bwsw.cloudstack.storage.kv.entity.HistoryResponseBody
 import com.bwsw.cloudstack.storage.kv.error.StorageError
-import com.bwsw.cloudstack.storage.kv.message.HistoryResponseBody
 
 case class HistoryResponse(body: Either[StorageError, HistoryResponseBody])

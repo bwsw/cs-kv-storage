@@ -20,7 +20,8 @@ package com.bwsw.cloudstack.storage.kv.actor
 import akka.actor.{ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import com.bwsw.cloudstack.storage.kv.cache.StorageCache
-import com.bwsw.cloudstack.storage.kv.entity.Storage
+import com.bwsw.cloudstack.storage.kv.entity
+import com.bwsw.cloudstack.storage.kv.entity.{Clear, Delete, Storage}
 import com.bwsw.cloudstack.storage.kv.error.{InternalError, NotFoundError}
 import com.bwsw.cloudstack.storage.kv.message._
 import com.bwsw.cloudstack.storage.kv.message.request._
@@ -156,7 +157,7 @@ class HistoricalKvActorSpec
         val answer = Right(())
         (kvProcessor.set(_: String, _: String, _: String)).expects(storageUuid, someKey, someValue)
           .returning(Future(answer))
-        test(answer, Some(KvHistory(storageUuid, someKey, someValue, timestamp, Set)))
+        test(answer, Some(KvHistory(storageUuid, someKey, someValue, timestamp, entity.Set)))
       }
 
       it("should process a request and skip history logging") {
@@ -202,7 +203,7 @@ class HistoricalKvActorSpec
         (kvProcessor.set(_: String, _: Map[String, String])).expects(storageUuid, keyValues).returning(Future(answer))
         test(
           answer, Some(KvHistoryBulk(keyValues
-            .map { case (key, value) => KvHistory(storageUuid, key, value, timestamp, Set) })))
+            .map { case (key, value) => KvHistory(storageUuid, key, value, timestamp, entity.Set) })))
       }
 
       it("should process a request and skip history logging") {

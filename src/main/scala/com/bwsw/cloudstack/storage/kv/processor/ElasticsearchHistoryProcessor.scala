@@ -17,9 +17,9 @@
 
 package com.bwsw.cloudstack.storage.kv.processor
 
-import com.bwsw.cloudstack.storage.kv.entity.History
+import com.bwsw.cloudstack.storage.kv.entity._
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, StorageError}
-import com.bwsw.cloudstack.storage.kv.message.{Clear, Delete, HistoryPagedBody, HistoryResponseBody, HistoryScrolledBody, KvHistory, Operation, Set}
+import com.bwsw.cloudstack.storage.kv.message._
 import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils
 import com.sksamuel.elastic4s.http.ElasticDsl.{search, _}
 import com.sksamuel.elastic4s.http.{HttpClient, RequestFailure}
@@ -53,19 +53,24 @@ class ElasticsearchHistoryProcessor(client: HttpClient) extends HistoryProcessor
     }
   }
 
-  def get(storageUuid: String,
-          keys: Iterable[String],
-          operations: Iterable[Operation],
-          start: Long,
-          end: Long,
-          sort: Iterable[String],
-          page: Int,
-          size: Int,
-          scroll: Int): Future[Either[StorageError, HistoryResponseBody]] = {
+  def get(
+      storageUuid: String,
+      keys: Iterable[String],
+      operations: Iterable[Operation],
+      start: Long,
+      end: Long,
+      sort: Iterable[String],
+      page: Int,
+      size: Int,
+      scroll: Int): Future[Either[StorageError, HistoryResponseBody]] = {
 
     val searchDef = search(getHistoricalStorage(storageUuid))
     val withKeys = if (keys.nonEmpty) Seq(termsQuery("key", keys)) else Seq.empty
-    val withOperations = if (operations.nonEmpty) withKeys :+ termsQuery("operation", operations.map(_.toString)) else withKeys
+    val withOperations =
+      if (operations.nonEmpty)
+        withKeys :+ termsQuery("operation", operations.map(_.toString))
+      else
+        withKeys
 
     val queries =
       if (start == 0)

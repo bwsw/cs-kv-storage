@@ -17,6 +17,8 @@
 
 package com.bwsw.cloudstack.storage.kv.message
 
+import com.bwsw.cloudstack.storage.kv.entity.Operation
+
 case class KvHistory(storage: String, key: String, value: String, timestamp: Long, operation: Operation, attempt: Int = 0) {
   /** Returns copy of this history with incremented attempts
     *

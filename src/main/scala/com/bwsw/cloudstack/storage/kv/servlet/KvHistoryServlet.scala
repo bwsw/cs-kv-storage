@@ -21,8 +21,8 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.util.Timeout
 import com.bwsw.cloudstack.storage.kv.configuration.ElasticsearchConfig
-import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError}
-import com.bwsw.cloudstack.storage.kv.message.{Clear, Delete, Operation, Set}
+import com.bwsw.cloudstack.storage.kv.entity.{Delete, Set, Clear, Operation}
+import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, NotFoundError}
 import com.bwsw.cloudstack.storage.kv.message.request.{GetHistoryRequest, ScrollHistoryRequest}
 import com.bwsw.cloudstack.storage.kv.processor.HistoryProcessor
 import org.json4s.JsonAST._
@@ -33,10 +33,15 @@ import org.scalatra.json.JacksonJsonSupport
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future}
 
-class KvHistoryServlet(system: ActorSystem, requestTimeout: FiniteDuration, processor: HistoryProcessor, historyKvActor: ActorRef, elasticsearchConfig: ElasticsearchConfig)
+class KvHistoryServlet(
+    system: ActorSystem,
+    requestTimeout: FiniteDuration,
+    processor: HistoryProcessor,
+    historyKvActor: ActorRef,
+    elasticsearchConfig: ElasticsearchConfig)
   extends ScalatraServlet
-    with FutureSupport
-    with JacksonJsonSupport {
+  with FutureSupport
+  with JacksonJsonSupport {
 
   protected implicit lazy val jsonFormats: Formats = DefaultFormats.preservingEmptyValues + new OperationSerializer
   protected implicit val akkaTimeout: Timeout = requestTimeout
@@ -48,7 +53,8 @@ class KvHistoryServlet(system: ActorSystem, requestTimeout: FiniteDuration, proc
     new AsyncResult() {
       val is: Future[_] = {
         try {
-          val getHistoryRequest = GetHistoryRequest(params("storage_uuid"),
+          val getHistoryRequest = GetHistoryRequest(
+            params("storage_uuid"),
             params.getOrElse("keys", "").split(",").filter(_.nonEmpty),
             params.getOrElse("operations", "").split(",").filter(_.nonEmpty).map {
               case "set" => Set

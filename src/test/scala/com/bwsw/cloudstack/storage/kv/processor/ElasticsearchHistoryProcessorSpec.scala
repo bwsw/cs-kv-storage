@@ -18,9 +18,9 @@
 package com.bwsw.cloudstack.storage.kv.processor
 
 import com.bwsw.cloudstack.storage.kv.configuration.ElasticsearchConfig
-import com.bwsw.cloudstack.storage.kv.entity.History
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError}
-import com.bwsw.cloudstack.storage.kv.message.{Clear, Delete, HistoryPagedBody, HistoryResponseBody, HistoryScrolledBody, KvHistory, Set}
+import com.bwsw.cloudstack.storage.kv.entity.{Clear, Delete, History, HistoryPagedBody, HistoryScrolledBody, Set}
+import com.bwsw.cloudstack.storage.kv.message.KvHistory
 import com.sksamuel.elastic4s.bulk.BulkDefinition
 import com.sksamuel.elastic4s.http.ElasticDsl.{indexInto, _}
 import com.sksamuel.elastic4s.http._

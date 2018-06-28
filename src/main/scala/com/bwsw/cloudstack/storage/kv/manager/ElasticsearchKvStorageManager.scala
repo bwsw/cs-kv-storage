@@ -57,7 +57,7 @@ class ElasticsearchKvStorageManager(client: HttpClient) extends KvStorageManager
         case Right(success) =>
           if (success.result.found)
             if (success.result.source("type") == TemporaryStorageType)
-              Right()
+              Right(())
             else
               Left(BadRequestError())
           else Left(NotFoundError())

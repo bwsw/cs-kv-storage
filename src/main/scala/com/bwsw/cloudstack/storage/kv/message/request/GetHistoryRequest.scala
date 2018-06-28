@@ -17,14 +17,15 @@
 
 package com.bwsw.cloudstack.storage.kv.message.request
 
-import com.bwsw.cloudstack.storage.kv.message.Operation
+import com.bwsw.cloudstack.storage.kv.entity.Operation
 
-case class GetHistoryRequest(storageUuid: String,
-                             keys: Iterable[String],
-                             operations: Iterable[Operation],
-                             start: Long,
-                             end: Long,
-                             sort: Iterable[String],
-                             page: Int,
-                             size: Int,
-                             scroll: Int)
+case class GetHistoryRequest(
+    storageUuid: String,
+    keys: Iterable[String],
+    operations: Iterable[Operation],
+    start: Long,
+    end: Long,
+    sort: Iterable[String],
+    page: Int,
+    size: Int,
+    scroll: Int)
