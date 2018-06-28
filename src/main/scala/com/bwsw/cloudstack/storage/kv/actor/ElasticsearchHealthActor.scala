@@ -57,6 +57,7 @@ class ElasticsearchHealthActor(implicit inj: Injector) extends HealthActor {
       )
       val status = if (checks.forall(_.status == Healthy)) Healthy else Unhealthy
       sender() ! HealthCheckDetailedResponseBody(status, checks)
+
     case HealthCheckResponse(false, registry, storageTemplate, historyStorageTemplate) =>
       sender() ! (registry match {
         case Right(success) =>
