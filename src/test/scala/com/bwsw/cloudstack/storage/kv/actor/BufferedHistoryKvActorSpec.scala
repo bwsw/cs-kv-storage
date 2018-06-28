@@ -21,7 +21,6 @@ import akka.actor.{ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit}
 import com.bwsw.cloudstack.storage.kv.cache.StorageCache
 import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
-import com.bwsw.cloudstack.storage.kv.entity
 import com.bwsw.cloudstack.storage.kv.entity._
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError, StorageError}
 import com.bwsw.cloudstack.storage.kv.message.request.{GetHistoryRequest, ScrollHistoryRequest}
@@ -52,7 +51,7 @@ class BufferedHistoryKvActorSpec
   private val someKey = "someKey"
   private val someValue = "someValue"
   private val timestamp = System.currentTimeMillis()
-  private val history = KvHistory(storage.uUID, someKey, someValue, timestamp, entity.Set)
+  private val history = KvHistory(storage.uUID, someKey, someValue, timestamp, Set)
   private val historyListRetry = List(
     KvHistory(storage.uUID, someKey, null, timestamp, Delete),
     KvHistory(storage.uUID, null, null, timestamp, Clear))
@@ -69,7 +68,7 @@ class BufferedHistoryKvActorSpec
   private val someScroll = 1000
   private val someScrollId = "DXF1ZXJ5QW5kRmV0Y2gBAAAAAAAAAAcWVDBqc3Vkb3lUeDZOYXk4bWczTHowUQ=="
   private val historyList = List(
-    History(someKey, someValue, timestamp, entity.Set),
+    History(someKey, someValue, timestamp, Set),
     History(someKey, null, timestamp, Delete),
     History(null, null, timestamp, Clear))
   private val getHistoryRequest =

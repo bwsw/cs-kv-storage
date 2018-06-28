@@ -44,7 +44,7 @@ class ElasticsearchStorageLoader(client: HttpClient) extends StorageLoader {
   private def getValue[T](source: Map[String, Any], key: String): T = {
     source.get(key) match {
       case Some(s) => s.asInstanceOf[T]
-      case _ => throw new RuntimeException("Invalid result")
+      case None => throw new RuntimeException("Invalid result")
     }
   }
 }
