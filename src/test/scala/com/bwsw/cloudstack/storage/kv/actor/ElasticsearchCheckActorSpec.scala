@@ -43,7 +43,6 @@ class ElasticsearchCheckActorSpec
   private val esConfig = mock[ElasticsearchConfig]
   private val uriBase = "http://localhost:"
   private val name = "someTemplate"
-  private val timeout = 2500.millis
   private val templatePath = "/_template/" + name
   private val wireMockServer = new WireMockServer(wireMockConfig().dynamicPort())
 
@@ -64,7 +63,7 @@ class ElasticsearchCheckActorSpec
 
     val elasticsearchCheckActor = system.actorOf(Props(new ElasticsearchCheckActor))
 
-    def test(status: Int, msg: Boolean) = {
+    def test(status: Int, msg: Boolean, timeout: FiniteDuration) = {
       (esConfig.getUri _).expects().returning(uriBase + wireMockServer.port())
       wireMockServer.stubFor(
         head(urlPathEqualTo(templatePath))
@@ -76,15 +75,15 @@ class ElasticsearchCheckActorSpec
     }
 
     it("should return true if template exists") {
-      test(200, msg = true)
+      test(200, msg = true, 3000.millis)
     }
 
     it("should return false if template does not exist") {
-      test(400, msg = false)
+      test(400, msg = false, 1500.millis)
     }
 
     it("should return false if request processing failed") {
-      test(500, msg = false)
+      test(500, msg = false, 1500.millis)
     }
   }
 
