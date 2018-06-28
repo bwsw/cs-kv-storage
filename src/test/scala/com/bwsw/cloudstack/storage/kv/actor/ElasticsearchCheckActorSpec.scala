@@ -43,7 +43,7 @@ class ElasticsearchCheckActorSpec
   private val esConfig = mock[ElasticsearchConfig]
   private val uriBase = "http://localhost:"
   private val name = "someTemplate"
-  private val timeout = 2000.millis
+  private val timeout = 2500.millis
   private val templatePath = "/_template/" + name
   private val wireMockServer = new WireMockServer(wireMockConfig().dynamicPort())
 
