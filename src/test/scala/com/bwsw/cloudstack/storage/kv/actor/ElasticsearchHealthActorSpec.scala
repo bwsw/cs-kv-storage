@@ -42,9 +42,10 @@ class ElasticsearchHealthActorSpec
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
+  implicit private val client: HttpClient = mock[HttpClient]
+
   private val checkTestProbe = TestProbe()
   private val appConf = mock[AppConfig]
-  implicit private val client: HttpClient = mock[HttpClient]
   private val registryIndex = "storage-registry"
   private val storageTemplate = "storage"
   private val historyStorageTemplate = "history-storage"

@@ -38,13 +38,14 @@ class ElasticsearchCheckActorSpec
   with ImplicitSender
   with BeforeAndAfterEach {
 
+  implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system))
+  
   private val esConfig = mock[ElasticsearchConfig]
   private val uriBase = "http://localhost:"
   private val name = "someTemplate"
   private val timeout = 1000.millis
   private val templatePath = "/_template/" + name
   private val wireMockServer = new WireMockServer(wireMockConfig().dynamicPort())
-  implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system))
 
   override def beforeEach {
     wireMockServer.start()

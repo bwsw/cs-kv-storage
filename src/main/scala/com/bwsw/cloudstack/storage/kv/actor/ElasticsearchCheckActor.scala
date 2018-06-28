@@ -33,10 +33,10 @@ class ElasticsearchCheckActor(implicit inj: Injector, materializer: ActorMateria
   extends CheckActor
   with ActorLogging {
 
+  import context.dispatcher
+
   private val http = Http(context.system)
   private val elasticsearchConfig = inject[ElasticsearchConfig]
-
-  import context.dispatcher
 
   def receive: PartialFunction[Any, Unit] = {
     case CheckTemplateExistsRequest(name) =>

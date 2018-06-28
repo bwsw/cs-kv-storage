@@ -38,8 +38,9 @@ class ElasticsearchHealthActor(implicit inj: Injector) extends HealthActor {
   private val checkActor = injectActorRef[CheckActor]
   private val client = inject[HttpClient]
   private val appConfig = inject[AppConfig]
-  implicit val duration: Timeout = appConfig.getRequestTimeout
   private val registryIndex = "storage-registry"
+
+  implicit val duration: Timeout = appConfig.getRequestTimeout
 
   def receive: PartialFunction[Any, Unit] = {
     case HealthCheckRequest(detailed) =>
@@ -48,7 +49,6 @@ class ElasticsearchHealthActor(implicit inj: Injector) extends HealthActor {
         storageTemplate <- getIndexTemplate("storage")
         historyStorageTemplate <- getIndexTemplate("history-storage")
       } yield HealthCheckResponse(detailed, registry, storageTemplate, historyStorageTemplate)).pipeTo(self)(sender())
-
     case HealthCheckResponse(true, registry, storageTemplate, historyStorageTemplate) =>
       val checks = Seq(
         indexExistsCheck(StorageRegistry, registry),
@@ -57,7 +57,6 @@ class ElasticsearchHealthActor(implicit inj: Injector) extends HealthActor {
       )
       val status = if (checks.forall(_.status == Healthy)) Healthy else Unhealthy
       sender() ! HealthCheckDetailedResponseBody(status, checks)
-
     case HealthCheckResponse(false, registry, storageTemplate, historyStorageTemplate) =>
       sender() ! (registry match {
         case Right(success) =>
@@ -69,13 +68,9 @@ class ElasticsearchHealthActor(implicit inj: Injector) extends HealthActor {
       })
   }
 
-  private def getResponses = for {
-    registry <- client.execute(indexExists(registryIndex))
-    storageTemplate <- getIndexTemplate("storage")
-    historyStorageTemplate <- getIndexTemplate("history-storage")
-  } yield (registry, storageTemplate, historyStorageTemplate)
-
-  private def indexExistsCheck(name: CheckName, response: Either[RequestFailure, RequestSuccess[IndexExistsResponse]]): Check = {
+  private def indexExistsCheck(
+      name: CheckName,
+      response: Either[RequestFailure, RequestSuccess[IndexExistsResponse]]): Check = {
     response match {
       case Left(failure) =>
         val message = if (failure.error == null) "Elasticsearch error" else failure.error.reason
@@ -97,7 +92,7 @@ class ElasticsearchHealthActor(implicit inj: Injector) extends HealthActor {
   private def getIndexTemplate(name: String): Future[Boolean] = {
     (checkActor ? CheckTemplateExistsRequest(name)).map {
       case true => true
-      case _ => false
+      case false => false
     }
   }
 }
