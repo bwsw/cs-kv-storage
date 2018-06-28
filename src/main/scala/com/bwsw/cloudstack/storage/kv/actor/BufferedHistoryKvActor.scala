@@ -31,7 +31,6 @@ import scaldi.akka.AkkaInjectable._
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
 
 /** Actor responsible for history buffering and time or queue size based flushing to storages **/
 class BufferedHistoryKvActor(implicit inj: Injector)
@@ -40,6 +39,7 @@ class BufferedHistoryKvActor(implicit inj: Injector)
   with akka.actor.ActorLogging {
 
   import BufferedHistoryKvActor._
+  import context.dispatcher
 
   private val buffer: ListBuffer[KvHistory] = ListBuffer.empty
   private val retryBuffer: ListBuffer[KvHistory] = ListBuffer.empty
@@ -53,12 +53,15 @@ class BufferedHistoryKvActor(implicit inj: Injector)
     case HistoryTimeout =>
       self ! flush(buffer)
       self ! flush(retryBuffer)
-    case KvHistoryFlush(histories) =>
-      historyProcessor.save(histories).map {
-        case Some(erroneous) =>
-          self ! KvHistoryRetry(erroneous)
-        case None => //do nothing
-      }
+    case KvHistoryFlush(histories) => histories match {
+      case List() => //do nothing
+      case list =>
+        historyProcessor.save(histories).map {
+          case Some(erroneous) =>
+            self ! KvHistoryRetry(erroneous)
+          case None => //do nothing
+        }
+    }
     case KvHistoryRetry(erroneous) =>
       retry(erroneous)
     case history: KvHistory =>

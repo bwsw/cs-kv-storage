@@ -43,6 +43,9 @@ libraryDependencies ++= Seq(
   "com.github.blemale" % "scaffeine_2.12" % "2.5.0",
   "org.scaldi" % "scaldi-akka_2.12" % "0.5.8",
 
+  // for logging filters
+  "org.codehaus.janino" % "janino" % "3.0.8",
+
   "org.scalatest" %% "scalatest" % "3.0.5" % Test,
   "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % Test,
   "org.scalamock" %% "scalamock" % "4.1.0" % Test,
