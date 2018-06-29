@@ -23,7 +23,7 @@ import com.bwsw.cloudstack.storage.kv.cache.StorageCache
 import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
 import com.bwsw.cloudstack.storage.kv.entity._
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError, StorageError}
-import com.bwsw.cloudstack.storage.kv.message.request.{GetHistoryRequest, ScrollHistoryRequest}
+import com.bwsw.cloudstack.storage.kv.message.request.{KvHistoryGetRequest, KvHistoryScrollRequest}
 import com.bwsw.cloudstack.storage.kv.message._
 import com.bwsw.cloudstack.storage.kv.processor.HistoryProcessor
 import org.scalamock.scalatest.MockFactory
@@ -72,7 +72,7 @@ class BufferedHistoryKvActorSpec
     History(someKey, null, timestamp, Delete),
     History(null, null, timestamp, Clear))
   private val getHistoryRequest =
-    GetHistoryRequest(
+    KvHistoryGetRequest(
       storage.uUID,
       someKeys,
       someOperations,
@@ -227,7 +227,7 @@ class BufferedHistoryKvActorSpec
 
       def test(scrollResult: Either[StorageError, HistoryScrolledBody]) = {
         expectScrollHistories().returning(Future(scrollResult))
-        bufferedHistoryKvActor ! ScrollHistoryRequest(someScrollId, someScroll)
+        bufferedHistoryKvActor ! KvHistoryScrollRequest(someScrollId, someScroll)
         expectMsg(scrollResult)
       }
 

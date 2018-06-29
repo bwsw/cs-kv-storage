@@ -22,8 +22,8 @@ import akka.pattern.pipe
 import com.bwsw.cloudstack.storage.kv.cache.StorageCache
 import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError}
-import com.bwsw.cloudstack.storage.kv.message.request.{GetHistoryRequest, ScrollHistoryRequest}
-import com.bwsw.cloudstack.storage.kv.message.response.HistoryResponse
+import com.bwsw.cloudstack.storage.kv.message.request.{KvHistoryGetRequest, KvHistoryScrollRequest}
+import com.bwsw.cloudstack.storage.kv.message.response.KvHistoryResponse
 import com.bwsw.cloudstack.storage.kv.message.{KvHistory, KvHistoryBulk, KvHistoryFlush, KvHistoryRetry}
 import com.bwsw.cloudstack.storage.kv.processor.HistoryProcessor
 import scaldi.Injector
@@ -74,7 +74,7 @@ class BufferedHistoryKvActor(implicit inj: Injector)
       if (buffer.length >= configuration.getFlushHistorySize) {
         self ! flush(buffer)
       }
-    case request: GetHistoryRequest =>
+    case request: KvHistoryGetRequest =>
       storageCache.isHistoryEnabled(request.storageUuid).flatMap {
         case Some(true) =>
           historyProcessor.get(
@@ -91,10 +91,11 @@ class BufferedHistoryKvActor(implicit inj: Injector)
           Future(Left(BadRequestError()))
         case None =>
           Future(Left(NotFoundError()))
-      }.map(body => HistoryResponse(body)).pipeTo(self)(sender())
-    case request: ScrollHistoryRequest =>
-      historyProcessor.scroll(request.scrollId, request.timeout).map(body => HistoryResponse(body)).pipeTo(self)(sender())
-    case HistoryResponse(body) =>
+      }.map(body => KvHistoryResponse(body)).pipeTo(self)(sender())
+    case request: KvHistoryScrollRequest =>
+      historyProcessor.scroll(request.scrollId, request.timeout).map(body => KvHistoryResponse(body)).pipeTo(self)(
+        sender())
+    case KvHistoryResponse(body) =>
       sender() ! body
     case failure: Status.Failure =>
       sender() ! Left(InternalError(failure.cause.getMessage))

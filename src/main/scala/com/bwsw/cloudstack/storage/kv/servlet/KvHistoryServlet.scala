@@ -23,7 +23,7 @@ import akka.util.Timeout
 import com.bwsw.cloudstack.storage.kv.configuration.ElasticsearchConfig
 import com.bwsw.cloudstack.storage.kv.entity.{Delete, Set, Clear, Operation}
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, NotFoundError}
-import com.bwsw.cloudstack.storage.kv.message.request.{GetHistoryRequest, ScrollHistoryRequest}
+import com.bwsw.cloudstack.storage.kv.message.request.{KvHistoryGetRequest, KvHistoryScrollRequest}
 import com.bwsw.cloudstack.storage.kv.processor.HistoryProcessor
 import org.json4s.JsonAST._
 import org.json4s.{CustomSerializer, DefaultFormats, Formats}
@@ -53,7 +53,7 @@ class KvHistoryServlet(
     new AsyncResult() {
       val is: Future[_] = {
         try {
-          val getHistoryRequest = GetHistoryRequest(
+          val getHistoryRequest = KvHistoryGetRequest(
             params("storage_uuid"),
             params.getOrElse("keys", "").split(",").filter(_.nonEmpty),
             params.getOrElse("operations", "").split(",").filter(_.nonEmpty).map {
@@ -92,7 +92,7 @@ class KvHistoryServlet(
         if (request.getHeader("Content-Type") == formats("json")) {
           parsedBody match {
             case JObject(List(("scrollId", scrollId: JString), ("timeout", timeout: JInt))) =>
-              val scrollRequest = ScrollHistoryRequest(scrollId.values, timeout.values.toLong)
+              val scrollRequest = KvHistoryScrollRequest(scrollId.values, timeout.values.toLong)
               (historyKvActor ? scrollRequest).map {
                 case Right(value) =>
                   contentType = formats("json")

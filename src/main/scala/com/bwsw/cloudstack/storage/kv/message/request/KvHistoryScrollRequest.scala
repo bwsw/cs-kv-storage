@@ -17,4 +17,4 @@
 
 package com.bwsw.cloudstack.storage.kv.message.request
 
-case class ScrollHistoryRequest(scrollId: String, timeout: Long)
+case class KvHistoryScrollRequest(scrollId: String, timeout: Long)

@@ -15,9 +15,17 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package com.bwsw.cloudstack.storage.kv.message.response
+package com.bwsw.cloudstack.storage.kv.message.request
 
-import com.bwsw.cloudstack.storage.kv.entity.HistoryResponseBody
-import com.bwsw.cloudstack.storage.kv.error.StorageError
+import com.bwsw.cloudstack.storage.kv.entity.Operation
 
-case class HistoryResponse(body: Either[StorageError, HistoryResponseBody])
+case class KvHistoryGetRequest(
+    storageUuid: String,
+    keys: Iterable[String],
+    operations: Iterable[Operation],
+    start: Long,
+    end: Long,
+    sort: Iterable[String],
+    page: Int,
+    size: Int,
+    scroll: Int)
