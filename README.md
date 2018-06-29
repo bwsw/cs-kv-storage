@@ -7,7 +7,7 @@ Following storage types are supported:
 
 * ACCOUNT
 
-Persistent storages for Apache CloudStack accounts managed via Apache CloudStack API. Each account can has 
+Persistent storages for Apache CloudStack accounts managed via Apache CloudStack API. Each account can have
 many storages. This storage type can be configured to save a history of operations.
 
 * VM
@@ -56,7 +56,7 @@ where `<port>`, `<config.path>` and `<version>` should be replaced with actual v
 * [Set the value for the key](#set-the-value-for-the-key)
 * [Set values for keys](#set-values-for-keys)
 * [Remove the mapping by the key](#remove-the-mapping-by-the-key)
-* [Remove mappings by keys](#remove-mapping-by-keys)
+* [Remove mappings by keys](#remove-mappings-by-keys)
 * [List keys](#list-keys)
 * [Clear](#clear)
 
@@ -151,8 +151,7 @@ Content-Type: application/json
 
 | HTTP Status Code | Description |
 | ---------------- | ----------- |
-| 200 | The request is processed successfully. Results are returned in the body as a map with boolean values as an 
-operation status. The content type is application/json.  |
+| 200 | The request is processed successfully. Results are returned in the body as a map with boolean values as an operation status. The content type is application/json.  |
 | 400 | The content-type, body, key or value are invalid. |
 | 404 | The storage does not exist. |
 | 500 | The request can not be processed because of an internal error. |
@@ -203,15 +202,14 @@ Content-Type: application/json
 
 | HTTP Status Code | Description |
 | ---------------- | ----------- |
-| 200 | The request is processed successfully. Results are returned in the body as a map with boolean values as an 
-operation status. The content type is application/json.  |
+| 200 | The request is processed successfully. Results are returned in the body as a map with boolean values as an operation status. The content type is application/json.  |
 | 400 | The content-type or body are invalid. |
 | 404 | The storage does not exist. |
 | 500 | The request can not be processed because of an internal error. |
 
 ##### Body example
 
-In the following example mappings for the first and third keys were deleted successfully.
+In the following example mappings for the first and third keys are deleted successfully.
 ```
 {
     "key1": true,
@@ -232,8 +230,7 @@ GET /list/<storage UUID>
 
 | HTTP Status Code | Description |
 | ---------------- | ----------- |
-| 200 | The request is processed successfully. Results are returned in the body as an array. The content type is 
-application/json.  |
+| 200 | The request is processed successfully. Results are returned in the body as an array. The content type is application/json.  |
 | 404 | The storage does not exist. |
 | 500 | The request can not be processed because of an internal error. |
 
@@ -267,6 +264,8 @@ POST /clear/<storage UUID>
 
 * [Update storage TTL](#update-storage-ttl)
 * [Delete the storage](#delete-the-storage)
+
+### Update storage TTL
 
 #### Request
 
