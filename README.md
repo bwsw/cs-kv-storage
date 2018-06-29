@@ -1,12 +1,33 @@
-# Key-Value Storage #
+Key-value storage
+=================
+
+This project provides key-value storages as an extension for Apache CloudStack.
+ 
+Following storage types are supported:
+
+* ACCOUNT
+
+Persistent storages for Apache CloudStack accounts managed via Apache CloudStack API. Each account can has 
+many storages. This storage type can be configured to save a history of operations.
+
+* VM
+
+Storages for Apache CloudStack virtual machines created and deleted automatically while creating or expunging virtual
+ machines.
+ 
+* TEMP
+
+Temporal storages with specified TTL created via Apache CloudStack API. TTL can be updated after creation. This 
+operation as well as storage deletion can be done via Apache CloudStack API and key-value storage API.  
+
 * [Build & Run](#build-run)
 * [API](#api)
 * [Configuration](#configuration)  
 
 
-## Build & Run ##
+# Build & Run #
 
-### Application as jar file
+## Application as jar file
 ```sh
 $ cd cs-kv-storage
 $ sbt assembly
@@ -14,43 +35,54 @@ $ java -Dconfig.file=<config.path> -jar target/scala-2.12/cs-kv-storage-<version
 ```
 where `<config.path>` and `<version>` should be replaced with actual values.
 
-### Application as docker container
+## Application as docker container
 
 ```sh
 $ cd cs-kv-storage
 $ sbt docker
-$ docker -p <port>:8080 -v <config.path>/opt/cs-kv-storage/application.conf git.bw-sw.com:5000/cloudstack-ecosystem/cs-kv-storage:<version>  
+$ docker -p <port>:8080 -v <config.path>:/opt/cs-kv-storage/application.conf git.bw-sw.com:5000/cloudstack-ecosystem/cs-kv-storage:<version>  
 ```
 where `<port>`, `<config.path>` and `<version>` should be replaced with actual values.
 
 # API
-## Actions
-| Action | Description |
-| ------ | ----------- |
-| [GET /get/\<storage UUID\>/\<key\>](#get-getstorage-uuidkey) | Returns value by given key |
-| [POST /get/\<storage UUID\>](#post-getstorage-uuid) | Returns values by keys given in the body of the request |
-| [PUT /set/\<storage UUID\>/\<key\>](#put-setstorage-uuidkey) | Sets value given in the body by the key |
-| [PUT /set/\<storage UUID\>](#put-setstorage-uuid) | Sets values by respective keys from pairs given in the body |
-| [DELETE /delete/\<storage UUID\>/\<key\>](#delete-deletestorage-uuidkey) | Removes record by given key |
-| [POST /delete/\<storage UUID\>](#post-deletestorage-uuid) | Removes records by array of given keys |
-| [GET /list/\<storage UUID\>](#get-liststorage-uuid) | Lists keys existing in the storage |
-| [POST /clear/\<storage UUID\>](#post-clearstorage-uuid) | Clears storage |
-### GET /get/\<storage UUID\>/\<key\> 
-#### Request example 
+
+* [Storage operations](#storage-operations)
+* [Storage management](#storage-management)
+
+## Storage operations
+
+* [Get the value by the key](#get-the-value-by-the-key)
+* [Get values by keys](#get-values-by-keys)
+* [Set the value for the key](#set-the-value-for-the-key)
+* [Set values for keys](#set-values-for-keys)
+* [Remove the mapping by the key](#remove-the-mapping-by-the-key)
+* [Remove mappings by keys](#remove-mapping-by-keys)
+* [List keys](#list-keys)
+* [Clear](#clear)
+
+### Get the value by the key
+
+#### Request
+
 ```
-GET /get/8986a11c-3f4c-4e22-8e04-5fe35dfd3a1d/somekey
+GET /get/<storage UUID>/<key>
 ```
-#### Responses
+
+#### Response
+
 | HTTP Status Code | Description |
 | ---------------- | ----------- |
-| 200 OK | Body contains text/plain value string |
-| 404 Not Found | Given storage aren't contain such key |
-| 500 Internal Server Error | Server have a problem processing the request |
----
-### POST /get/\<storage UUID\>
-#### Request example 
+| 200 | The request is processed successfully. The value is returned in the body. The content type is text/plain. |
+| 404 | The storage does not exist or does not contain a mapping for the key. |
+| 500 | The request can not be processed because of an internal error. |
+
+
+### Get values by keys
+
+#### Request
+
 ```
-POST /get/8986a11c-3f4c-4e22-8e04-5fe35dfd3a1d
+POST /get/<storage UUID>
 Content-Type: application/json
 
 [
@@ -59,13 +91,19 @@ Content-Type: application/json
     "key3"
 ]
 ```
-#### Responses
+
+#### Response
+
 | HTTP Status Code | Description |
 | ---------------- | ----------- |
-| 200 OK | Body contains application/json string representing map key to value or null if value cannot be found in storage|
-| 500 Internal Server Error | Server have a problem processing the request |
+| 200 | The request is processed successfully. Results are returned in the body as a map with null values for keys that do not exist. The content type is application/json. |
+| 404 | The storage does not exist. |
+| 500 | The request can not be processed because of an internal error. |
+
 ##### Body example
-In the following example values can be found only by first and third keys:
+
+In the following example the mapping for the second key does not exist.
+
 ```
 {
     "key1": "value1",
@@ -73,30 +111,33 @@ In the following example values can be found only by first and third keys:
     "key3": "value3"
 }
 ```
----
-### PUT /set/\<storage UUID\>/\<key\>
+
+### Set the value for the key
+
 #### Request
-Request must have Content-Type set to text/plain and contain value as a simple string in the body  
-For example:
+
 ```
-PUT /set/8986a11c-3f4c-4e22-8e04-5fe35dfd3a1d/somekey
+PUT /set/<storage UUID>/somekey
 Content-Type: text/plain
 
 somevalue
 ```
-#### Responses
+
+#### Response
+
 | HTTP Status Code | Description |
 | ---------------- | ----------- |
-| 200 OK | Body are empty |
-| 400 Bad Request | Request have wrong content type or key or value are invalid |
-| 500 Internal Server Error | Server have a problem processing the request |
----
-### PUT /set/\<storage UUID\>
+| 200 | The request is processed successfully. |
+| 400 | The content-type, key or value are invalid. |
+| 404 | The storage does not exist. |
+| 500 | The request can not be processed because of an internal error. |
+
+### Set values for keys
+
 #### Request
-Requset must have Content-Type set to application/json and contain map of keys and values encoded in JSON  
-For example
+
 ```
-PUT /set/8986a11c-3f4c-4e22-8e04-5fe35dfd3a1d
+PUT /set/<storage UUID>
 Content-Type: application/json
 
 {
@@ -105,13 +146,20 @@ Content-Type: application/json
     "key3": "value3"
 }
 ```
-#### Responses
+
+#### Response
+
 | HTTP Status Code | Description |
 | ---------------- | ----------- |
-| 200 OK | Body contains application/json with map of keys and boolean operation status |
-| 500 Internal Server Error | Server have a problem processing the request |
+| 200 | The request is processed successfully. Results are returned in the body as a map with boolean values as an 
+operation status. The content type is application/json.  |
+| 400 | The content-type, body, key or value are invalid. |
+| 404 | The storage does not exist. |
+| 500 | The request can not be processed because of an internal error. |
+
 ##### Body example
-In the following example values can be set only by first and third keys:
+
+In the following example values for the first and third keys are set successfully.
 ```
 {
     "key1": true,
@@ -119,24 +167,29 @@ In the following example values can be set only by first and third keys:
     "key3": true
 }
 ```
----
-### DELETE /delete/\<storage UUID\>/\<key\>
-#### Request example
+
+### Remove the mapping by the key
+
+#### Request
+
 ```
-DELETE /delete/8986a11c-3f4c-4e22-8e04-5fe35dfd3a1d/somekey
+DELETE /delete/<storage UUID>/somekey
 ```
-#### Responses
+
+#### Response
+
 | HTTP Status Code | Description |
 | ---------------- | ----------- |
-| 200 OK | Body is empty |
-| 500 Internal Server Error | Server have a problem processing the request |
----
-### POST /delete/\<storage UUID\>
+| 200 | The request is processed successfully. |
+| 404 | The storage does not exist. |
+| 500 | The request can not be processed because of an internal error. |
+
+### Remove mappings by keys
+
 #### Request
-Requset must have Content-Type set to application/json and contain map of keys and values encoded in JSON  
-For example
+
 ```
-POST /delete/8986a11c-3f4c-4e22-8e04-5fe35dfd3a1d
+POST /delete/<storage UUID>
 Content-Type: application/json
 
 [
@@ -145,14 +198,20 @@ Content-Type: application/json
     "key3"
 ]
 ```
-#### Responses
+
+#### Response
+
 | HTTP Status Code | Description |
 | ---------------- | ----------- |
-| 200 OK | Body contains application/json with map of keys and boolean operation status |
-| 400 Bad Request | Request have wrong content type or body cannot be parsed |
-| 500 Internal Server Error | Server have a problem processing the request |
+| 200 | The request is processed successfully. Results are returned in the body as a map with boolean values as an 
+operation status. The content type is application/json.  |
+| 400 | The content-type or body are invalid. |
+| 404 | The storage does not exist. |
+| 500 | The request can not be processed because of an internal error. |
+
 ##### Body example
-In the following example values can be deleten only by first and third keys:
+
+In the following example mappings for the first and third keys were deleted successfully.
 ```
 {
     "key1": true,
@@ -160,18 +219,26 @@ In the following example values can be deleten only by first and third keys:
     "key3": true
 }
 ```
----
-### GET /list/\<storage UUID\>
-#### Request example 
+
+### List keys
+
+#### Request
+
 ```
-GET /list/8986a11c-3f4c-4e22-8e04-5fe35dfd3a1d
+GET /list/<storage UUID>
 ```
-#### Responses
+
+#### Response
+
 | HTTP Status Code | Description |
 | ---------------- | ----------- |
-| 200 OK | Body contains application/json with list of keys |
-| 500 Internal Server Error | Server have a problem processing the request |
+| 200 | The request is processed successfully. Results are returned in the body as an array. The content type is 
+application/json.  |
+| 404 | The storage does not exist. |
+| 500 | The request can not be processed because of an internal error. |
+
 ##### Body example
+
 ```
 [
     "key1",
@@ -179,34 +246,82 @@ GET /list/8986a11c-3f4c-4e22-8e04-5fe35dfd3a1d
     "key3"
 ]
 ```
----
-### POST /clear/\<storage UUID\>
-#### Request example 
+
+### Clear
+
+#### Request
+
 ```
-POST /clear/8986a11c-3f4c-4e22-8e04-5fe35dfd3a1d
+POST /clear/<storage UUID>
 ```
-#### Responses
+
+#### Response
+
 | HTTP Status Code | Description |
 | ---------------- | ----------- |
-| 200 OK | Body is empty |
-| 409 Conflict | Conflicts occurred during deletion, storage may have been cleared partially |
-| 500 Internal Server Error | Server have a problem processing the request |
-# Configuration
-Configuration file example can be found [here](/src/test/resources/application.conf)  
-### List of parameters
+| 200 | The request is processed successfully.  |
+| 409 | Conflicts occurred during executing the operation, the storage may have been cleared partially. |
+| 500 | The request can not be processed because of an internal error. |
+
+## Storage management
+
+* [Update storage TTL](#update-storage-ttl)
+* [Delete the storage](#delete-the-storage)
+
+#### Request
+
+```
+PUT /storage/<storage UUID>?ttl=<ttl>
+```
+
 | Parameter | Description |
+|-----------|-------------|
+| ttl | TTL in milliseconds |
+
+#### Response
+
+| HTTP Status Code | Description |
+| ---------------- | ----------- |
+| 200 | The request is processed successfully. |
+| 400 | The storage type is not TEMP. |
+| 404 | The storage does not exist. |
+| 500 | The request can not be processed because of an internal error. |
+
+### Delete the storage
+
+#### Request
+
+```
+DELETE /storage/<storage UUID>
+```
+
+#### Response
+
+| HTTP Status Code | Description |
+| ---------------- | ----------- |
+| 200 | The request is processed successfully. |
+| 400 | The storage type is not TEMP. |
+| 404 | The storage does not exist. |
+| 500 | The request can not be processed because of an internal error. |
+
+# Configuration
+
+The example of the configuration file can be found [here](/src/test/resources/application.conf).
+
+| Property | Description |
 | --------- | ----------- |
-| elasticsearch.uri | Contains scheme (http or https), host and port, e.g. "http://localhost:9200" |
-| elasticsearch.auth.username and elasticsearch.auth.password | Credentials used to authenticate application using X-Pack |
-| elasticsearch.search.pagesize | Size limit of a single page loaded during List operation |
-| elasticsearch.search.keepalive | Limit of time single page should be loaded during List action |
-| elasticsearch.limit.max-value-size | Limit of how many characters value can have |
-| elasticsearch.limit.max-key-size | Limit of how many characters key can have |
-| app.cache.max-size | Limit the number of storages cache can have information about in a single time |
-| app.cache.expiration-time | Expiration time of information stored in the cache about single storage |
-| app.history.flush-size | Amount of historical records in a queue to immediately start saving it into storage |
-| app.history.flush-timeout | Maximum period of time between flushes |
-| app.history.retry-limit | Amount of times system tries to put record into storage in case of consecutive errors |
-| app.request-timeout | Maximum time system tries to handle request |
+| elasticsearch.uri | Elasticsearch addesses in the format elasticsearch://host:port,host:port, http://host:port,host:port or https://host:port,host:port. |
+| elasticsearch.auth.username | Elasticsearch username for authentication. |
+| elasticsearch.auth.password | Elasticsearch password for authentication. | 
+| elasticsearch.search.pagesize | Batch size to retrieve all results (scroll) for key listing. |
+| elasticsearch.search.keepalive | Timeout between batch requests to retrieve all results (scroll) for key listing. |
+| elasticsearch.limit.max-value-size | Max length of the value. |
+| elasticsearch.limit.max-key-size | Max length of the key. |
+| app.cache.max-size | Max size of the storage cache. |
+| app.cache.expiration-time | TTL for the storage cache items. |
+| app.history.flush-size | Size of batch requests to save a history of the storage operations. |
+| app.history.flush-timeout | Timeout between batch/retry requests to save a history of the storage operations. |
+| app.history.retry-limit | Amount of attempts to try to log the storage operation. |
+| app.request-timeout | Maximum time to process the request. |
 
 
