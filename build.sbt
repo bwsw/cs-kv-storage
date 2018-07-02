@@ -1,3 +1,20 @@
+// Licensed to the Apache Software Foundation (ASF) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
 val ScalatraVersion = "2.6.3"
 
 organization := "com.bwsw"
@@ -11,6 +28,7 @@ scalaVersion := "2.12.6"
 resolvers += Classpaths.typesafeReleases
 
 val elastic4sVersion = "6.2.8"
+val akkaVersion = "2.5.12"
 
 libraryDependencies ++= Seq(
   "org.scalatra" %% "scalatra" % ScalatraVersion,
@@ -19,13 +37,19 @@ libraryDependencies ++= Seq(
   "javax.servlet" % "javax.servlet-api" % "3.1.0" % "provided",
   "com.sksamuel.elastic4s" % "elastic4s-http_2.12" % elastic4sVersion,
   "com.typesafe" % "config" % "1.3.3",
-  "com.typesafe.akka" %% "akka-actor" % "2.5.12",
+  "com.typesafe.akka" %% "akka-actor" % akkaVersion,
   "org.scalatra" %% "scalatra-json" % ScalatraVersion,
   "org.json4s" %% "json4s-jackson" % "3.5.4",
+  "com.github.blemale" % "scaffeine_2.12" % "2.5.0",
+  "org.scaldi" % "scaldi-akka_2.12" % "0.5.8",
+
+  // for logging filters
+  "org.codehaus.janino" % "janino" % "3.0.8",
 
   "org.scalatest" %% "scalatest" % "3.0.5" % Test,
   "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % Test,
-  "org.scalamock" %% "scalamock" % "4.1.0" % Test
+  "org.scalamock" %% "scalamock" % "4.1.0" % Test,
+  "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test
 )
 
 assemblyJarName := s"${name.value}-${version.value}-jar-with-dependencies.jar"

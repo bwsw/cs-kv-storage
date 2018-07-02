@@ -1,6 +1,23 @@
+// Licensed to the Apache Software Foundation (ASF) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
 package com.bwsw.cloudstack.storage.kv.processor
 
-import com.bwsw.cloudstack.storage.kv.app.Configuration
+import com.bwsw.cloudstack.storage.kv.configuration.{AppConfig, ElasticsearchConfig}
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError}
 import com.sksamuel.elastic4s.bulk.BulkDefinition
 import com.sksamuel.elastic4s.delete.{DeleteByIdDefinition, DeleteByQueryDefinition}
@@ -35,8 +52,9 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
 
   describe("An ElasticsearchKvProcessor") {
     val fakeClient = mock[HttpClient]
-    val fakeConf = mock[Configuration]
-    val elasticsearchKvProcessor = new ElasticsearchKvProcessor(fakeClient, fakeConf)
+    val fakeConf = mock[AppConfig]
+    val fakeEsConf = mock[ElasticsearchConfig]
+    val elasticsearchKvProcessor = new ElasticsearchKvProcessor(fakeClient, fakeEsConf)
 
     describe("(get by the key)") {
       it("should return the value if the key exists") {
@@ -132,7 +150,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
     describe("(set the key/value)") {
       def testSuccess(key: String, value: String, maxKeyLength: Int, maxValueLength: Int) = {
         val indexResponse = IndexResponse(key, index, `type`, 1, "created", forcedRefresh = false, null)
-        expectsMaxKeyValueLength(fakeConf, key.length, value.length)
+        expectsMaxKeyValueLength(fakeEsConf, key.length, value.length)
         expectsIndexRequest(fakeClient).returning(getRequestSuccessFuture(indexResponse))
 
         elasticsearchKvProcessor.set(storage, key, value).map {
@@ -156,7 +174,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
 
       it("should set null value by the key") {
         val indexResponse = IndexResponse(key, index, `type`, 1, "created", forcedRefresh = false, null)
-        (fakeConf.getMaxKeyLength _).expects().returning(key.length).atLeastOnce()
+        (fakeEsConf.getMaxKeyLength _).expects().returning(key.length).atLeastOnce()
         expectsIndexRequest(fakeClient, key, null).returning(getRequestSuccessFuture(indexResponse))
 
         elasticsearchKvProcessor.set(storage, key, null).map {
@@ -174,7 +192,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
       }
 
       it("should fail if execute method fails") {
-        expectsMaxKeyValueLength(fakeConf, key.length, value.length)
+        expectsMaxKeyValueLength(fakeEsConf, key.length, value.length)
         expectsIndexRequest(fakeClient).throwing(exception)
 
         recoverToExceptionIf[Exception] {
@@ -193,13 +211,13 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
       }
 
       it("should return BadRequest if the key is too long") {
-        (fakeConf.getMaxKeyLength _).expects().returning(key.length - 1).atLeastOnce()
+        (fakeEsConf.getMaxKeyLength _).expects().returning(key.length - 1).atLeastOnce()
         testInvalidKey(key)
       }
 
       it("should return BadRequest if the value is too long") {
         expectsIndexRequest(fakeClient).never()
-        expectsMaxKeyValueLength(fakeConf, key.length, value.length - 1)
+        expectsMaxKeyValueLength(fakeEsConf, key.length, value.length - 1)
 
         elasticsearchKvProcessor.set(storage, key, value).map {
           case Left(error: BadRequestError) => succeed
@@ -208,7 +226,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
       }
 
       it("should return InternalError if the request fails") {
-        expectsMaxKeyValueLength(fakeConf, key.length, value.length)
+        expectsMaxKeyValueLength(fakeEsConf, key.length, value.length)
         expectsIndexRequest(fakeClient).returning(getRequestFailureFuture)
         elasticsearchKvProcessor.set(storage, key, value).map {
           case Left(error: InternalError) => succeed
@@ -225,7 +243,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
             None,
             None,
             None)))
-        expectsMaxKeyValueLength(fakeConf, maxKeyLength, maxValueLength)
+        expectsMaxKeyValueLength(fakeEsConf, maxKeyLength, maxValueLength)
         expectsBulkIndexRequest(fakeClient, keyValues).returning(getRequestSuccessFuture(bulkResponse))
 
         elasticsearchKvProcessor.set(storage, keyValues).map {
@@ -267,7 +285,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
             None)))
 
         val maxValueLength = getMaxLength(keyValues.values)
-        expectsMaxKeyValueLength(fakeConf, getMaxLength(keyValues.keys), maxValueLength)
+        expectsMaxKeyValueLength(fakeEsConf, getMaxLength(keyValues.keys), maxValueLength)
         expectsBulkIndexRequest(fakeClient, keyValues).returning(getRequestSuccessFuture(bulkResponse))
 
         val invalidKeyValues = Map("keyForLongValue" -> "a" * (maxValueLength + 1))
@@ -287,12 +305,12 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
       }
 
       it("should return false for too long keys") {
-        (fakeConf.getMaxKeyLength _).expects().returning(key.length - 1).atLeastOnce()
+        (fakeEsConf.getMaxKeyLength _).expects().returning(key.length - 1).atLeastOnce()
         testInvalidKey(key)
       }
 
       it("should fail if execute method fails") {
-        expectsMaxKeyValueLength(fakeConf, getMaxLength(keyValues.keys), getMaxLength(keyValues.values))
+        expectsMaxKeyValueLength(fakeEsConf, getMaxLength(keyValues.keys), getMaxLength(keyValues.values))
         expectsBulkIndexRequest(fakeClient, keyValues).throwing(exception)
 
         recoverToExceptionIf[Exception] {
@@ -303,7 +321,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
       }
 
       it("should return InternalError if the request fails") {
-        expectsMaxKeyValueLength(fakeConf, getMaxLength(keyValues.keys), getMaxLength(keyValues.values))
+        expectsMaxKeyValueLength(fakeEsConf, getMaxLength(keyValues.keys), getMaxLength(keyValues.values))
         expectsBulkIndexRequest(fakeClient, keyValues).returning(getRequestFailureFuture)
         elasticsearchKvProcessor.set(storage, keyValues).map {
           case Left(_: InternalError) => succeed
@@ -387,7 +405,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
 
       it("should return existing keys") {
         val searchResponse = SearchResponse(1, isTimedOut = false, isTerminatedEarly = false, Map.empty, Shards(1, 0, 1), None, Map.empty, SearchHits(hits.length, 1, hits))
-        expectsSearchRequest(fakeClient, fakeConf, scrollSize).returning(getRequestSuccessFuture(searchResponse))
+        expectsSearchRequest(fakeClient, fakeEsConf, scrollSize).returning(getRequestSuccessFuture(searchResponse))
         elasticsearchKvProcessor.list(storage).map {
           case Right(values) => assert(keyValues.keys.toList == values)
           case _ => fail
@@ -401,7 +419,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
         val searchScrollResponse2 = SearchResponse(1, isTimedOut = false, isTerminatedEarly = false, Map.empty, Shards(1, 0, 1),
           Some(scrollId3), Map.empty, SearchHits(hits.length, 1, Array()))
 
-        expectsSearchRequest(fakeClient, fakeConf, scrollSize).returning(getRequestSuccessFuture(searchResponse))
+        expectsSearchRequest(fakeClient, fakeEsConf, scrollSize).returning(getRequestSuccessFuture(searchResponse))
         expectsSearchScrollRequest(fakeClient, fakeConf, scrollId1).returning(getRequestSuccessFuture(searchScrollResponse1))
         expectsSearchScrollRequest(fakeClient, fakeConf, scrollId2).returning(getRequestSuccessFuture(searchScrollResponse2))
         expectsClearScrollRequest(fakeClient, scrollId3).returning(getRequestSuccessFuture(ClearScrollResponse(succeeded = true, 1)))
@@ -412,7 +430,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
       }
 
       it("should fail if execute method fails") {
-        expectsSearchRequest(fakeClient, fakeConf, scrollSize).throwing(exception)
+        expectsSearchRequest(fakeClient, fakeEsConf, scrollSize).throwing(exception)
 
         recoverToExceptionIf[Exception] {
           Future {
@@ -422,7 +440,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
       }
 
       it("should fail if scrolling fails") {
-        expectsSearchRequest(fakeClient, fakeConf, scrollSize).returning(getRequestSuccessFuture(searchResponse))
+        expectsSearchRequest(fakeClient, fakeEsConf, scrollSize).returning(getRequestSuccessFuture(searchResponse))
         expectsSearchScrollRequest(fakeClient, fakeConf, scrollId1).throwing(new Exception())
         recoverToSucceededIf[Exception] {
           elasticsearchKvProcessor.list(storage)
@@ -430,7 +448,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
       }
 
       it("should return InternalError if the request fails") {
-        expectsSearchRequest(fakeClient, fakeConf, scrollSize).returning(getRequestFailureFuture)
+        expectsSearchRequest(fakeClient, fakeEsConf, scrollSize).returning(getRequestFailureFuture)
         elasticsearchKvProcessor.list(storage).map {
           case Left(_: InternalError) => succeed
           case _ => fail
@@ -438,7 +456,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
       }
 
       it("should return InternalError if scrolling fails") {
-        expectsSearchRequest(fakeClient, fakeConf, scrollSize).returning(getRequestSuccessFuture(searchResponse))
+        expectsSearchRequest(fakeClient, fakeEsConf, scrollSize).returning(getRequestSuccessFuture(searchResponse))
         expectsSearchScrollRequest(fakeClient, fakeConf, scrollId1).returning(getRequestFailureFuture)
         elasticsearchKvProcessor.list(storage).map {
           case Left(_: InternalError) => succeed
@@ -523,14 +541,14 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
       .expects(ElasticDsl.bulk(deletes), BulkExecutable, *)
   }
 
-  private def expectsSearchRequest(client: HttpClient, conf: Configuration, size: Int) = {
-    (conf.getSearchPageSize _).expects().returning(size)
-    (conf.getSearchScrollKeepAlive _).expects().returning(keepAlive)
+  private def expectsSearchRequest(client: HttpClient, conf: ElasticsearchConfig, size: Int) = {
+    (conf.getScrollPageSize _).expects().returning(size)
+    (conf.getScrollKeepAlive _).expects().returning(keepAlive)
     (client.execute[SearchDefinition, SearchResponse](_: SearchDefinition)(_: HttpExecutable[SearchDefinition, SearchResponse], _: ExecutionContext))
       .expects(ElasticDsl.search(index).size(size).keepAlive(keepAlive), SearchHttpExecutable, *)
   }
 
-  private def expectsSearchScrollRequest(client: HttpClient, conf: Configuration, scrollId: String) = {
+  private def expectsSearchScrollRequest(client: HttpClient, conf: AppConfig, scrollId: String) = {
     (client.execute[SearchScrollDefinition, SearchResponse](_: SearchScrollDefinition)(_: HttpExecutable[SearchScrollDefinition, SearchResponse], _: ExecutionContext))
       .expects(searchScroll(scrollId).keepAlive(keepAlive), SearchScrollHttpExecutable, *)
   }
@@ -545,7 +563,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
       .expects(clearScroll(scrollId), ClearScrollHttpExec, *)
   }
 
-  private def expectsMaxKeyValueLength(conf: Configuration, maxKeyLength: Int, maxValueLength: Int) = {
+  private def expectsMaxKeyValueLength(conf: ElasticsearchConfig, maxKeyLength: Int, maxValueLength: Int) = {
     (conf.getMaxKeyLength _).expects().returning(maxKeyLength).atLeastOnce()
     (conf.getMaxValueLength _).expects().returning(maxValueLength).atLeastOnce()
   }
