@@ -15,7 +15,7 @@
 					"description": null,
 					"item": [
 						{
-							"name": "LIst a storage",
+                          "name": "List a storage",
 							"event": [
 								{
 									"listen": "test",
@@ -45,13 +45,13 @@
 								"header": [],
 								"body": {},
 								"url": {
-									"raw": "{{url}}/list/{{storage_uuid}}",
+                                  "raw": "{{url}}/list/{{read_only_storage}}",
 									"host": [
 										"{{url}}"
 									],
 									"path": [
 										"list",
-										"{{storage_uuid}}"
+                                      "{{read_only_storage}}"
 									]
 								}
 							},
@@ -85,29 +85,10 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "0a9410b7-f537-4742-82cf-8c6a1664d186",
+                                      "id": "98982517-5143-481d-a85b-8eb037420a29",
 										"type": "text/javascript",
 										"exec": [
-											"const es_url = pm.variables.get(\"es_url\");",
-											"//create clear storage",
-											"pm.sendRequest({",
-											"  url: es_url + \"/storage-empty_storage\",",
-											"  method: 'PUT'",
-											"});",
-											"//add it into registry",
-											"pm.sendRequest({",
-											"  url: es_url + \"/storage-registry/_doc/storage-empty_storage\",",
-											"  method: 'PUT',",
-											"  header: 'Content-Type:application/json',",
-											"  body: {",
-											"      mode: 'raw',",
-											"      raw: JSON.stringify({",
-											"\t        \"type\": \"ACC\",",
-											"\t        \"is_history_enabled\": true})",
-											"  }",
-											"});",
-											"",
-											""
+                                          "const es_url = pm.variables.get(\"es_url\");"
 										]
 									}
 								}
@@ -120,13 +101,13 @@
 									"raw": ""
 								},
 								"url": {
-									"raw": "{{url}}/list/empty_storage",
+                                  "raw": "{{url}}/list/empty",
 									"host": [
 										"{{url}}"
 									],
 									"path": [
 										"list",
-										"empty_storage"
+                                      "empty"
 									]
 								}
 							},
@@ -138,32 +119,21 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "259bdec4-6644-465b-b72d-ef7294254da1",
+                                      "id": "f2910574-e8fa-4909-a6b4-ce4fefc34250",
 										"type": "text/javascript",
 										"exec": [
-											"const es_url = pm.variables.get(\"es_url\");",
-											"//try to delete storage",
-											"pm.sendRequest({",
-											"  url: es_url + \"/storage-nonexistent\",",
-											"  method: 'DELETE'",
-											"});",
-											"//try to delete record in registry",
-											"pm.sendRequest({",
-											"  url: es_url + \"/storage-registry/_doc/storage-clear_storage\",",
-											"  method: 'DELETE'",
-											"});",
-											""
+                                          "const es_url = pm.variables.get(\"es_url\");"
 										]
 									}
 								},
 								{
 									"listen": "test",
 									"script": {
-										"id": "4122b7b6-eaa8-4494-9fe0-cafad5211bc5",
+                                      "id": "ba93799b-5a46-42d1-88c7-b32892ad5324",
 										"type": "text/javascript",
 										"exec": [
-											"pm.test(\"Status code is 500\", function() {",
-											"  pm.response.to.have.status(500);",
+                                          "pm.test(\"Status code is 404\", function() {",
+                                          "  pm.response.to.have.status(404);",
 											"});",
 											"",
 											"pm.test(\"Response body is empty\", function () {",
@@ -252,13 +222,13 @@
 								"header": [],
 								"body": {},
 								"url": {
-									"raw": "{{url}}/get/{{storage_uuid}}/{{some_key}}",
+                                  "raw": "{{url}}/get/{{read_only_storage}}/{{some_key}}",
 									"host": [
 										"{{url}}"
 									],
 									"path": [
 										"get",
-										"{{storage_uuid}}",
+                                      "{{read_only_storage}}",
 										"{{some_key}}"
 									]
 								}
@@ -292,13 +262,13 @@
 								"header": [],
 								"body": {},
 								"url": {
-									"raw": "{{url}}/get/{{storage_uuid}}/{{empty_key}}",
+                                  "raw": "{{url}}/get/{{read_only_storage}}/{{empty_key}}",
 									"host": [
 										"{{url}}"
 									],
 									"path": [
 										"get",
-										"{{storage_uuid}}",
+                                      "{{read_only_storage}}",
 										"{{empty_key}}"
 									]
 								}
@@ -321,11 +291,11 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "970a9901-a045-41a9-8bd1-47ec27936e29",
+                                      "id": "59eb38cb-c72f-4765-bc91-51e2b23c9bb5",
 										"type": "text/javascript",
 										"exec": [
-											"pm.test(\"Status code is 500\", function() {",
-											"  pm.response.to.have.status(500);",
+                                          "pm.test(\"Status code is 404\", function() {",
+                                          "  pm.response.to.have.status(404);",
 											"});",
 											"",
 											"pm.test(\"Response body is empty\", function () {",
@@ -426,13 +396,13 @@
 									"raw": "[\"key1\", \"key2\", \"key3\"]"
 								},
 								"url": {
-									"raw": "{{url}}/get/{{storage_uuid}}",
+                                  "raw": "{{url}}/get/{{read_only_storage}}",
 									"host": [
 										"{{url}}"
 									],
 									"path": [
 										"get",
-										"{{storage_uuid}}"
+                                      "{{read_only_storage}}"
 									]
 								}
 							},
@@ -467,13 +437,13 @@
 									"raw": "[\"key1\", \"key2\", \"key3\"]"
 								},
 								"url": {
-									"raw": "{{url}}/get/{{storage_uuid}}",
+                                  "raw": "{{url}}/get/{{read_only_storage}}",
 									"host": [
 										"{{url}}"
 									],
 									"path": [
 										"get",
-										"{{storage_uuid}}"
+                                      "{{read_only_storage}}"
 									]
 								}
 							},
@@ -513,13 +483,13 @@
 									"raw": "[\"key1\", \"key2\", \"key3\""
 								},
 								"url": {
-									"raw": "{{url}}/get/{{storage_uuid}}",
+                                  "raw": "{{url}}/get/{{read_only_storage}}",
 									"host": [
 										"{{url}}"
 									],
 									"path": [
 										"get",
-										"{{storage_uuid}}"
+                                      "{{read_only_storage}}"
 									]
 								}
 							},
@@ -559,13 +529,13 @@
 									"raw": "[\"key1\", \"key2\", \"key3\""
 								},
 								"url": {
-									"raw": "{{url}}/get/{{storage_uuid}}",
+                                  "raw": "{{url}}/get/{{read_only_storage}}",
 									"host": [
 										"{{url}}"
 									],
 									"path": [
 										"get",
-										"{{storage_uuid}}"
+                                      "{{read_only_storage}}"
 									]
 								}
 							},
@@ -579,45 +549,35 @@
 					"description": "",
 					"item": [
 						{
-							"name": "Set value",
+                          "name": "Set with wrong Content-Type",
 							"event": [
 								{
 									"listen": "test",
 									"script": {
-										"id": "32ad74d5-d97d-40d0-95bf-f3a08d0a79da",
+                                      "id": "3107e8cf-4fde-481f-b508-be857a29f610",
 										"type": "text/javascript",
 										"exec": [
-											"pm.test(\"Status code is 200\", function () {",
-											"    pm.response.to.have.status(200);",
+                                          "pm.test(\"Status code is 400\", function () {",
+                                          "    pm.response.to.have.status(400);",
 											"});",
 											"pm.sendRequest({",
-											"        url: pm.variables.get(\"es_url\") + \"/storage-\" + pm.variables.get(\"storage_uuid\") + \"/_doc/\" + pm.variables.get(\"some_key\"),",
+                                          "        url: pm.variables.get(\"es_url\") + \"/storage-\" + pm.variables.get(\"editable_storage\") + \"/_doc/\" + pm.variables.get(\"some_key\"),",
 											"        method: 'GET'},",
 											"    function (err, res) {",
-											"        pm.test(\"Document actually indexed\", function () {",
-											"        pm.expect(res.json()[\"_source\"][\"value\"]).to.eql(\"newValue\");",
-											"        pm.sendRequest({",
-											"            url: pm.variables.get(\"es_url\") + \"/storage-\" + pm.variables.get(\"storage_uuid\") + \"/_doc/\" + pm.variables.get(\"some_key\"),",
-											"            method: 'PUT',",
-											"            header: 'Content-Type:application/json',",
-											"            body: {",
-											"                mode: 'raw',",
-											"                raw: JSON.stringify({\"value\": pm.variables.get(\"some_value\")})",
-											"            }",
-											"        });",
-											"    });",
-											"});",
-											""
+                                          "        pm.test(\"Document is not changed\", function () {",
+                                          "        pm.expect(res.json()._source.value).to.eql(pm.variables.get(\"some_value\"));",
+                                          "    });",
+                                          "});"
 										]
 									}
 								},
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "228bb11b-cbd7-4ef3-8a51-3b505853ae38",
+                                      "id": "d296aab1-4aa2-4e1d-8b34-8e217df06b7e",
 										"type": "text/javascript",
 										"exec": [
-											"const value = \"newValue\""
+                                          ""
 										]
 									}
 								}
@@ -627,7 +587,7 @@
 								"header": [
 									{
 										"key": "Content-Type",
-										"value": "text/plain"
+                                      "value": "application/json"
 									}
 								],
 								"body": {
@@ -635,13 +595,13 @@
 									"raw": "newValue"
 								},
 								"url": {
-									"raw": "{{url}}/set/{{storage_uuid}}/{{some_key}}",
+                                  "raw": "{{url}}/set/{{editable_storage}}/{{some_key}}",
 									"host": [
 										"{{url}}"
 									],
 									"path": [
 										"set",
-										"{{storage_uuid}}",
+                                      "{{editable_storage}}",
 										"{{some_key}}"
 									]
 								}
@@ -649,32 +609,33 @@
 							"response": []
 						},
 						{
-							"name": "Set with wrong Content-Type",
+                          "name": "Set value",
 							"event": [
 								{
 									"listen": "test",
 									"script": {
-										"id": "45b0819b-cc3b-41e8-8754-086c297d7c53",
+                                      "id": "86687f15-ce24-43ea-a77f-13c9259a0a3e",
 										"type": "text/javascript",
 										"exec": [
-											"pm.test(\"Status code is 400\", function () {",
-											"    pm.response.to.have.status(400);",
+                                          "pm.test(\"Status code is 200\", function () {",
+                                          "    pm.response.to.have.status(200);",
 											"});",
 											"pm.sendRequest({",
-											"        url: pm.variables.get(\"es_url\") + \"/storage-\" + pm.variables.get(\"storage_uuid\") + \"/_doc/\" + pm.variables.get(\"some_key\"),",
+                                          "        url: pm.variables.get(\"es_url\") + \"/storage-\" + pm.variables.get(\"editable_storage\") + \"/_doc/\" + pm.variables.get(\"some_key\"),",
 											"        method: 'GET'},",
 											"    function (err, res) {",
-											"        pm.test(\"Document is not changed\", function () {",
-											"        pm.expect(res.json()._source.value).to.eql(pm.variables.get(\"some_value\"));",
+                                          "        pm.test(\"Document actually indexed\", function () {",
+                                          "        pm.expect(res.json()[\"_source\"][\"value\"]).to.eql(\"newValue\");",
 											"    });",
-											"});"
+                                          "});",
+                                          ""
 										]
 									}
 								},
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "d296aab1-4aa2-4e1d-8b34-8e217df06b7e",
+                                      "id": "546e693f-cf78-42ad-b416-ffdc2737ffc6",
 										"type": "text/javascript",
 										"exec": [
 											""
@@ -687,7 +648,7 @@
 								"header": [
 									{
 										"key": "Content-Type",
-										"value": "application/json"
+                                      "value": "text/plain"
 									}
 								],
 								"body": {
@@ -695,13 +656,13 @@
 									"raw": "newValue"
 								},
 								"url": {
-									"raw": "{{url}}/set/{{storage_uuid}}/{{some_key}}",
+                                  "raw": "{{url}}/set/{{editable_storage}}/{{some_key}}",
 									"host": [
 										"{{url}}"
 									],
 									"path": [
 										"set",
-										"{{storage_uuid}}",
+                                      "{{editable_storage}}",
 										"{{some_key}}"
 									]
 								}
@@ -716,65 +677,42 @@
 					"description": "",
 					"item": [
 						{
-							"name": "Set values",
+                          "name": "Set with wrong Content-Type",
 							"event": [
 								{
 									"listen": "test",
 									"script": {
-										"id": "8996b813-df18-4f44-806b-3956426a6007",
+                                      "id": "38f6427e-1bc6-4eea-bdeb-e3ee4954ff42",
 										"type": "text/javascript",
 										"exec": [
-											"pm.test(\"Status code is 200\", function () {",
-											"    pm.response.to.have.status(200);",
+                                          "pm.test(\"Status code is 400\", function () {",
+                                          "    pm.response.to.have.status(400);",
 											"});",
 											"",
-											"pm.test(\"Content-Type is application/json\", function () {",
-											"    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+                                          "pm.test(\"Body is empty\", function () {",
+                                          "    pm.expect(pm.response.text()).to.eql(\"\");",
 											"});",
 											"",
-											"pm.test(\"Response body contains statuses of operations\", function () {",
-											"    var jsonData = pm.response.json();",
-											"    var example = {",
-											"        \"key1\" : true,",
-											"        \"key2\" : true,",
-											"        \"key3\" : true,",
-											"        \"key4\" : true",
-											"    }",
-											"    pm.expect(jsonData).to.eql(example);",
-											"});",
 											"const source = JSON.stringify({\"ids\": [\"key1\",\"key2\",\"key3\",\"key4\"]})",
 											"pm.sendRequest({",
-											"        url: pm.variables.get(\"es_url\") + \"/storage-\" + pm.variables.get(\"storage_uuid\") + \"/_doc/_mget?source=\" + source + \"&source_content_type=application/json\",",
+                                          "        url: pm.variables.get(\"es_url\") + \"/storage-\" + pm.variables.get(\"multieditable_storage\") + \"/_doc/_mget?source=\" + source + \"&source_content_type=application/json\",",
 											"        method: 'GET'},",
 											"    function (err, res) {",
-											"        pm.test(\"Documents are actually indexed\", function () {",
+                                          "        pm.test(\"Documents are not changed\", function () {",
 											"            const result = res.json()[\"docs\"].map(function callback(c, i, a){",
 											"                return {",
-											"                    key: c[\"_id\"],",
-											"                    value: c[\"_source\"][\"value\"]",
+                                          "                    key: c._id,",
+                                          "                    value: c._source.value",
 											"                };",
 											"            })",
 											"            const example = [",
-											"                {key: \"key1\", value: \"newValue1\"},",
-											"                {key: \"key2\", value: \"newValue2\"},",
-											"                {key: \"key3\", value: \"newValue3\"},",
-											"                {key: \"key4\", value: \"newValue4\"}];",
-											"            pm.sendRequest({",
-											"                url: pm.variables.get(\"es_url\") + \"/storage-\" + pm.variables.get(\"storage_uuid\") + \"/_doc/_bulk\",",
-											"                method: 'POST',",
-											"                header: 'Content-Type:application/json',",
-											"                body: {",
-											"                    mode: 'raw',",
-											"                    raw: ",
-											"                    '{\"index\": {\"_id\": \"key1\"}}\\n{\"value\": \"value1\"}\\n' +",
-											"                    '{\"index\": {\"_id\": \"key2\"}}\\n{\"value\": \"value2\"}\\n' +",
-											"                    '{\"index\": {\"_id\": \"key3\"}}\\n{\"value\": \"value3\"}\\n' +",
-											"                    '{\"index\": {\"_id\": \"key4\"}}\\n{\"value\": \"value4\"}\\n'",
-											"                }",
-											"            });",
-											"    });",
-											"});",
-											""
+                                          "                {key: \"key1\", value: \"value1\"},",
+                                          "                {key: \"key2\", value: \"value2\"},",
+                                          "                {key: \"key3\", value: \"value3\"},",
+                                          "                {key: \"key4\", value: \"value4\"}];",
+                                          "            pm.expect(result).to.eql(example);",
+                                          "    });",
+                                          "});"
 										]
 									}
 								}
@@ -784,7 +722,7 @@
 								"header": [
 									{
 										"key": "Content-Type",
-										"value": "application/json"
+                                      "value": "text/plain"
 									}
 								],
 								"body": {
@@ -792,25 +730,25 @@
 									"raw": "{\n\t\"key1\": \"newValue1\",\n\t\"key2\": \"newValue2\",\n\t\"key3\": \"newValue3\",\n\t\"key4\": \"newValue4\"\n}"
 								},
 								"url": {
-									"raw": "{{url}}/set/{{storage_uuid}}",
+                                  "raw": "{{url}}/set/{{multieditable_storage}}",
 									"host": [
 										"{{url}}"
 									],
 									"path": [
 										"set",
-										"{{storage_uuid}}"
+                                      "{{multieditable_storage}}"
 									]
 								}
 							},
 							"response": []
 						},
 						{
-							"name": "Set with wrong Content-Type",
+                          "name": "Set with bad json",
 							"event": [
 								{
 									"listen": "test",
 									"script": {
-										"id": "076ad2df-2b03-41ef-95ea-fe087e9ea78d",
+                                      "id": "aca9650f-90f7-4204-97d1-1fa60a726b72",
 										"type": "text/javascript",
 										"exec": [
 											"pm.test(\"Status code is 400\", function () {",
@@ -823,7 +761,7 @@
 											"",
 											"const source = JSON.stringify({\"ids\": [\"key1\",\"key2\",\"key3\",\"key4\"]})",
 											"pm.sendRequest({",
-											"        url: pm.variables.get(\"es_url\") + \"/storage-\" + pm.variables.get(\"storage_uuid\") + \"/_doc/_mget?source=\" + source + \"&source_content_type=application/json\",",
+                                          "        url: pm.variables.get(\"es_url\") + \"/storage-\" + pm.variables.get(\"multieditable_storage\") + \"/_doc/_mget?source=\" + source + \"&source_content_type=application/json\",",
 											"        method: 'GET'},",
 											"    function (err, res) {",
 											"        pm.test(\"Documents are not changed\", function () {",
@@ -850,33 +788,33 @@
 								"header": [
 									{
 										"key": "Content-Type",
-										"value": "text/plain"
+                                      "value": "application/json"
 									}
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n\t\"key1\": \"newValue1\",\n\t\"key2\": \"newValue2\",\n\t\"key3\": \"newValue3\",\n\t\"key4\": \"newValue4\"\n}"
+                                  "raw": "{\n\t\"key1\": \"newValue1\",\n\t\"key2\": \"newValue2\",\n\t\"key3\": \"newValue3\",\n\t\"key4\": \"newValue4\"\n"
 								},
 								"url": {
-									"raw": "{{url}}/set/{{storage_uuid}}",
+                                  "raw": "{{url}}/set/{{multieditable_storage}}",
 									"host": [
 										"{{url}}"
 									],
 									"path": [
 										"set",
-										"{{storage_uuid}}"
+                                      "{{multieditable_storage}}"
 									]
 								}
 							},
 							"response": []
 						},
 						{
-							"name": "Set with bad json",
+                          "name": "Set with wrong body format",
 							"event": [
 								{
 									"listen": "test",
 									"script": {
-										"id": "c14239a1-c8fa-4de6-91a4-fae66d73a11a",
+                                      "id": "70a877c6-5b79-4d6d-b387-54d53ec3f605",
 										"type": "text/javascript",
 										"exec": [
 											"pm.test(\"Status code is 400\", function () {",
@@ -889,73 +827,7 @@
 											"",
 											"const source = JSON.stringify({\"ids\": [\"key1\",\"key2\",\"key3\",\"key4\"]})",
 											"pm.sendRequest({",
-											"        url: pm.variables.get(\"es_url\") + \"/storage-\" + pm.variables.get(\"storage_uuid\") + \"/_doc/_mget?source=\" + source + \"&source_content_type=application/json\",",
-											"        method: 'GET'},",
-											"    function (err, res) {",
-											"        pm.test(\"Documents are not changed\", function () {",
-											"            const result = res.json()[\"docs\"].map(function callback(c, i, a){",
-											"                return {",
-											"                    key: c._id,",
-											"                    value: c._source.value",
-											"                };",
-											"            })",
-											"            const example = [",
-											"                {key: \"key1\", value: \"value1\"},",
-											"                {key: \"key2\", value: \"value2\"},",
-											"                {key: \"key3\", value: \"value3\"},",
-											"                {key: \"key4\", value: \"value4\"}];",
-											"            pm.expect(result).to.eql(example);",
-											"    });",
-											"});"
-										]
-									}
-								}
-							],
-							"request": {
-								"method": "PUT",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n\t\"key1\": \"newValue1\",\n\t\"key2\": \"newValue2\",\n\t\"key3\": \"newValue3\",\n\t\"key4\": \"newValue4\"\n"
-								},
-								"url": {
-									"raw": "{{url}}/set/{{storage_uuid}}",
-									"host": [
-										"{{url}}"
-									],
-									"path": [
-										"set",
-										"{{storage_uuid}}"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Set with wrong body format",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "9979a932-cf4a-4fd3-8536-3c5b2c9627ef",
-										"type": "text/javascript",
-										"exec": [
-											"pm.test(\"Status code is 400\", function () {",
-											"    pm.response.to.have.status(400);",
-											"});",
-											"",
-											"pm.test(\"Body is empty\", function () {",
-											"    pm.expect(pm.response.text()).to.eql(\"\");",
-											"});",
-											"",
-											"const source = JSON.stringify({\"ids\": [\"key1\",\"key2\",\"key3\",\"key4\"]})",
-											"pm.sendRequest({",
-											"        url: pm.variables.get(\"es_url\") + \"/storage-\" + pm.variables.get(\"storage_uuid\") + \"/_doc/_mget?source=\" + source + \"&source_content_type=application/json\",",
+                                          "        url: pm.variables.get(\"es_url\") + \"/storage-\" + pm.variables.get(\"multieditable_storage\") + \"/_doc/_mget?source=\" + source + \"&source_content_type=application/json\",",
 											"        method: 'GET'},",
 											"    function (err, res) {",
 											"        pm.test(\"Documents are not changed\", function () {",
@@ -987,7 +859,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "[\n\t{\"key1\": \"newValue1\"},\n\t{\"key2\": \"newValue2\"},\n\t{\"key3\": \"newValue3\"},\n\t{\"key4\": \"newValue4\"}\n]\n"
+                                  "raw": "[\n\t{\"key1\": \"newValue1\"},\n\t{\"key2\": \"newValue2\"},\n\t{\"key3\": \"newValue3\"},\n\t{\"key4\": \"newValue4\"}\n]\n"
 								},
 								"url": {
 									"raw": "{{url}}/set/{{storage_uuid}}",
@@ -997,6 +869,82 @@
 									"path": [
 										"set",
 										"{{storage_uuid}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+                          "name": "Set values",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+                                      "id": "af261c77-70da-48c7-a0d4-13e3ddacec0c",
+										"type": "text/javascript",
+										"exec": [
+                                          "pm.test(\"Status code is 200\", function () {",
+                                          "    pm.response.to.have.status(200);",
+                                          "});",
+                                          "",
+                                          "pm.test(\"Content-Type is application/json\", function () {",
+                                          "    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+											"});",
+											"",
+                                          "pm.test(\"Response body contains statuses of operations\", function () {",
+                                          "    var jsonData = pm.response.json();",
+                                          "    var example = {",
+                                          "        \"key1\" : true,",
+                                          "        \"key2\" : true,",
+                                          "        \"key3\" : true,",
+                                          "        \"key4\" : true",
+                                          "    }",
+                                          "    pm.expect(jsonData).to.eql(example);",
+											"});",
+											"const source = JSON.stringify({\"ids\": [\"key1\",\"key2\",\"key3\",\"key4\"]})",
+											"pm.sendRequest({",
+                                          "        url: pm.variables.get(\"es_url\") + \"/storage-\" + pm.variables.get(\"multieditable_storage\") + \"/_doc/_mget?source=\" + source + \"&source_content_type=application/json\",",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+                                          "        pm.test(\"Documents are actually indexed\", function () {",
+											"            const result = res.json()[\"docs\"].map(function callback(c, i, a){",
+											"                return {",
+                                          "                    key: c[\"_id\"],",
+                                          "                    value: c[\"_source\"][\"value\"]",
+											"                };",
+											"            })",
+											"            const example = [",
+                                          "                {key: \"key1\", value: \"newValue1\"},",
+                                          "                {key: \"key2\", value: \"newValue2\"},",
+                                          "                {key: \"key3\", value: \"newValue3\"},",
+                                          "                {key: \"key4\", value: \"newValue4\"}];",
+											"    });",
+                                          "});",
+                                          ""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+                                  "raw": "{\n\t\"key1\": \"newValue1\",\n\t\"key2\": \"newValue2\",\n\t\"key3\": \"newValue3\",\n\t\"key4\": \"newValue4\"\n}"
+								},
+								"url": {
+                                  "raw": "{{url}}/set/{{multieditable_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"set",
+                                      "{{multieditable_storage}}"
 									]
 								}
 							},
@@ -1010,38 +958,21 @@
 					"description": "",
 					"item": [
 						{
-							"name": "Delete value",
+                          "name": "Delete from non existent storage",
 							"event": [
 								{
 									"listen": "test",
 									"script": {
-										"id": "21d7e3d4-d5bc-47ad-9643-f46b3a5c1325",
+                                      "id": "6509c34e-01ea-4c26-b835-7f3d48de89d3",
 										"type": "text/javascript",
 										"exec": [
-											"pm.test(\"Status code is 200\", function () {",
-											"    pm.response.to.have.status(200);",
+                                          "pm.test(\"Status code is 404\", function () {",
+                                          "    pm.response.to.have.status(404);",
 											"});",
 											"",
 											"pm.test(\"Body is empty\", function () {",
 											"    pm.expect(pm.response.text()).to.eql(\"\");",
-											"});",
-											"",
-											"pm.sendRequest({",
-											"        url: pm.variables.get(\"es_url\") + \"/storage-\" + pm.variables.get(\"storage_uuid\") + \"/_doc/\" + pm.variables.get(\"some_key\"),",
-											"        method: 'PUT',",
-											"        header: 'Content-Type:application/json',",
-											"        body: {",
-											"            mode: 'raw',",
-											"            raw: JSON.stringify({\"value\": pm.variables.get(\"some_value\")})",
-											"        }},",
-											"    function (err, res) {",
-											"        pm.test(\"Document is actually deleted\", function () {",
-											"            pm.expect(res.json().result).to.eql(\"created\");",
-											"            ",
-											"        });",
-											"    }",
-											");",
-											""
+                                          "});"
 										]
 									}
 								},
@@ -1061,13 +992,13 @@
 								"header": [],
 								"body": {},
 								"url": {
-									"raw": "{{url}}/delete/{{storage_uuid}}/{{some_key}}",
+                                  "raw": "{{url}}/delete/{{non_existent_storage}}/{{some_key}}",
 									"host": [
 										"{{url}}"
 									],
 									"path": [
 										"delete",
-										"{{storage_uuid}}",
+                                      "{{non_existent_storage}}",
 										"{{some_key}}"
 									]
 								}
@@ -1075,21 +1006,31 @@
 							"response": []
 						},
 						{
-							"name": "Delete from non existent storage",
+                          "name": "Delete value",
 							"event": [
 								{
 									"listen": "test",
 									"script": {
-										"id": "db97aa22-f3e9-4849-97e3-953b0fc729a3",
+                                      "id": "543459eb-4ac5-408c-b600-54ec52431bd5",
 										"type": "text/javascript",
 										"exec": [
-											"pm.test(\"Status code is 500\", function () {",
-											"    pm.response.to.have.status(500);",
+                                          "pm.test(\"Status code is 200\", function () {",
+                                          "    pm.response.to.have.status(200);",
 											"});",
 											"",
 											"pm.test(\"Body is empty\", function () {",
 											"    pm.expect(pm.response.text()).to.eql(\"\");",
 											"});",
+                                          "",
+                                          "pm.sendRequest({",
+                                          "        url: pm.variables.get(\"es_url\") + \"/storage-\" + pm.variables.get(\"deletable_storage\") + \"/_doc/\" + pm.variables.get(\"some_key\"),",
+                                          "        method: 'GET'},",
+                                          "    function (err, res) {",
+                                          "        pm.test(\"Document is actually deleted\", function () {",
+                                          "            pm.expect(res.json().found).to.eql(false);",
+                                          "        });",
+                                          "    }",
+                                          ");",
 											""
 										]
 									}
@@ -1110,13 +1051,13 @@
 								"header": [],
 								"body": {},
 								"url": {
-									"raw": "{{url}}/delete/{{non_existent_storage}}/{{some_key}}",
+                                  "raw": "{{url}}/delete/{{deletable_storage}}/{{some_key}}",
 									"host": [
 										"{{url}}"
 									],
 									"path": [
 										"delete",
-										"{{non_existent_storage}}",
+                                      "{{deletable_storage}}",
 										"{{some_key}}"
 									]
 								}
@@ -1131,48 +1072,30 @@
 					"description": "",
 					"item": [
 						{
-							"name": "Delete values",
+                          "name": "Delete with wrong Content-Type",
 							"event": [
 								{
 									"listen": "test",
 									"script": {
-										"id": "510e11bc-0569-4707-af26-2f5283184a14",
+                                      "id": "1f666e79-f395-41e5-9cbe-7720255606d9",
 										"type": "text/javascript",
 										"exec": [
-											"pm.test(\"Status code is 200\", function () {",
-											"    pm.response.to.have.status(200);",
+                                          "pm.test(\"Status code is 400\", function () {",
+                                          "    pm.response.to.have.status(400);",
+											"});",
+                                          "pm.test(\"Response body is empty\", function () {",
+                                          "    pm.expect(pm.response.text()).to.eql(\"\");",
 											"});",
 											"",
-											"pm.test(\"Content-Type is application/json\", function () {",
-											"    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
-											"});",
-											"",
-											"pm.test(\"Response body contains statuses of operations\", function () {",
-											"    var jsonData = pm.response.json();",
-											"    var example = {",
-											"        \"key1\" : true,",
-											"        \"key2\" : true,",
-											"        \"key3\" : true",
-											"    }",
-											"    pm.expect(jsonData).to.eql(example);",
-											"});",
-											"",
+                                          "const source = JSON.stringify({\"ids\": [\"key1\",\"key2\",\"key3\"]})",
 											"pm.sendRequest({",
-											"        url: pm.variables.get(\"es_url\") + \"/storage-\" + pm.variables.get(\"storage_uuid\") + \"/_doc/_bulk\",",
-											"        method: 'POST',",
-											"        header: 'Content-Type:application/json',",
-											"        body: {",
-											"            mode: 'raw',",
-											"            raw: ",
-											"            '{\"index\": {\"_id\": \"key1\"}}\\n{\"value\": \"value1\"}\\n' +",
-											"            '{\"index\": {\"_id\": \"key2\"}}\\n{\"value\": \"value2\"}\\n' +",
-											"            '{\"index\": {\"_id\": \"key3\"}}\\n{\"value\": \"value3\"}\\n'",
-											"        }},",
+                                          "        url: pm.variables.get(\"es_url\") + \"/storage-\" + pm.variables.get(\"multideletable_storage\") + \"/_doc/_mget?source=\" + source + \"&source_content_type=application/json\",",
+                                          "        method: 'GET'},",
 											"    function (err, res) {",
-											"        pm.test(\"Documents are actually deleted\", function () {",
-											"            const result = res.json().items.every(function callback(c){",
-											"                return c.index.result == \"created\"",
-											"            })",
+                                          "        pm.test(\"Documents are not deleted\", function () {",
+                                          "            const result = res.json().docs.every(function callback(c){",
+                                          "                return c.found;",
+                                          "            });",
 											"            pm.expect(result).to.eql(true);",
 											"        });",
 											"});"
@@ -1185,7 +1108,7 @@
 								"header": [
 									{
 										"key": "Content-Type",
-										"value": "application/json"
+                                      "value": "text/plain"
 									}
 								],
 								"body": {
@@ -1193,25 +1116,25 @@
 									"raw": "[\"key1\", \"key2\", \"key3\"]"
 								},
 								"url": {
-									"raw": "{{url}}/delete/{{storage_uuid}}",
+                                  "raw": "{{url}}/delete/{{multideletable_storage}}",
 									"host": [
 										"{{url}}"
 									],
 									"path": [
 										"delete",
-										"{{storage_uuid}}"
+                                      "{{multideletable_storage}}"
 									]
 								}
 							},
 							"response": []
 						},
 						{
-							"name": "Delete with wrong Content-Type",
+                          "name": "Delete with bad json",
 							"event": [
 								{
 									"listen": "test",
 									"script": {
-										"id": "bda7a37a-0de8-4559-b169-8cc51a4feb2b",
+                                      "id": "fa23bc6b-a386-42f2-b0bd-8f792b0580b9",
 										"type": "text/javascript",
 										"exec": [
 											"pm.test(\"Status code is 400\", function () {",
@@ -1223,7 +1146,7 @@
 											"",
 											"const source = JSON.stringify({\"ids\": [\"key1\",\"key2\",\"key3\"]})",
 											"pm.sendRequest({",
-											"        url: pm.variables.get(\"es_url\") + \"/storage-\" + pm.variables.get(\"storage_uuid\") + \"/_doc/_mget?source=\" + source + \"&source_content_type=application/json\",",
+                                          "        url: pm.variables.get(\"es_url\") + \"/storage-\" + pm.variables.get(\"multideletable_storage\") + \"/_doc/_mget?source=\" + source + \"&source_content_type=application/json\",",
 											"        method: 'GET'},",
 											"    function (err, res) {",
 											"        pm.test(\"Documents are not deleted\", function () {",
@@ -1242,33 +1165,33 @@
 								"header": [
 									{
 										"key": "Content-Type",
-										"value": "text/plain"
+                                      "value": "application/json"
 									}
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "[\"key1\", \"key2\", \"key3\"]"
+                                  "raw": "[\"key1\", \"key2\", \"key3\""
 								},
 								"url": {
-									"raw": "{{url}}/delete/{{storage_uuid}}",
+                                  "raw": "{{url}}/delete/{{multideletable_storage}}",
 									"host": [
 										"{{url}}"
 									],
 									"path": [
 										"delete",
-										"{{storage_uuid}}"
+                                      "{{multideletable_storage}}"
 									]
 								}
 							},
 							"response": []
 						},
 						{
-							"name": "Delete with bad json",
+                          "name": "Delete with wrong body format",
 							"event": [
 								{
 									"listen": "test",
 									"script": {
-										"id": "bda7a37a-0de8-4559-b169-8cc51a4feb2b",
+                                      "id": "23ec0694-2c0f-4f59-9488-a13236b7cc35",
 										"type": "text/javascript",
 										"exec": [
 											"pm.test(\"Status code is 400\", function () {",
@@ -1280,7 +1203,7 @@
 											"",
 											"const source = JSON.stringify({\"ids\": [\"key1\",\"key2\",\"key3\"]})",
 											"pm.sendRequest({",
-											"        url: pm.variables.get(\"es_url\") + \"/storage-\" + pm.variables.get(\"storage_uuid\") + \"/_doc/_mget?source=\" + source + \"&source_content_type=application/json\",",
+                                          "        url: pm.variables.get(\"es_url\") + \"/storage-\" + pm.variables.get(\"multideletable_storage\") + \"/_doc/_mget?source=\" + source + \"&source_content_type=application/json\",",
 											"        method: 'GET'},",
 											"    function (err, res) {",
 											"        pm.test(\"Documents are not deleted\", function () {",
@@ -1299,50 +1222,61 @@
 								"header": [
 									{
 										"key": "Content-Type",
-										"value": "application/json"
+                                      "value": "text/plain"
 									}
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "[\"key1\", \"key2\", \"key3\""
+                                  "raw": "[\"key1\", \"key2\", \"key3\"]"
 								},
 								"url": {
-									"raw": "{{url}}/delete/{{storage_uuid}}",
+                                  "raw": "{{url}}/delete/{{multideletable_storage}}",
 									"host": [
 										"{{url}}"
 									],
 									"path": [
 										"delete",
-										"{{storage_uuid}}"
+                                      "{{multideletable_storage}}"
 									]
 								}
 							},
 							"response": []
 						},
 						{
-							"name": "Delete with wrong body format",
+                          "name": "Delete values",
 							"event": [
 								{
 									"listen": "test",
 									"script": {
-										"id": "bda7a37a-0de8-4559-b169-8cc51a4feb2b",
+                                      "id": "a9336cc5-5783-437e-8c37-4ba951684259",
 										"type": "text/javascript",
 										"exec": [
-											"pm.test(\"Status code is 400\", function () {",
-											"    pm.response.to.have.status(400);",
+                                          "pm.test(\"Status code is 200\", function () {",
+                                          "    pm.response.to.have.status(200);",
+                                          "});",
+                                          "",
+                                          "pm.test(\"Content-Type is application/json\", function () {",
+                                          "    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
 											"});",
-											"pm.test(\"Response body is empty\", function () {",
-											"    pm.expect(pm.response.text()).to.eql(\"\");",
+                                          "",
+                                          "pm.test(\"Response body contains statuses of operations\", function () {",
+                                          "    var jsonData = pm.response.json();",
+                                          "    var example = {",
+                                          "        \"key1\" : true,",
+                                          "        \"key2\" : true,",
+                                          "        \"key3\" : true",
+                                          "    }",
+                                          "    pm.expect(jsonData).to.eql(example);",
 											"});",
 											"",
 											"const source = JSON.stringify({\"ids\": [\"key1\",\"key2\",\"key3\"]})",
 											"pm.sendRequest({",
-											"        url: pm.variables.get(\"es_url\") + \"/storage-\" + pm.variables.get(\"storage_uuid\") + \"/_doc/_mget?source=\" + source + \"&source_content_type=application/json\",",
+                                          "        url: pm.variables.get(\"es_url\") + \"/storage-\" + pm.variables.get(\"multideletable_storage\") + \"/_doc/_mget?source=\" + source + \"&source_content_type=application/json\",",
 											"        method: 'GET'},",
 											"    function (err, res) {",
-											"        pm.test(\"Documents are not deleted\", function () {",
+                                          "        pm.test(\"Documents actually deleted\", function () {",
 											"            const result = res.json().docs.every(function callback(c){",
-											"                return c.found;",
+                                          "                return !c.found;",
 											"            });",
 											"            pm.expect(result).to.eql(true);",
 											"        });",
@@ -1356,7 +1290,7 @@
 								"header": [
 									{
 										"key": "Content-Type",
-										"value": "text/plain"
+                                      "value": "application/json"
 									}
 								],
 								"body": {
@@ -1364,13 +1298,13 @@
 									"raw": "[\"key1\", \"key2\", \"key3\"]"
 								},
 								"url": {
-									"raw": "{{url}}/delete/{{storage_uuid}}",
+                                  "raw": "{{url}}/delete/{{multideletable_storage}}",
 									"host": [
 										"{{url}}"
 									],
 									"path": [
 										"delete",
-										"{{storage_uuid}}"
+                                      "{{multideletable_storage}}"
 									]
 								}
 							},
@@ -1389,7 +1323,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "cbd6fba0-ecba-4843-9db8-11690fe66ba6",
+                                      "id": "d6a10f21-9cc7-40d7-a9f7-0e1e19820098",
 										"type": "text/javascript",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
@@ -1399,9 +1333,9 @@
 											"pm.test(\"Body is empty\", function () {",
 											"    pm.expect(pm.response.text()).to.eql(\"\");",
 											"});",
-											"",
-											"pm.sendRequest({",
-											"        url: pm.variables.get(\"es_url\") + \"/storage-removable/_doc/_search\",",
+                                          "var test = function() {",
+                                          "    pm.sendRequest({",
+                                          "        url: pm.variables.get(\"es_url\") + \"/storage-\" + pm.variables.get(\"cleanable_storage\") + \"/_doc/_search\",",
 											"        method: 'POST',",
 											"        header: 'Content-Type:application/json',",
 											"        body: {",
@@ -1412,41 +1346,20 @@
 											"        pm.test(\"Storage is clear\", function() {",
 											"            pm.expect(res.json().hits.total).to.eql(0);",
 											"        });",
-											"});"
+                                          "});",
+                                          "};",
+                                          "setTimeout(test, 1500);",
+                                          ""
 										]
 									}
 								},
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "070f8a1f-6c1a-428c-9847-7c1c312cd864",
+                                      "id": "3f04a838-3537-4dd5-83cd-e97ba1a13787",
 										"type": "text/javascript",
 										"exec": [
-											"// const es_url = pm.variables.get(\"es_url\");",
-											"// const storage = \"storage-removable\" ;",
-											"// if (pm.environment.get(\"is_test_storage_set\") !== true) {",
-											"//     //create test storage",
-											"//     pm.sendRequest({",
-											"//       url: es_url + \"/\" + storage,",
-											"//       method: 'PUT'",
-											"//     });",
-											"//     //fill it with records",
-											"//     pm.sendRequest({",
-											"//       url: es_url + \"/\" + storage + \"/_doc/_bulk\",",
-											"//       method: 'PUT',",
-											"//       header: 'Content-Type:application/json',",
-											"//       body: {",
-											"//           mode: 'raw',",
-											"//           raw: ",
-											"//           '{\"index\": {\"_id\": \"key1\"}}\\n{\"value\": \"value1\"}\\n' + ",
-											"//           '{\"index\": {\"_id\": \"key2\"}}\\n{\"value\": \"value2\"}\\n' + ",
-											"//           '{\"index\": {\"_id\": \"key3\"}}\\n{\"value\": \"value3\"}\\n' + ",
-											"//           '{\"index\": {\"_id\": \"key4\"}}\\n{\"value\": \"value4\"}\\n' + ",
-											"//           '{\"index\": {\"_id\": \"key5\"}}\\n{\"value\": \"value5\"}\\n'",
-											"//       }",
-											"//     });",
-											"//     pm.environment.set(\"is_test_storage_set\", true);",
-											"// }"
+                                          ""
 										]
 									}
 								}
@@ -1456,13 +1369,13 @@
 								"header": [],
 								"body": {},
 								"url": {
-									"raw": "{{url}}/clear/removable",
+                                  "raw": "{{url}}/clear/{{cleanable_storage}}",
 									"host": [
 										"{{url}}"
 									],
 									"path": [
 										"clear",
-										"removable"
+                                      "{{cleanable_storage}}"
 									]
 								}
 							},
@@ -1479,31 +1392,7 @@
 						"id": "1614f2d8-26fe-4d0d-bcc6-d35f15fdd259",
 						"type": "text/javascript",
 						"exec": [
-							"const es_url = pm.variables.get(\"es_url\");",
-							"const storage = \"storage-\" + pm.variables.get(\"storage_uuid\");",
-							"if (pm.environment.get(\"is_test_storage_set\") !== true) {",
-							"    //create test storage",
-							"    pm.sendRequest({",
-							"      url: es_url + \"/\" + storage,",
-							"      method: 'PUT'",
-							"    });",
-							"    //fill it with records",
-							"    pm.sendRequest({",
-							"      url: es_url + \"/\" + storage + \"/_doc/_bulk\",",
-							"      method: 'PUT',",
-							"      header: 'Content-Type:application/json',",
-							"      body: {",
-							"          mode: 'raw',",
-							"          raw: ",
-							"          '{\"index\": {\"_id\": \"key1\"}}\\n{\"value\": \"value1\"}\\n' + ",
-							"          '{\"index\": {\"_id\": \"key2\"}}\\n{\"value\": \"value2\"}\\n' + ",
-							"          '{\"index\": {\"_id\": \"key3\"}}\\n{\"value\": \"value3\"}\\n' + ",
-							"          '{\"index\": {\"_id\": \"key4\"}}\\n{\"value\": \"value4\"}\\n' + ",
-							"          '{\"index\": {\"_id\": \"key5\"}}\\n{\"value\": \"value5\"}\\n'",
-							"      }",
-							"    });",
-							"    pm.environment.set(\"is_test_storage_set\", true);",
-							"}"
+                          ""
 						]
 					}
 				},
@@ -1528,16 +1417,223 @@
 					"description": "",
 					"item": [
 						{
+                          "name": "Set TTL of non existent storage",
+                          "event": [
+                            {
+                              "listen": "test",
+                              "script": {
+                                "id": "c62a36f1-c3bb-4a70-a026-516b4bc0b031",
+                                "type": "text/javascript",
+                                "exec": [
+                                  "pm.test(\"Status code is 404\", function () {",
+                                  "    pm.response.to.have.status(404);",
+                                  "})",
+                                  "",
+                                  "pm.test(\"Body is empty\", function () {",
+                                  "    pm.expect(pm.response.text()).to.eql(\"\");",
+                                  "});",
+                                  ""
+                                ]
+                              }
+                            }
+                          ],
+                          "request": {
+                            "method": "PUT",
+                            "header": [],
+                            "body": {},
+                            "url": {
+                              "raw": "{{url}}/storage/{{non_existent_storage}}?ttl=565656",
+                              "host": [
+                                "{{url}}"
+                              ],
+                              "path": [
+                                "storage",
+                                "{{non_existent_storage}}"
+                              ],
+                              "query": [
+                                {
+                                  "key": "ttl",
+                                  "value": "565656"
+                                }
+                              ]
+                            }
+                          },
+                          "response": []
+                        },
+                      {
+                        "name": "Set TTL of persistent storage",
+                        "event": [
+                          {
+                            "listen": "test",
+                            "script": {
+                              "id": "c32e3166-863f-43d2-a928-350d787e1773",
+                              "type": "text/javascript",
+                              "exec": [
+                                "pm.test(\"Status code is 400\", function () {",
+                                "    pm.response.to.have.status(400);",
+                                "})",
+                                "",
+                                "pm.test(\"Body is empty\", function () {",
+                                "    pm.expect(pm.response.text()).to.eql(\"\");",
+                                "});",
+                                "",
+                                "pm.sendRequest({",
+                                "        url: pm.variables.get(\"es_url\") + \"/storage-registry/_doc/\" + pm.variables.get(\"acc_storage\"),",
+                                "        method: 'GET'},",
+                                "    function (err, res) {",
+                                "        pm.test(\"TTL is not set\", function () {",
+                                "            pm.expect(res.json()._source.ttl).to.eql(undefined);",
+                                "    });",
+                                "});"
+                              ]
+                            }
+                          }
+                        ],
+                        "request": {
+                          "method": "PUT",
+                          "header": [],
+                          "body": {},
+                          "url": {
+                            "raw": "{{url}}/storage/{{acc_storage}}?ttl=565656",
+                            "host": [
+                              "{{url}}"
+                            ],
+                            "path": [
+                              "storage",
+                              "{{acc_storage}}"
+                            ],
+                            "query": [
+                              {
+                                "key": "ttl",
+                                "value": "565656"
+                              }
+                            ]
+                          }
+                        },
+                        "response": []
+                      },
+                      {
+                        "name": "Set bad TTL",
+                        "event": [
+                          {
+                            "listen": "test",
+                            "script": {
+                              "id": "825b8fb2-352b-4a40-9e7f-7e7fa67eb5eb",
+                              "type": "text/javascript",
+                              "exec": [
+                                "pm.test(\"Status code is 400\", function () {",
+                                "    pm.response.to.have.status(400);",
+                                "})",
+                                "",
+                                "pm.test(\"Body is empty\", function () {",
+                                "    pm.expect(pm.response.text()).to.eql(\"\");",
+                                "});",
+                                "",
+                                "pm.sendRequest({",
+                                "        url: pm.variables.get(\"es_url\") + \"/storage-registry/_doc/\" + pm.variables.get(\"temp_storage\"),",
+                                "        method: 'GET'},",
+                                "    function (err, res) {",
+                                "        pm.test(\"TTL is not changed\", function () {",
+                                "            pm.expect(res.json()._source.ttl).to.eql(10000);",
+                                "    });",
+                                "});"
+                              ]
+                            }
+                          }
+                        ],
+                        "request": {
+                          "method": "PUT",
+                          "header": [],
+                          "body": {},
+                          "url": {
+                            "raw": "{{url}}/storage/{{temp_storage}}?ttl=10.seconds",
+                            "host": [
+                              "{{url}}"
+                            ],
+                            "path": [
+                              "storage",
+                              "{{temp_storage}}"
+                            ],
+                            "query": [
+                              {
+                                "key": "ttl",
+                                "value": "10.seconds"
+                              }
+                            ]
+                          }
+                        },
+                        "response": []
+                      },
+                      {
+                        "name": "Send request without TTL specified",
+                        "event": [
+                          {
+                            "listen": "test",
+                            "script": {
+                              "id": "d83577d7-597a-4870-a774-b4d66ae86e0b",
+                              "type": "text/javascript",
+                              "exec": [
+                                "pm.test(\"Status code is 400\", function () {",
+                                "    pm.response.to.have.status(400);",
+                                "})",
+                                "",
+                                "pm.test(\"Body is empty\", function () {",
+                                "    pm.expect(pm.response.text()).to.eql(\"\");",
+                                "});",
+                                "",
+                                "pm.sendRequest({",
+                                "        url: pm.variables.get(\"es_url\") + \"/storage-registry/_doc/\" + pm.variables.get(\"temp_storage\"),",
+                                "        method: 'GET'},",
+                                "    function (err, res) {",
+                                "        pm.test(\"TTL is not changed\", function () {",
+                                "            pm.expect(res.json()._source.ttl).to.eql(10000);",
+                                "    });",
+                                "});"
+                              ]
+                            }
+                          }
+                        ],
+                        "request": {
+                          "method": "PUT",
+                          "header": [],
+                          "body": {},
+                          "url": {
+                            "raw": "{{url}}/storage/{{temp_storage}}",
+                            "host": [
+                              "{{url}}"
+                            ],
+                            "path": [
+                              "storage",
+                              "{{temp_storage}}"
+                            ]
+                          }
+                        },
+                        "response": []
+                      },
+                      {
 							"name": "Set temporary storage ttl",
 							"event": [
 								{
 									"listen": "test",
 									"script": {
-										"id": "6ccfe145-e84a-4e67-b083-f18e8efc7b08",
+                                      "id": "959bbc47-5b9a-427b-a801-9a8f91ca2745",
 										"type": "text/javascript",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
+                                          "})",
+                                          "",
+                                          "pm.test(\"Body is empty\", function () {",
+                                          "    pm.expect(pm.response.text()).to.eql(\"\");",
+                                          "});",
+                                          "",
+                                          "pm.sendRequest({",
+                                          "        url: pm.variables.get(\"es_url\") + \"/storage-registry/_doc/\" + pm.variables.get(\"temp_storage\"),",
+                                          "        method: 'GET'},",
+                                          "    function (err, res) {",
+                                          "        pm.test(\"TTL actually changed\", function () {",
+                                          "            pm.expect(res.json()._source.ttl).to.eql(565656);",
+                                          "    });",
 											"});"
 										]
 									}
@@ -1548,7 +1644,7 @@
 								"header": [],
 								"body": {},
 								"url": {
-									"raw": "{{url}}/storage/{{temp_storage}}?ttl=100000",
+                                  "raw": "{{url}}/storage/{{temp_storage}}?ttl=565656",
 									"host": [
 										"{{url}}"
 									],
@@ -1559,8 +1655,260 @@
 									"query": [
 										{
 											"key": "ttl",
-											"value": "100000"
-										}
+                                          "value": "565656"
+                                        }
+                                    ]
+                                }
+                            },
+                        "response": []
+                      }
+                    ],
+                  "_postman_isSubFolder": true
+                },
+              {
+                "name": "Delete temporary storage",
+                "description": "",
+                "item": [
+                  {
+                    "name": "Delete persistent storage",
+                    "event": [
+                      {
+                        "listen": "test",
+                        "script": {
+                          "id": "e6030dc9-9312-42fc-8dcc-22a4ee86a63f",
+                          "type": "text/javascript",
+                          "exec": [
+                            "pm.test(\"Status code is 400\", function () {",
+                            "    pm.response.to.have.status(400);",
+                            "});",
+                            "",
+                            "pm.test(\"Body is empty\", function () {",
+                            "    pm.expect(pm.response.text()).to.eql(\"\");",
+                            "});",
+                            "",
+                            "pm.sendRequest({",
+                            "        url: pm.variables.get(\"es_url\") + \"/storage-registry/_doc/\" + pm.variables.get(\"acc_storage\"),",
+                            "        method: 'HEAD'},",
+                            "    function (err, res) {",
+                            "        pm.test(\"Storage is not deleted\", function () {",
+                            "            pm.expect(res).to.have.property('code', 200);",
+                            "            pm.expect(res).to.have.property('status', 'OK');",
+                            "        });",
+                            "    }",
+                            ");"
+                          ]
+                        }
+                      }
+                    ],
+                    "request": {
+                      "method": "DELETE",
+                      "header": [],
+                      "body": {},
+                      "url": {
+                        "raw": "{{url}}/storage/{{acc_storage}}",
+                        "host": [
+                          "{{url}}"
+                        ],
+                        "path": [
+                          "storage",
+                          "{{acc_storage}}"
+                        ]
+                      }
+                    },
+                    "response": []
+                  },
+                  {
+                    "name": "Delete non existent storage",
+                    "event": [
+                      {
+                        "listen": "test",
+                        "script": {
+                          "id": "511103a4-5d8c-45b6-93e0-587ff20bd9b4",
+                          "type": "text/javascript",
+                          "exec": [
+                            "pm.test(\"Status code is 404\", function () {",
+                            "    pm.response.to.have.status(404);",
+                            "});",
+                            "",
+                            "pm.test(\"Body is empty\", function () {",
+                            "    pm.expect(pm.response.text()).to.eql(\"\");",
+                            "});",
+                            ""
+                          ]
+                        }
+                      }
+                    ],
+                    "request": {
+                      "method": "DELETE",
+                      "header": [],
+                      "body": {},
+                      "url": {
+                        "raw": "{{url}}/storage/{{non_existent_storage}}",
+                        "host": [
+                          "{{url}}"
+                        ],
+                        "path": [
+                          "storage",
+                          "{{non_existent_storage}}"
+                        ]
+                      }
+                    },
+                    "response": []
+                  },
+                  {
+                    "name": "Delete storage with no index",
+                    "event": [
+                      {
+                        "listen": "test",
+                        "script": {
+                          "id": "2d0b21d9-a19c-4b81-a7b4-4ce21d8cca50",
+                          "type": "text/javascript",
+                          "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Body is empty\", function () {",
+                            "    pm.expect(pm.response.text()).to.eql(\"\");",
+                            "});",
+                            "",
+                            "",
+                            "pm.sendRequest({",
+                            "        url: pm.variables.get(\"es_url\") + \"/storage-registry/_doc/\" + pm.variables.get(\"no_index_storage\"),",
+                            "        method: 'HEAD'},",
+                            "    function (err, res) {",
+                            "        pm.test(\"Storage record in registry deleted\", function () {",
+                            "            pm.expect(res).to.have.property('code', 404);",
+                            "            pm.expect(res).to.have.property('status', 'Not Found');",
+                            "        });",
+                            "    }",
+                            ");"
+                          ]
+                        }
+                      }
+                    ],
+                    "request": {
+                      "method": "DELETE",
+                      "header": [],
+                      "body": {},
+                      "url": {
+                        "raw": "{{url}}/storage/{{no_index_storage}}",
+                        "host": [
+                          "{{url}}"
+                        ],
+                        "path": [
+                          "storage",
+                          "{{no_index_storage}}"
+                        ]
+                      },
+                      "description": "Delete temporary storage that have no record with its UUID in storage registry"
+                    },
+                    "response": []
+                  },
+                  {
+                    "name": "Delete unregistered storage",
+                    "event": [
+                      {
+                        "listen": "test",
+                        "script": {
+                          "id": "bc1c9128-b901-4c17-8c5a-9e0854ca1fe2",
+                          "type": "text/javascript",
+                          "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Body is empty\", function () {",
+                            "    pm.expect(pm.response.text()).to.eql(\"\");",
+                            "});",
+                            "",
+                            "pm.sendRequest({",
+                            "        url: pm.variables.get(\"es_url\") + \"/storage-\" + pm.variables.get(\"not_registered_storage\"),",
+                            "        method: 'HEAD'},",
+                            "    function (err, res) {",
+                            "        pm.test(\"Storage index deleted\", function () {",
+                            "            pm.expect(res).to.have.property('code', 404);",
+                            "            pm.expect(res).to.have.property('status', 'Not Found');",
+                            "        });",
+                            "    }",
+                            ");"
+                          ]
+                        }
+                      }
+                    ],
+                    "request": {
+                      "method": "DELETE",
+                      "header": [],
+                      "body": {},
+                      "url": {
+                        "raw": "{{url}}/storage/{{not_registered_storage}}",
+                        "host": [
+                          "{{url}}"
+                        ],
+                        "path": [
+                          "storage",
+                          "{{not_registered_storage}}"
+                        ]
+                      },
+                      "description": "Delete temporary storage that have no record with its UUID in storage registry"
+                    },
+                    "response": []
+                  },
+                  {
+                    "name": "Delete temporary storage",
+                    "event": [
+                      {
+                        "listen": "test",
+                        "script": {
+                          "id": "75a9b830-ebd1-4805-802e-3a9cd079ae53",
+                          "type": "text/javascript",
+                          "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Body is empty\", function () {",
+                            "    pm.expect(pm.response.text()).to.eql(\"\");",
+                            "});",
+                            "",
+                            "",
+                            "pm.sendRequest({",
+                            "        url: pm.variables.get(\"es_url\") + \"/storage-registry/_doc/\" + pm.variables.get(\"temp_storage\"),",
+                            "        method: 'HEAD'},",
+                            "    function (err, res) {",
+                            "        pm.test(\"Storage record in registry deleted\", function () {",
+                            "            pm.expect(res).to.have.property('code', 404);",
+                            "            pm.expect(res).to.have.property('status', 'Not Found');",
+                            "        });",
+                            "    }",
+                            ");",
+                            "",
+                            "pm.sendRequest({",
+                            "        url: pm.variables.get(\"es_url\") + \"/storage-\" + pm.variables.get(\"temp_storage\"),",
+                            "        method: 'HEAD'},",
+                            "    function (err, res) {",
+                            "        pm.test(\"Storage index deleted\", function () {",
+                            "            pm.expect(res).to.have.property('code', 404);",
+                            "            pm.expect(res).to.have.property('status', 'Not Found');",
+                            "        });",
+                            "    }",
+                            ");"
+                          ]
+                        }
+                      }
+                    ],
+                    "request": {
+                      "method": "DELETE",
+                      "header": [],
+                      "body": {},
+                      "url": {
+                        "raw": "{{url}}/storage/{{temp_storage}}",
+                        "host": [
+                          "{{url}}"
+                        ],
+                        "path": [
+                          "storage",
+                          "{{temp_storage}}"
 									]
 								}
 							},
@@ -1596,57 +1944,120 @@
 	],
 	"variable": [
 		{
-			"id": "07c3d4af-0aa7-4af4-9cb3-861af2a64598",
+          "id": "f68c730b-ad7d-48ec-8c1f-fd09a1f300a8",
 			"key": "url",
-			"value": "http://localhost:8080/",
+          "value": "http://app:8080",
 			"type": "string"
 		},
 		{
-			"id": "eeeab95a-9f96-4ef2-a26a-20f291952042",
+          "id": "79189da9-b61e-44e6-b54a-8913f6fa98bc",
 			"key": "storage_uuid",
 			"value": "b3d1b2a6-bd5b-49d5-bd9e-86538fdc180d",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "82219a72-50cb-498d-9343-a678b22a38f9",
+          "id": "7dba3dc2-4982-4427-93bf-e599a2eef14e",
 			"key": "es_url",
-			"value": "http://localhost:9200/",
+          "value": "http://elasticsearch:9200",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "e1b7b95e-4ff6-492f-8265-757312c484fa",
+          "id": "fd43ddac-cd43-422a-9772-a41990a59e5e",
 			"key": "some_key",
 			"value": "key1",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "1549ee7d-f89a-4e28-8201-d7714bf550b2",
+          "id": "59435d85-c73e-4607-8325-2bf430594abc",
 			"key": "some_value",
 			"value": "value1",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "6c857258-bc8c-49c9-a812-00d2b622ce59",
+          "id": "aec19b91-e2d0-42f8-9566-cf32876aa67d",
 			"key": "empty_key",
 			"value": "empty_key",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "236fb85b-fcdc-40f3-8459-18cecdf58be8",
+          "id": "d2595831-9315-4a48-a894-e496d61c16c9",
 			"key": "non_existent_storage",
 			"value": "nonexistent",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "a04f8062-574f-48be-a31d-339305ae764e",
+          "id": "1a17064b-5a60-49b5-bf03-bd2b9295ced3",
+          "key": "read_only_storage",
+          "value": "read-only",
+          "type": "string",
+          "description": ""
+        },
+      {
+        "id": "ee48dca6-92a2-4f61-8451-665a344e585a",
+        "key": "editable_storage",
+        "value": "editable-single",
+        "type": "string",
+        "description": ""
+      },
+      {
+        "id": "fb4bf55b-c6d4-40ef-871b-7babfef75318",
+        "key": "multieditable_storage",
+        "value": "editable-multiple",
+        "type": "string",
+        "description": ""
+      },
+      {
+        "id": "c8bedc45-6d39-4cac-8078-097156714cde",
+        "key": "deletable_storage",
+        "value": "deletable-single",
+        "type": "string",
+        "description": ""
+      },
+      {
+        "id": "e3fbeb46-8c75-4f34-a220-0a07b3747542",
+        "key": "multideletable_storage",
+        "value": "deletable-multiple",
+        "type": "string",
+        "description": ""
+      },
+      {
+        "id": "2919d9b7-e80a-4596-aabb-cccbb7104cdc",
+        "key": "cleanable_storage",
+        "value": "cleanable",
+        "type": "string",
+        "description": ""
+      },
+      {
+        "id": "29459aaf-3a81-4838-b59a-25c19af7dc77",
 			"key": "temp_storage",
-			"value": "24138626-91bc-4e85-92e6-82b00c6edd28",
+        "value": "temp",
+        "type": "string",
+        "description": ""
+      },
+      {
+        "id": "631d6dd7-4cd2-4a40-96ee-af480d1fd9d9",
+        "key": "acc_storage",
+        "value": "account",
+        "type": "string",
+        "description": ""
+      },
+      {
+        "id": "6a45fb92-6642-4d4f-8c1e-f5095a89084b",
+        "key": "no_index_storage",
+        "value": "no-index",
+        "type": "string",
+        "description": ""
+      },
+      {
+        "id": "111c436c-f6b6-4fe2-9895-a2ad826602c9",
+        "key": "not_registered_storage",
+        "value": "not-registered",
 			"type": "string",
 			"description": ""
 		}

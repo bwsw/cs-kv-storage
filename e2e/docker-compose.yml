@@ -35,8 +35,6 @@ services:
       - cs-kv-storage-e2e
   newman:
     image: "postman/newman_ubuntu1404"
-    depends_on:
-      - app
     volumes:
       - ./newman:/etc/newman
     networks:
