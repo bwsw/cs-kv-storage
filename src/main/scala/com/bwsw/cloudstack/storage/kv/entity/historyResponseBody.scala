@@ -21,4 +21,4 @@ sealed trait HistoryResponseBody
 
 case class HistoryScrolledBody(total: Long, size: Long, scrollId: String, items: List[History]) extends HistoryResponseBody
 
-case class HistoryPagedBody(total: Long, size: Long, page: Long, items: List[History]) extends HistoryResponseBody
+case class HistoryPagedBody(total: Long, size: Long, page: Int, items: List[History]) extends HistoryResponseBody

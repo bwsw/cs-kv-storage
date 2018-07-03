@@ -40,12 +40,12 @@ trait HistoryProcessor {
   def get(storageUuid: String,
           keys: Iterable[String],
           operations: Iterable[Operation],
-          start: Long,
-          end: Long,
+      start: Option[Long],
+      end: Option[Long],
           sort: Iterable[String],
-          page: Int,
-          size: Int,
-          scroll: Int): Future[Either[StorageError, HistoryResponseBody]]
+      page: Option[Int],
+      size: Option[Int],
+      scroll: Option[Long]): Future[Either[StorageError, HistoryResponseBody]]
 
   /** Retrieves a single page of the request
     *

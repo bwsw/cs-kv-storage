@@ -20,11 +20,9 @@ package com.bwsw.cloudstack.storage.kv.servlet
 import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.util.Timeout
-import com.bwsw.cloudstack.storage.kv.configuration.ElasticsearchConfig
 import com.bwsw.cloudstack.storage.kv.entity.{Delete, Set, Clear, Operation}
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, NotFoundError}
 import com.bwsw.cloudstack.storage.kv.message.request.{KvHistoryGetRequest, KvHistoryScrollRequest}
-import com.bwsw.cloudstack.storage.kv.processor.HistoryProcessor
 import org.json4s.JsonAST._
 import org.json4s.{CustomSerializer, DefaultFormats, Formats}
 import org.scalatra._
@@ -36,9 +34,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class KvHistoryServlet(
     system: ActorSystem,
     requestTimeout: FiniteDuration,
-    processor: HistoryProcessor,
-    historyKvActor: ActorRef,
-    elasticsearchConfig: ElasticsearchConfig)
+    historyRequestActor: ActorRef)
   extends ScalatraServlet
   with FutureSupport
   with JacksonJsonSupport {
@@ -62,14 +58,14 @@ class KvHistoryServlet(
               case "clear" => Clear
               case _ => throw new OperationFormatException
             },
-            params.getOrElse("start", "0").toLong,
-            params.getOrElse("end", "0").toLong,
+            params.getAs[Long]("start"),
+            params.getAs[Long]("end"),
             params.getOrElse("sort", "").split(",").filter(fieldList.contains(_)),
-            params.getOrElse("page", "1").toInt,
-            params.getOrElse("size", elasticsearchConfig.getScrollPageSize.toString).toInt,
-            params.getOrElse("scroll", "0").toInt)
+            params.getAs[Int]("page"),
+            params.getAs[Int]("size"),
+            params.getAs[Long]("scroll"))
 
-          (historyKvActor ? getHistoryRequest)
+          (historyRequestActor ? getHistoryRequest)
             .map {
               case Right(value) =>
                 contentType = formats("json")
@@ -93,7 +89,7 @@ class KvHistoryServlet(
           parsedBody match {
             case JObject(List(("scrollId", scrollId: JString), ("timeout", timeout: JInt))) =>
               val scrollRequest = KvHistoryScrollRequest(scrollId.values, timeout.values.toLong)
-              (historyKvActor ? scrollRequest).map {
+              (historyRequestActor ? scrollRequest).map {
                 case Right(value) =>
                   contentType = formats("json")
                   value

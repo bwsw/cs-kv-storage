@@ -18,19 +18,14 @@
 package com.bwsw.cloudstack.storage.kv.actor
 
 import akka.actor.{Status, Timers}
-import akka.pattern.pipe
-import com.bwsw.cloudstack.storage.kv.cache.StorageCache
 import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
-import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError}
-import com.bwsw.cloudstack.storage.kv.message.request.{KvHistoryGetRequest, KvHistoryScrollRequest}
-import com.bwsw.cloudstack.storage.kv.message.response.KvHistoryResponse
+import com.bwsw.cloudstack.storage.kv.error.InternalError
 import com.bwsw.cloudstack.storage.kv.message.{KvHistory, KvHistoryBulk, KvHistoryFlush, KvHistoryRetry}
 import com.bwsw.cloudstack.storage.kv.processor.HistoryProcessor
 import scaldi.Injector
 import scaldi.akka.AkkaInjectable._
 
 import scala.collection.mutable.ListBuffer
-import scala.concurrent.Future
 
 /** Actor responsible for history buffering and time or queue size based flushing to storages **/
 class BufferedHistoryKvActor(implicit inj: Injector)
@@ -45,7 +40,6 @@ class BufferedHistoryKvActor(implicit inj: Injector)
   private val retryBuffer: ListBuffer[KvHistory] = ListBuffer.empty
   private val configuration = inject[AppConfig]
   private val historyProcessor = inject[HistoryProcessor]
-  private val storageCache = inject[StorageCache]
 
   timers.startPeriodicTimer(HistoryTimer, HistoryTimeout, configuration.getFlushHistoryTimeout)
 
@@ -74,29 +68,6 @@ class BufferedHistoryKvActor(implicit inj: Injector)
       if (buffer.length >= configuration.getFlushHistorySize) {
         self ! flush(buffer)
       }
-    case request: KvHistoryGetRequest =>
-      storageCache.isHistoryEnabled(request.storageUuid).flatMap {
-        case Some(true) =>
-          historyProcessor.get(
-            request.storageUuid,
-            request.keys,
-            request.operations,
-            request.start,
-            request.end,
-            request.sort,
-            request.page,
-            request.size,
-            request.scroll)
-        case Some(false) =>
-          Future(Left(BadRequestError()))
-        case None =>
-          Future(Left(NotFoundError()))
-      }.map(body => KvHistoryResponse(body)).pipeTo(self)(sender())
-    case request: KvHistoryScrollRequest =>
-      historyProcessor.scroll(request.scrollId, request.timeout).map(body => KvHistoryResponse(body)).pipeTo(self)(
-        sender())
-    case KvHistoryResponse(body) =>
-      sender() ! body
     case failure: Status.Failure =>
       sender() ! Left(InternalError(failure.cause.getMessage))
   }

@@ -15,17 +15,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package com.bwsw.cloudstack.storage.kv.message.request
+package com.bwsw.cloudstack.storage.kv.actor
 
-import com.bwsw.cloudstack.storage.kv.entity.Operation
+import akka.actor.Actor
 
-case class KvHistoryGetRequest(
-    storageUuid: String,
-    keys: Iterable[String],
-    operations: Iterable[Operation],
-    start: Option[Long],
-    end: Option[Long],
-    sort: Iterable[String],
-    page: Option[Int],
-    size: Option[Int],
-    scroll: Option[Long])
+/** Actor responsible for history record retrieving **/
+trait HistoryRequestActor extends Actor

@@ -17,6 +17,7 @@
 
 package com.bwsw.cloudstack.storage.kv.processor
 
+import com.bwsw.cloudstack.storage.kv.configuration.ElasticsearchConfig
 import com.bwsw.cloudstack.storage.kv.entity._
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, StorageError}
 import com.bwsw.cloudstack.storage.kv.message._
@@ -33,7 +34,9 @@ import scala.concurrent.Future
   *
   * @param client the client to send requests to Elasticsearch
   */
-class ElasticsearchHistoryProcessor(client: HttpClient) extends HistoryProcessor {
+class ElasticsearchHistoryProcessor(
+    client: HttpClient,
+    elasticsearchConfig: ElasticsearchConfig) extends HistoryProcessor {
 
   import ElasticsearchHistoryProcessor._
 
@@ -57,12 +60,12 @@ class ElasticsearchHistoryProcessor(client: HttpClient) extends HistoryProcessor
       storageUuid: String,
       keys: Iterable[String],
       operations: Iterable[Operation],
-      start: Long,
-      end: Long,
+      start: Option[Long],
+      end: Option[Long],
       sort: Iterable[String],
-      page: Int,
-      size: Int,
-      scroll: Int): Future[Either[StorageError, HistoryResponseBody]] = {
+      page: Option[Int],
+      size: Option[Int],
+      scroll: Option[Long]): Future[Either[StorageError, HistoryResponseBody]] = {
 
     val searchDef = search(getHistoricalStorage(storageUuid))
     val withKeys = if (keys.nonEmpty) Seq(termsQuery("key", keys)) else Seq.empty
@@ -72,37 +75,35 @@ class ElasticsearchHistoryProcessor(client: HttpClient) extends HistoryProcessor
       else
         withKeys
 
-    val queries =
-      if (start == 0)
-        if (end == 0)
-          withOperations
+    val queries = (start, end) match {
+      case (None, None) => withOperations
+      case (None, Some(e)) => withOperations :+ rangeQuery("timestamp").lte(e)
+      case (Some(s), None) => withOperations :+ rangeQuery("timestamp").gte(s)
+      case (Some(s), Some(e)) =>
+        if (s == e)
+          withOperations :+ termQuery("timestamp", s)
         else
-          withOperations :+ rangeQuery("timestamp").lte(end)
-      else if (end == 0)
-        withOperations :+ rangeQuery("timestamp").gte(start)
-      else if (end == start)
-        withOperations :+ termQuery("timestamp", start)
-      else
-        withOperations :+ rangeQuery("timestamp").gte(start).lte(end)
+          withOperations :+ rangeQuery("timestamp").gte(s).lte(e)
+    }
 
     val queryDef = queries.size match {
       case 0 => searchDef
       case 1 => searchDef.query(queries.head)
       case _ => searchDef.query(boolQuery().filter(queries))
     }
+    val pageSize = size.getOrElse(elasticsearchConfig.getScrollPageSize)
 
-    val withSize = queryDef.size(size)
-    val withPage =
-      if (page > 1)
-        withSize.from(size * (page - 1))
-      else
-        withSize
+    val withSize = queryDef.size(pageSize)
 
-    val withScroll =
-      if (scroll > 0)
-        withPage.scroll(scroll + "ms")
-      else
-        withPage
+    val withPage = page match {
+      case Some(p) => withSize.from(pageSize * (p - 1))
+      case None => withSize
+    }
+
+    val withScroll = scroll match {
+      case Some(s) => withPage.scroll(s + "ms")
+      case None => withPage
+    }
 
     val withSort =
       if (sort.nonEmpty)
@@ -131,7 +132,7 @@ class ElasticsearchHistoryProcessor(client: HttpClient) extends HistoryProcessor
               Right(HistoryPagedBody(
                 success.result.totalHits,
                 success.result.size,
-                page,
+                page.getOrElse(1),
                 getItems(success.result.hits)
               ))
           }
