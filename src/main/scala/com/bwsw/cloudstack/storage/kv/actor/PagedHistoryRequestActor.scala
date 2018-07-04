@@ -29,6 +29,7 @@ import scaldi.akka.AkkaInjectable.inject
 
 import scala.concurrent.Future
 
+/** Actor responsible for page-by-page retrieving of history records **/
 class PagedHistoryRequestActor(implicit inj: Injector) extends HistoryRequestActor {
 
   import context.dispatcher

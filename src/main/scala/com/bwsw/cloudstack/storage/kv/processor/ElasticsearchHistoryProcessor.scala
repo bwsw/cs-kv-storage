@@ -25,8 +25,11 @@ import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils
 import com.sksamuel.elastic4s.http.ElasticDsl.{search, _}
 import com.sksamuel.elastic4s.http.{HttpClient, RequestFailure}
 import com.sksamuel.elastic4s.http.search.SearchHits
+import com.sksamuel.elastic4s.searches.queries.QueryDefinition
+import com.sksamuel.elastic4s.searches.queries.term.TermsQueryDefinition
 import com.sksamuel.elastic4s.searches.sort.{FieldSortDefinition, SortOrder}
 
+import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -68,22 +71,22 @@ class ElasticsearchHistoryProcessor(
       scroll: Option[Long]): Future[Either[StorageError, SearchResponseBody[History]]] = {
 
     val searchDef = search(getHistoricalStorage(storageUuid))
-    val withKeys = if (keys.nonEmpty) Seq(termsQuery("key", keys)) else Seq.empty
-    val withOperations =
-      if (operations.nonEmpty)
-        withKeys :+ termsQuery("operation", operations.map(_.toString))
-      else
-        withKeys
+    val queries: ArrayBuffer[QueryDefinition] = if (keys.nonEmpty) ArrayBuffer(termsQuery(
+      "key",
+      keys)) else ArrayBuffer.empty
 
-    val queries = (start, end) match {
-      case (None, None) => withOperations
-      case (None, Some(e)) => withOperations :+ rangeQuery("timestamp").lte(e)
-      case (Some(s), None) => withOperations :+ rangeQuery("timestamp").gte(s)
+    if (operations.nonEmpty)
+      queries += termsQuery("operation", operations.map(_.toString))
+
+    (start, end) match {
+      case (None, None) => None
+      case (None, Some(e)) => queries += rangeQuery("timestamp").lte(e)
+      case (Some(s), None) => queries += rangeQuery("timestamp").gte(s)
       case (Some(s), Some(e)) =>
         if (s == e)
-          withOperations :+ termQuery("timestamp", s)
+          queries += termQuery("timestamp", s)
         else
-          withOperations :+ rangeQuery("timestamp").gte(s).lte(e)
+          queries += rangeQuery("timestamp").gte(s).lte(e)
     }
 
     val queryDef = queries.size match {
