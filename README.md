@@ -47,6 +47,7 @@ where `<port>`, `<config.path>` and `<version>` should be replaced with actual v
 # API
 
 * [Storage operations](#storage-operations)
+* [Storage history](#storage-history)
 * [Storage management](#storage-management)
 
 ## Storage operations
