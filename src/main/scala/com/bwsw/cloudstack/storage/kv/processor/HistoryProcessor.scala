@@ -17,7 +17,7 @@
 
 package com.bwsw.cloudstack.storage.kv.processor
 
-import com.bwsw.cloudstack.storage.kv.entity.{HistoryResponseBody, HistoryScrolledBody, Operation}
+import com.bwsw.cloudstack.storage.kv.entity.{History, Operation, SearchResponseBody, SearchScrolledBody}
 import com.bwsw.cloudstack.storage.kv.error.StorageError
 import com.bwsw.cloudstack.storage.kv.message._
 
@@ -37,15 +37,16 @@ trait HistoryProcessor {
     * @param storageUuid UUID of storage to search from
     * @return a [[Future]] of response body or StorageError if any error occurred
     */
-  def get(storageUuid: String,
-          keys: Iterable[String],
-          operations: Iterable[Operation],
+  def get(
+      storageUuid: String,
+      keys: Iterable[String],
+      operations: Iterable[Operation],
       start: Option[Long],
       end: Option[Long],
-          sort: Iterable[String],
+      sort: Iterable[String],
       page: Option[Int],
       size: Option[Int],
-      scroll: Option[Long]): Future[Either[StorageError, HistoryResponseBody]]
+      scroll: Option[Long]): Future[Either[StorageError, SearchResponseBody[History]]]
 
   /** Retrieves a single page of the request
     *
@@ -53,5 +54,5 @@ trait HistoryProcessor {
     * @param timeout  time to keep the search context open for in milliseconds
     * @return a [[Future]] of response body or StorageError if any error occurred
     */
-  def scroll(scrollId: String, timeout: Long): Future[Either[StorageError, HistoryScrolledBody]]
+  def scroll(scrollId: String, timeout: Long): Future[Either[StorageError, SearchScrolledBody[History]]]
 }

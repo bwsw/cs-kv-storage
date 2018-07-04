@@ -65,7 +65,7 @@ class ElasticsearchHistoryProcessor(
       sort: Iterable[String],
       page: Option[Int],
       size: Option[Int],
-      scroll: Option[Long]): Future[Either[StorageError, HistoryResponseBody]] = {
+      scroll: Option[Long]): Future[Either[StorageError, SearchResponseBody[History]]] = {
 
     val searchDef = search(getHistoricalStorage(storageUuid))
     val withKeys = if (keys.nonEmpty) Seq(termsQuery("key", keys)) else Seq.empty
@@ -122,14 +122,14 @@ class ElasticsearchHistoryProcessor(
         try {
           success.result.scrollId match {
             case Some(scrollId) =>
-              Right(HistoryScrolledBody(
+              Right(SearchScrolledBody(
                 success.result.totalHits,
                 success.result.size,
                 scrollId,
                 getItems(success.result.hits)
               ))
             case None =>
-              Right(HistoryPagedBody(
+              Right(SearchPagedBody(
                 success.result.totalHits,
                 success.result.size,
                 page.getOrElse(1),
@@ -138,12 +138,12 @@ class ElasticsearchHistoryProcessor(
           }
         }
         catch {
-          case ParseError(message) => Left(InternalError(message))
+          case iae: IllegalArgumentException => Left(InternalError(iae.getMessage))
         }
     }
   }
 
-  def scroll(scrollId: String, timeout: Long): Future[Either[StorageError, HistoryScrolledBody]] = {
+  def scroll(scrollId: String, timeout: Long): Future[Either[StorageError, SearchScrolledBody[History]]] = {
     client.execute(searchScroll(scrollId).keepAlive(timeout + "ms"))
       .map {
         case Left(RequestFailure(404, _, _, _)) =>
@@ -154,7 +154,7 @@ class ElasticsearchHistoryProcessor(
           Left(ElasticsearchUtils.getError(failure))
         case Right(success) =>
           try {
-            Right(HistoryScrolledBody(
+            Right(SearchScrolledBody(
               success.result.totalHits,
               success.result.size,
               success.result.scrollId.get,
@@ -162,7 +162,7 @@ class ElasticsearchHistoryProcessor(
             ))
           }
           catch {
-            case ParseError(message) => Left(InternalError(message))
+            case iae: IllegalArgumentException => Left(InternalError(iae.getMessage))
           }
       }
   }
@@ -187,7 +187,7 @@ object ElasticsearchHistoryProcessor {
     fields.get(name) match {
       case Some(null) => null
       case Some(value: String) => value
-      case _ => throw ParseError("Invalid String result")
+      case _ => throw new IllegalArgumentException("Invalid String result")
     }
   }
 
@@ -195,23 +195,14 @@ object ElasticsearchHistoryProcessor {
     fields.get(name) match {
       case Some(value: Long) => value
       case Some(value: Int) => value
-      case _ => throw ParseError("Invalid Long result")
+      case _ => throw new IllegalArgumentException("Invalid Long result")
     }
-  }
-
-  protected def getOperation(string: String): Operation = string match {
-    case "set" => Set
-    case "delete" => Delete
-    case "clear" => Clear
-    case _ => throw ParseError("Invalid Operation result")
   }
 
   protected def getItems(searchHits: SearchHits): List[History] = searchHits.hits.map {
     hit =>
       implicit val fields: Map[String, Any] = hit.sourceAsMap
-      History(getString("key"), getString("value"), getLong("timestamp"), getOperation(getString("operation")))
+      History(getString("key"), getString("value"), getLong("timestamp"), Operation.parse(getString("operation")))
   }.toList
-
-  private case class ParseError(message: String) extends Exception
 
 }

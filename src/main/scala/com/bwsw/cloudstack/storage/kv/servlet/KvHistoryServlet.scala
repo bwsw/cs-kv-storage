@@ -20,13 +20,14 @@ package com.bwsw.cloudstack.storage.kv.servlet
 import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.util.Timeout
-import com.bwsw.cloudstack.storage.kv.entity.{Delete, Set, Clear, Operation}
-import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, NotFoundError}
+import com.bwsw.cloudstack.storage.kv.entity.Operation
+import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError}
 import com.bwsw.cloudstack.storage.kv.message.request.{KvHistoryGetRequest, KvHistoryScrollRequest}
 import org.json4s.JsonAST._
 import org.json4s.{CustomSerializer, DefaultFormats, Formats}
 import org.scalatra._
 import org.scalatra.json.JacksonJsonSupport
+import org.scalatra.util.conversion.TypeConverter
 
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future}
@@ -41,30 +42,16 @@ class KvHistoryServlet(
 
   protected implicit lazy val jsonFormats: Formats = DefaultFormats.preservingEmptyValues + new OperationSerializer
   protected implicit val akkaTimeout: Timeout = requestTimeout
+  protected implicit val itc: TypeConverter[String, Int] = new ToIntConverter
+  protected implicit val ltc: TypeConverter[String, Long] = new ToLongConverter
   protected val fieldList = List("key", "value", "timestamp", "operation")
 
   protected implicit def executor: ExecutionContext = system.dispatcher
 
   get("/:storage_uuid") {
     new AsyncResult() {
-      val is: Future[_] = {
-        try {
-          val getHistoryRequest = KvHistoryGetRequest(
-            params("storage_uuid"),
-            params.getOrElse("keys", "").split(",").filter(_.nonEmpty),
-            params.getOrElse("operations", "").split(",").filter(_.nonEmpty).map {
-              case "set" => Set
-              case "delete" => Delete
-              case "clear" => Clear
-              case _ => throw new OperationFormatException
-            },
-            params.getAs[Long]("start"),
-            params.getAs[Long]("end"),
-            params.getOrElse("sort", "").split(",").filter(fieldList.contains(_)),
-            params.getAs[Int]("page"),
-            params.getAs[Int]("size"),
-            params.getAs[Long]("scroll"))
-
+      val is: Future[_] = validate(params) match {
+        case Some(getHistoryRequest) =>
           (historyRequestActor ? getHistoryRequest)
             .map {
               case Right(value) =>
@@ -74,10 +61,7 @@ class KvHistoryServlet(
               case Left(_: BadRequestError) => BadRequest("")
               case _ => InternalServerError()
             }
-        } catch {
-          case nfe: NumberFormatException => Future(BadRequest(""))
-          case ofe: OperationFormatException => Future(BadRequest(""))
-        }
+        case None => Future(BadRequest(""))
       }
     }
   }
@@ -87,7 +71,7 @@ class KvHistoryServlet(
       val is: Future[_] =
         if (request.getHeader("Content-Type") == formats("json")) {
           parsedBody match {
-            case JObject(List(("scrollId", scrollId: JString), ("timeout", timeout: JInt))) =>
+            case JObject(List(("scroll", scrollId: JString), ("timeout", timeout: JInt))) =>
               val scrollRequest = KvHistoryScrollRequest(scrollId.values, timeout.values.toLong)
               (historyRequestActor ? scrollRequest).map {
                 case Right(value) =>
@@ -104,13 +88,36 @@ class KvHistoryServlet(
     }
   }
 
-  private class OperationFormatException extends Exception
+
+  protected def validate(params: Params): Option[KvHistoryGetRequest] = {
+    try {
+      Some(KvHistoryGetRequest(
+        params("storage_uuid"),
+        params.getOrElse("keys", "").split(",").filter(_.nonEmpty),
+        params.getOrElse("operations", "").split(",").filter(_.nonEmpty).map(Operation.parse),
+        params.getAs[Long]("start"),
+        params.getAs[Long]("end"),
+        params.getOrElse("sort", "").split(",").filter(fieldList.contains(_)),
+        params.getAs[Int]("page"),
+        params.getAs[Int]("size"),
+        params.getAs[Long]("scroll")))
+    } catch {
+      case _: NumberFormatException => None
+      case _: IllegalArgumentException => None
+    }
+  }
+
+  private class ToIntConverter extends TypeConverter[String, Int] {
+    override def apply(s: String) = Some(s.toInt)
+  }
+
+  private class ToLongConverter extends TypeConverter[String, Long] {
+    override def apply(s: String) = Some(s.toLong)
+  }
 
   private class OperationSerializer extends CustomSerializer[Operation](
     format => ( {
-      case JString("set") => Set
-      case JString("delete") => Delete
-      case JString("clear") => Clear
+      case JString(s) => Operation.parse(s)
     }, {
       case op: Operation => JString(op.toString)
     }))

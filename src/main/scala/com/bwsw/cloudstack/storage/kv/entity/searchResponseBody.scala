@@ -17,8 +17,12 @@
 
 package com.bwsw.cloudstack.storage.kv.entity
 
-sealed trait HistoryResponseBody
+sealed trait SearchResponseBody[T]
 
-case class HistoryScrolledBody(total: Long, size: Long, scrollId: String, items: List[History]) extends HistoryResponseBody
+case class SearchScrolledBody[T](
+    total: Long,
+    size: Long,
+    scrollId: String,
+    items: List[T]) extends SearchResponseBody[T]
 
-case class HistoryPagedBody(total: Long, size: Long, page: Int, items: List[History]) extends HistoryResponseBody
+case class SearchPagedBody[T](total: Long, size: Long, page: Int, items: List[T]) extends SearchResponseBody[T]

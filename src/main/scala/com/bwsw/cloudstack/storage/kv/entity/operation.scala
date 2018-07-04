@@ -31,3 +31,16 @@ object Delete extends Operation {
 object Clear extends Operation {
   override def toString: String = "clear"
 }
+
+/** Returns operation by its spelling
+  *
+  * @throws IllegalArgumentException when string ain't match any of operations
+  */
+object Operation {
+  def parse(string: String): Operation = string match {
+    case "set" => Set
+    case "delete" => Delete
+    case "clear" => Clear
+    case _ => throw new IllegalArgumentException("Invalid Operation result")
+  }
+}
