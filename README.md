@@ -104,7 +104,7 @@ Content-Type: application/json
 
 In the following example the mapping for the second key does not exist.
 
-```
+```json
 {
     "key1": "value1",
     "key2": null,
@@ -159,7 +159,7 @@ Content-Type: application/json
 ##### Body example
 
 In the following example values for the first and third keys are set successfully.
-```
+```json
 {
     "key1": true,
     "key2": false,
@@ -210,7 +210,7 @@ Content-Type: application/json
 ##### Body example
 
 In the following example mappings for the first and third keys are deleted successfully.
-```
+```json
 {
     "key1": true,
     "key2": false,
@@ -236,7 +236,7 @@ GET /list/<storage UUID>
 
 ##### Body example
 
-```
+```json
 [
     "key1",
     "key2":
@@ -259,6 +259,114 @@ POST /clear/<storage UUID>
 | 200 | The request is processed successfully.  |
 | 409 | Conflicts occurred during executing the operation, the storage may have been cleared partially. |
 | 500 | The request can not be processed because of an internal error. |
+
+## Storage history
+
+* [Search and list history records](#search-and-list-history-records)
+* [List history records](#list-history-records)
+
+### Search and list history records
+
+#### Request
+
+```
+GET /history/<storage UUID>
+```
+##### Parameters
+
+| Name  | Mandatory | Description |
+|-------|-----------|-------------|
+| keys  | no | Comma separated list of keys. |
+| operations | no | Comma separated list of operations. |
+| start | no | The start date/time as Unix timestamp |
+| end | no | The end  date/time as Unix timestamp |
+| sort | no | Comma separated list of fields prefixed with - for descending order |
+| page | no (1 by default) | A page number of results |
+| size | no (default value set in configuration file) | A number of results returned in the page |
+| scroll | no | A timeout for Scroll API in ms |
+
+#### Response
+
+| Use case  | Status code | Body |
+|-------|-----------|-------------|
+| The storage does not exist  | 404 | &lt;empty&gt; |
+| Elasticsearch is not available | 500 | &lt;empty&gt; |
+| The storage does not support history | 400 | &lt;empty&gt; |
+| The storage exists and supports history | 200 | Results in the format specified below |
+
+##### Response body examples
+For requests with page parameter specified
+```json
+{
+   "total":1000,
+   "size":10,
+   "page":1,
+   "items":[
+      {
+         "key":"key",
+         "value":"value",
+         "operation":"set/delete/clear",
+         "timestamp":1528442057000
+      }
+   ]
+}
+```
+
+For requests with scroll parameter specified
+```json
+{
+   "total":1000,
+   "size":10,
+   "scroll":"scroll id",
+   "items":[
+      {
+         "key":"key",
+         "value":"value",
+         "operation":"set/delete/clear",
+         "timestamp":1528442057000
+      }
+   ]
+}
+```
+### List history records
+
+#### Request
+
+```
+POST /history
+Content-Type: application/json
+
+{
+   "scroll":"scroll id",
+   "size": 100,
+   "timeout": 60000
+}
+```
+#### Response
+
+| Use case  | Status code | Body |
+|-------|-----------|-------------|
+| Elasticsearch is not available | 500 | &lt;empty&gt; |
+| Invalid/expired scroll id | 400 | &lt;empty&gt; |
+| Scroll request is successful | 200 | Results in the format as specified above for requests with page and scroll |
+
+##### Response body example
+
+```json
+{
+   "total":1000,
+   "size":10,
+   "scroll":"scroll id",
+   "items":[
+      {
+         "key":"key",
+         "value":"value",
+         "operation":"set/delete/clear",
+         "timestamp":1528442057000
+      }
+   ]
+}
+```
 
 ## Storage management
 
