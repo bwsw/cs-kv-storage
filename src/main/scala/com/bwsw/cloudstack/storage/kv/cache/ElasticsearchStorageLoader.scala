@@ -35,7 +35,10 @@ class ElasticsearchStorageLoader(client: HttpClient) extends StorageLoader {
         case Left(_) => throw new RuntimeException("Storage info loading failed")
         case Right(success) =>
           if (success.result.found) {
-            Some(Storage(success.result.id, getValue(success.result.source, "type"), getValue(success.result.source, "is_history_enabled")))
+            Some(Storage(
+              success.result.id,
+              getValue(success.result.source, "type"),
+              getValue(success.result.source, "is_history_enabled")))
           }
           else None
       }
