@@ -17,7 +17,7 @@
 
 package com.bwsw.cloudstack.storage.kv.actor
 
-import akka.actor.{ActorLogging, Status}
+import akka.actor.ActorLogging
 import akka.pattern.pipe
 import akka.stream.ActorMaterializer
 import akka.http.scaladsl.Http
@@ -46,12 +46,12 @@ class ElasticsearchTemplateCheckActor(implicit inj: Injector, materializer: Acto
         case resp@HttpResponse(code, _, _, _) =>
           resp.discardEntityBytes()
           code match {
-            case StatusCodes.OK => Check(checkName, Healthy, "OK")
-            case StatusCodes.NotFound => Check(checkName, Unhealthy, "Not found")
-            case unexpected => Check(checkName, Unhealthy, "Unexpected status: " + unexpected.intValue())
+            case StatusCodes.OK => Check(checkName, Healthy, Ok)
+            case StatusCodes.NotFound => Check(checkName, Unhealthy, NotFound)
+            case unexpected => Check(checkName, Unhealthy, Unexpected("Unexpected status: " + unexpected.intValue()))
           }
       }.recover {
-        case ex => Check(checkName, Unhealthy, ex.getMessage)
+        case ex => Check(checkName, Unhealthy, Unexpected(ex.getMessage))
       }.pipeTo(sender())
   }
 

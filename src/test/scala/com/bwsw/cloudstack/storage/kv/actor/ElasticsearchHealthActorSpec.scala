@@ -47,9 +47,6 @@ class ElasticsearchHealthActorSpec
 
   private val checkTestProbe = TestProbe()
   private val appConf = mock[AppConfig]
-  private val successMsg = "OK"
-  private val notFoundMsg = "Not found"
-  private val exceptionMsg = "Elasticsearch error"
   private val timeout = 1000.millis
 
   class TemplateCheckActorMock(testProbe: TestProbe) extends TemplateCheckActor {
@@ -80,25 +77,25 @@ class ElasticsearchHealthActorSpec
       val storageRegistryCheck = storageRegistryCheckResult match {
         case Right(true) =>
           expectStorageRegistryExists()
-          Check(StorageRegistry, Healthy, successMsg)
+          Check(StorageRegistry, Healthy, Ok)
         case Right(false) =>
           expectStorageRegistryNotFound()
-          Check(StorageRegistry, Unhealthy, notFoundMsg)
+          Check(StorageRegistry, Unhealthy, NotFound)
         case Left(_) =>
-          expectStorageRegistryRequestFailure(exceptionMsg)
-          Check(StorageRegistry, Unhealthy, exceptionMsg)
+          expectStorageRegistryRequestFailure(ElasticsearchError().toString)
+          Check(StorageRegistry, Unhealthy, ElasticsearchError())
       }
       val storageCheck =
         if (storageTemplateCheckResult)
-          Check(StorageTemplate, Healthy, successMsg)
+          Check(StorageTemplate, Healthy, Ok)
         else
-          Check(StorageTemplate, Unhealthy, notFoundMsg)
+          Check(StorageTemplate, Unhealthy, NotFound)
 
       val historyStorageCheck =
         if (historyStorageTemplateCheckResult)
-          Check(HistoryStorageTemplate, Healthy, successMsg)
+          Check(HistoryStorageTemplate, Healthy, Ok)
         else
-          Check(HistoryStorageTemplate, Unhealthy, notFoundMsg)
+          Check(HistoryStorageTemplate, Unhealthy, NotFound)
 
       elasticsearchHealthActor ! HealthCheckRequest(true)
       checkTestProbe.expectMsg(timeout, TemplateCheckRequest(storageTemplate, StorageTemplate))

@@ -64,14 +64,17 @@ class ElasticsearchHealthActor(implicit inj: Injector) extends HealthActor {
   private def checkIndex(index: String, name: CheckName): Future[Check] = {
     client.execute(indexExists(index)).map {
       case Left(failure) =>
-        Check(name, Unhealthy, if (failure.error == null) "Elasticsearch error" else failure.error.reason)
+        Check(
+          name,
+          Unhealthy,
+          if (failure.error == null) ElasticsearchError() else ElasticsearchError(failure.error.reason))
       case Right(success) =>
         if (success.result.exists)
-          Check(name, Healthy, "OK")
+          Check(name, Healthy, Ok)
         else
-          Check(name, Unhealthy, "Not found")
+          Check(name, Unhealthy, NotFound)
     }.recover {
-      case ex => Check(name, Unhealthy, ex.getMessage)
+      case ex => Check(name, Unhealthy, Unexpected(ex.getMessage))
     }
   }
 

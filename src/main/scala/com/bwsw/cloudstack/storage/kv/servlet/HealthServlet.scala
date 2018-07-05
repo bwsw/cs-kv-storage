@@ -20,7 +20,7 @@ package com.bwsw.cloudstack.storage.kv.servlet
 import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.util.Timeout
-import com.bwsw.cloudstack.storage.kv.entity._
+import com.bwsw.cloudstack.storage.kv.entity.{StatusMessage, Healthy, Unhealthy, HealthStatus, CheckName}
 import com.bwsw.cloudstack.storage.kv.message.request.HealthCheckRequest
 import com.bwsw.cloudstack.storage.kv.message.response.{DetailedHealthCheckResponse, StatusHealthCheckResponse}
 import org.json4s.JsonAST.JString
@@ -36,7 +36,7 @@ class HealthServlet(system: ActorSystem, requestTimeout: FiniteDuration, healthA
   with FutureSupport
   with JacksonJsonSupport {
 
-  protected implicit lazy val jsonFormats: Formats = DefaultFormats.preservingEmptyValues + new HealthStatusSerializer + new NameSerializer
+  protected implicit lazy val jsonFormats: Formats = DefaultFormats.preservingEmptyValues + new HealthStatusSerializer + new NameSerializer + new StatusMessageSerializer
 
   protected implicit val akkaTimeout: Timeout = requestTimeout
 
@@ -60,11 +60,18 @@ class HealthServlet(system: ActorSystem, requestTimeout: FiniteDuration, healthA
     }
   }
 
+  private class StatusMessageSerializer extends CustomSerializer[StatusMessage](
+    format => ( {
+      case JString(s) => StatusMessage.parse(s)
+    }, {
+      case sm: StatusMessage => JString(sm.toString)
+    }))
+
   private class HealthStatusSerializer extends CustomSerializer[HealthStatus](
     format => ( {
       case JString(s) => HealthStatus.parse(s)
     }, {
-      case op: HealthStatus => JString(op.toString)
+      case hs: HealthStatus => JString(hs.toString)
     }))
 
   private class NameSerializer extends CustomSerializer[CheckName](

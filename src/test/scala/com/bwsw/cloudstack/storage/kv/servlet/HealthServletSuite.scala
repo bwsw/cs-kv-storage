@@ -41,14 +41,14 @@ class HealthServletSuite
   private implicit val system: ActorSystem = ActorSystem()
   private val healthActor = TestActorRef(new MockActor())
   private val jsonError = "{\"status\":\"UNHEALTHY\",\"checks\":[" +
-    "{\"name\":\"STORAGE_REGISTRY\",\"status\":\"UNHEALTHY\",\"message\":\"Not found\"}," +
-    "{\"name\":\"STORAGE_TEMPLATE\",\"status\":\"HEALTHY\",\"message\":\"\"}," +
-    "{\"name\":\"HISTORY_STORAGE_TEMPLATE\",\"status\":\"UNHEALTHY\",\"message\":\"ElasticsearchError\"}" +
+    s"""{\"name\":\"STORAGE_REGISTRY\",\"status\":\"UNHEALTHY\",\"message\":\"$NotFound\"},""" +
+    s"""{\"name\":\"STORAGE_TEMPLATE\",\"status\":\"HEALTHY\",\"message\":\"$Ok\"},""" +
+    s"""{\"name\":\"HISTORY_STORAGE_TEMPLATE\",\"status\":\"UNHEALTHY\",\"message\":\"${ElasticsearchError()}\"}""" +
     "]}"
   private val jsonOk = "{\"status\":\"HEALTHY\",\"checks\":[" +
-    "{\"name\":\"STORAGE_REGISTRY\",\"status\":\"HEALTHY\",\"message\":\"\"}," +
-    "{\"name\":\"STORAGE_TEMPLATE\",\"status\":\"HEALTHY\",\"message\":\"\"}," +
-    "{\"name\":\"HISTORY_STORAGE_TEMPLATE\",\"status\":\"HEALTHY\",\"message\":\"\"}" +
+    s"""{\"name\":\"STORAGE_REGISTRY\",\"status\":\"HEALTHY\",\"message\":\"$Ok\"},""" +
+    s"""{\"name\":\"STORAGE_TEMPLATE\",\"status\":\"HEALTHY\",\"message\":\"$Ok\"},""" +
+    s"""{\"name\":\"HISTORY_STORAGE_TEMPLATE\",\"status\":\"HEALTHY\",\"message\":\"$Ok\"}""" +
     "]}"
 
 
@@ -89,9 +89,9 @@ class HealthServletSuite
             HealthCheckRequest(true),
             () => DetailedHealthCheckResponse(
               Healthy, Seq(
-                Check(StorageRegistry, Healthy, ""),
-                Check(StorageTemplate, Healthy, ""),
-                Check(HistoryStorageTemplate, Healthy, "")
+                Check(StorageRegistry, Healthy, Ok),
+                Check(StorageTemplate, Healthy, Ok),
+                Check(HistoryStorageTemplate, Healthy, Ok)
               ))))
         get("/health?detailed=true") {
           status should equal(200)
@@ -105,9 +105,9 @@ class HealthServletSuite
             HealthCheckRequest(true),
             () => DetailedHealthCheckResponse(
               Unhealthy, Seq(
-                Check(StorageRegistry, Unhealthy, "Not found"),
-                Check(StorageTemplate, Healthy, ""),
-                Check(HistoryStorageTemplate, Unhealthy, "ElasticsearchError")
+                Check(StorageRegistry, Unhealthy, NotFound),
+                Check(StorageTemplate, Healthy, Ok),
+                Check(HistoryStorageTemplate, Unhealthy, ElasticsearchError())
               ))))
         get("/health?detailed=true") {
           status should equal(500)

@@ -17,5 +17,29 @@
 
 package com.bwsw.cloudstack.storage.kv.entity
 
-/** Single check performed on the system **/
-case class Check(name: CheckName, status: HealthStatus, message: StatusMessage)
+sealed trait StatusMessage
+
+object Ok extends StatusMessage {
+  override def toString: String = "OK"
+}
+
+object NotFound extends StatusMessage {
+  override def toString: String = "Not found"
+}
+
+case class ElasticsearchError(message: String = "Elasticsearch error") extends StatusMessage {
+  override def toString: String = message
+}
+
+case class Unexpected(message: String) extends StatusMessage {
+  override def toString: String = message
+}
+
+object StatusMessage {
+  def parse(string: String): StatusMessage = string match {
+    case "OK" => Ok
+    case "Not found" => NotFound
+    case "Elasticsearch error" => ElasticsearchError()
+    case msg => Unexpected(msg)
+  }
+}

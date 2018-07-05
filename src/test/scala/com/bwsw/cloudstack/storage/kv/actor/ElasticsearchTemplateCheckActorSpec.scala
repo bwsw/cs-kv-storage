@@ -44,8 +44,6 @@ class ElasticsearchTemplateCheckActorSpec
   private val esConfig = mock[ElasticsearchConfig]
   private val uriBase = "http://localhost:"
   private val name = "someTemplate"
-  private val successMsg = "OK"
-  private val notFoundMsg = "Not found"
   private val unexpectedMsg = "Unexpected status: "
   private val checkName = Unspecified
   private val templatePath = "/_template/" + name
@@ -80,15 +78,15 @@ class ElasticsearchTemplateCheckActorSpec
     }
 
     it("should return true if template exists") {
-      test(200, Check(checkName, Healthy, successMsg), 5000.millis)
+      test(200, Check(checkName, Healthy, Ok), 5000.millis)
     }
 
     it("should return false if template does not exist") {
-      test(404, Check(checkName, Unhealthy, notFoundMsg), 1500.millis)
+      test(404, Check(checkName, Unhealthy, NotFound), 1500.millis)
     }
 
     it("should return false if request processing failed") {
-      test(500, Check(checkName, Unhealthy, unexpectedMsg + 500), 1500.millis)
+      test(500, Check(checkName, Unhealthy, Unexpected(unexpectedMsg + 500)), 1500.millis)
     }
   }
 
