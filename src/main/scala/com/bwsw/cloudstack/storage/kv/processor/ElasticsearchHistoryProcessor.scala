@@ -20,6 +20,7 @@ package com.bwsw.cloudstack.storage.kv.processor
 import com.bwsw.cloudstack.storage.kv.message.KvHistory
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.HttpClient
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -29,8 +30,9 @@ import scala.concurrent.Future
   * @param client the client to send requests to Elasticsearch
   */
 class ElasticsearchHistoryProcessor(client: HttpClient) extends HistoryProcessor {
-
   import ElasticsearchHistoryProcessor._
+
+  private val logger = LoggerFactory.getLogger(getClass)
 
   def save(histories: List[KvHistory]): Future[Option[List[KvHistory]]] = {
     val indices = histories.map {
@@ -38,7 +40,9 @@ class ElasticsearchHistoryProcessor(client: HttpClient) extends HistoryProcessor
         indexInto(getHistoricalStorage(record.storage), `type`) fields getFields(record)
     }
     client.execute(bulk(indices)).map {
-      case Left(_) => Some(histories)
+      case Left(failure) =>
+        logger.error(failure.error.reason)
+        Some(histories)
       case Right(success) =>
         val erroneous = success.result.items.filter(_.error.isDefined).map(item => histories(item.itemId))
         if (erroneous.isEmpty)

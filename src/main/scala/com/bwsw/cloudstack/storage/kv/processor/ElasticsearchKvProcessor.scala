@@ -24,6 +24,7 @@ import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.get.GetResponse
 import com.sksamuel.elastic4s.http.search.SearchHits
 import com.sksamuel.elastic4s.http.{ElasticDsl, HttpClient}
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
 
@@ -38,11 +39,14 @@ class ElasticsearchKvProcessor(client: HttpClient, conf: ElasticsearchConfig) ex
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
+
   def get(storage: String, key: String): Future[Either[StorageError, String]] = {
     client.execute {
       ElasticDsl.get(key).from(ElasticsearchUtils.getStorageIndex(storage) / Type)
     }.map {
-      case Left(failure) => Left(ElasticsearchUtils.getError(failure))
+      case Left(failure) =>
+        logger.error(failure.error.reason)
+        Left(ElasticsearchUtils.getError(failure))
       case Right(success) =>
         if (success.result.found)
           getValue(success.result.source)
@@ -58,17 +62,22 @@ class ElasticsearchKvProcessor(client: HttpClient, conf: ElasticsearchConfig) ex
     client.execute {
       multiget(gets)
     }.map {
-      case Left(failure) => Left(ElasticsearchUtils.getError(failure))
+      case Left(failure) =>
+        logger.error(failure.error.reason)
+        Left(ElasticsearchUtils.getError(failure))
       case Right(success) => getValues(success.result.docs, keys.map(e => e -> None).toMap)
     }
   }
 
   def set(storage: String, key: String, value: String): Future[Either[StorageError, Unit]] = {
+    logger.error("HIDUDE\n")
     if (isKvValid(key, value))
       client.execute {
         indexInto(ElasticsearchUtils.getStorageIndex(storage) / Type) id key fields (ValueField -> value)
       }.map {
-        case Left(failure) => Left(ElasticsearchUtils.getError(failure))
+        case Left(failure) =>
+          logger.error(failure.error.reason)
+          Left(ElasticsearchUtils.getError(failure))
         case Right(_) => Right(Unit)
       }
     else
@@ -85,7 +94,9 @@ class ElasticsearchKvProcessor(client: HttpClient, conf: ElasticsearchConfig) ex
       client.execute {
         bulk(sets)
       }.map {
-        case Left(failure) => Left(ElasticsearchUtils.getError(failure))
+        case Left(failure) =>
+          logger.error(failure.error.reason)
+          Left(ElasticsearchUtils.getError(failure))
         case Right(success) =>
           Right(success.result.items.map(bulkResponseItem =>
             (bulkResponseItem.id, bulkResponseItem.error.isEmpty)).toMap ++ bad)
@@ -98,7 +109,9 @@ class ElasticsearchKvProcessor(client: HttpClient, conf: ElasticsearchConfig) ex
     client.execute {
       deleteById(ElasticsearchUtils.getStorageIndex(storage), Type, key)
     }.map {
-      case Left(failure) => Left(ElasticsearchUtils.getError(failure))
+      case Left(failure) =>
+        logger.error(failure.error.reason)
+        Left(ElasticsearchUtils.getError(failure))
       case Right(_) => Right(Unit)
     }
   }
@@ -110,7 +123,9 @@ class ElasticsearchKvProcessor(client: HttpClient, conf: ElasticsearchConfig) ex
     client.execute {
       bulk(deletes)
     }.map {
-      case Left(failure) => Left(ElasticsearchUtils.getError(failure))
+      case Left(failure) =>
+        logger.error(failure.error.reason)
+        Left(ElasticsearchUtils.getError(failure))
       case Right(success) =>
         Right(success.result.items.map(bulkResponseItem =>
           (bulkResponseItem.id, bulkResponseItem.error.isEmpty)).toMap)
@@ -123,7 +138,9 @@ class ElasticsearchKvProcessor(client: HttpClient, conf: ElasticsearchConfig) ex
       search(ElasticsearchUtils.getStorageIndex(storage)).size(conf.getScrollPageSize)
         .scroll(keepAlive)
     }.flatMap {
-      case Left(failure) => Future(Left(ElasticsearchUtils.getError(failure)))
+      case Left(failure) =>
+        logger.error(failure.error.reason)
+        Future(Left(ElasticsearchUtils.getError(failure)))
       case Right(success) =>
         if (success.result.scrollId.nonEmpty) {
           scrollAll(success.result.scrollId.get, getIds(success.result.hits), keepAlive)
@@ -139,7 +156,9 @@ class ElasticsearchKvProcessor(client: HttpClient, conf: ElasticsearchConfig) ex
         .proceedOnConflicts(true)
     }
       .map {
-        case Left(failure) => Left(ElasticsearchUtils.getError(failure))
+        case Left(failure) =>
+          logger.error(failure.error.reason)
+          Left(ElasticsearchUtils.getError(failure))
         case Right(success) =>
           if (success.result.versionConflicts > 0)
             Left(ConflictError())
@@ -151,7 +170,9 @@ class ElasticsearchKvProcessor(client: HttpClient, conf: ElasticsearchConfig) ex
   private def scrollAll(scrollId: String, results: List[String], keepAlive: String): Future[Either[StorageError, List[String]]] = {
     client.execute(searchScroll(scrollId).keepAlive(keepAlive))
       .flatMap {
-        case Left(failure) => Future(Left(ElasticsearchUtils.getError(failure)))
+        case Left(failure) =>
+          logger.error(failure.error.reason)
+          Future(Left(ElasticsearchUtils.getError(failure)))
         case Right(success) =>
           if (success.result.hits.hits.length == 0) {
             client.execute {
@@ -179,6 +200,7 @@ class ElasticsearchKvProcessor(client: HttpClient, conf: ElasticsearchConfig) ex
 object ElasticsearchKvProcessor {
   private val Type = "_doc"
   private val ValueField = "value"
+  private val logger = LoggerFactory.getLogger(getClass)
 
   private def getValue(fields: Map[String, Any]): Either[StorageError, String] = {
     fields.get(ValueField) match {
@@ -195,7 +217,9 @@ object ElasticsearchKvProcessor {
         if (r.found) {
           val result = getValue(r.source)
           result match {
-            case Left(error) => Left(error)
+            case Left(error) =>
+              logger.error("Field " + ValueField + " is not specified in response: " + r)
+              Left(error)
             case Right(value) => getValues(tail, results + (r.id -> Some(value)))
           }
         }
