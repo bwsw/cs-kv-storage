@@ -45,16 +45,21 @@ class HealthServlet(system: ActorSystem, requestTimeout: FiniteDuration, healthA
   get("/") {
     new AsyncResult() {
       val is: Future[_] = {
-        val detailed = params.getOrElse("detailed", "false").toBoolean
-        (healthActor ? HealthCheckRequest(detailed)).map {
-          case StatusHealthCheckResponse(Healthy) => Ok("")
-          case StatusHealthCheckResponse(Unhealthy) => InternalServerError("")
-          case body: DetailedHealthCheckResponse =>
-            contentType = formats("json")
-            body.status match {
-              case Healthy => Ok(body)
-              case Unhealthy => InternalServerError(body)
-            }
+        try {
+          val detailed = params.getOrElse("detailed", "false").toBoolean
+          (healthActor ? HealthCheckRequest(detailed)).map {
+            case StatusHealthCheckResponse(Healthy) => Ok("")
+            case StatusHealthCheckResponse(Unhealthy) => InternalServerError("")
+            case body: DetailedHealthCheckResponse =>
+              contentType = formats("json")
+              body.status match {
+                case Healthy => Ok(body)
+                case Unhealthy => InternalServerError(body)
+              }
+          }
+        }
+        catch {
+          case iae: IllegalArgumentException => Future(BadRequest(""))
         }
       }
     }

@@ -115,5 +115,14 @@ class HealthServletSuite
         }
       }
     }
+
+    describe("check bad request") {
+      it("should return 400 Bad Request if bad detailed parameter given") {
+        get("/health?detailed=bad") {
+          status should equal(400)
+          body should equal("")
+        }
+      }
+    }
   }
 }
