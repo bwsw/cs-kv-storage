@@ -37,7 +37,8 @@ class ElasticsearchKvStorageManager(client: HttpClient) extends KvStorageManager
   def updateTempStorageTtl(storage: String, ttl: Long): Future[Either[StorageError, Unit]] = {
     client.execute(update(storage) in Registry / Type
       script
-      s"""if (ctx._source.type == "$TemporaryStorageType"){ ctx._source.ttl = $ttl } else { ctx.op="noop"}""")
+      s"""if (ctx._source.type == "$TemporaryStorageType")""" +
+        s"""{ ctx._source.expiration_timestamp = ctx._source.expiration_timestamp - ctx._source.ttl + $ttl; ctx._source.ttl = $ttl } else { ctx.op="noop"}""")
       .map {
         case Left(failure) => failure.status match {
           case 404 => Left(NotFoundError())

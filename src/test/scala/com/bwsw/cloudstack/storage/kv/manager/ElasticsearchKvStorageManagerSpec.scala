@@ -18,6 +18,7 @@
 package com.bwsw.cloudstack.storage.kv.manager
 
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError}
+import com.bwsw.cloudstack.storage.kv.manager.ElasticsearchKvStorageManager.TemporaryStorageType
 import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils
 import com.sksamuel.elastic4s.delete.DeleteByIdDefinition
 import com.sksamuel.elastic4s.get.GetDefinition
@@ -185,7 +186,11 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
   private def expectUpdateRequest(client: HttpClient) = {
     (client.execute[UpdateDefinition, UpdateResponse](_: UpdateDefinition)(_: HttpExecutable[UpdateDefinition, UpdateResponse], _: ExecutionContext))
       .expects(update(storage) in registry / `type`
-        script "if (ctx._source.type == \"TEMP\"){ ctx._source.ttl = " + ttl + " } else { ctx.op=\"noop\"}", UpdateHttpExecutable, *)
+        script
+        s"""if (ctx._source.type == "TEMP")""" +
+          s"""{ ctx._source.expiration_timestamp = ctx._source.expiration_timestamp - ctx._source.ttl + $ttl; ctx._source.ttl = $ttl } else { ctx.op="noop"}""",
+        UpdateHttpExecutable,
+        *)
   }
 
   private def expectGetRequest(client: HttpClient) = {
