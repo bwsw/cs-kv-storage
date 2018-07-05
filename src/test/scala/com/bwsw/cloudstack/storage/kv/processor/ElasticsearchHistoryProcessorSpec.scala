@@ -19,6 +19,7 @@ package com.bwsw.cloudstack.storage.kv.processor
 
 import com.bwsw.cloudstack.storage.kv.entity.{Set, Clear, Delete}
 import com.bwsw.cloudstack.storage.kv.message.KvHistory
+import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils._
 import com.sksamuel.elastic4s.bulk.BulkDefinition
 import com.sksamuel.elastic4s.http.ElasticDsl.{indexInto, _}
 import com.sksamuel.elastic4s.http._
@@ -29,10 +30,7 @@ import org.scalatest.AsyncFunSpec
 import scala.concurrent.{ExecutionContext, Future}
 
 class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
-  private val index = "history-storage-someStorage"
-  private val `type` = "_doc"
-  private val artificalKey = "cbIaz2MBpp4Ypizt4vT5"
-  private val history = KvHistory("someStorage", "someKey", "someValue", 1, Set)
+  private val artificialKey = "cbIaz2MBpp4Ypizt4vT5"
   private val histories = List(
     KvHistory("someStorage2", "someKey", "someValue", 1, Set),
     KvHistory("someStorage", "someKey1", "someValue", 1, Delete),
@@ -47,11 +45,24 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
       it("should save a list of historical records") {
         val bulkResponse = BulkResponse(1, errors = false,
           histories.map(history => BulkResponseItems(
-            Some(BulkResponseItem(0, artificalKey, getHistoryIndex(history.storage), `type`, 1, forcedRefresh = false, found = false, created = true, "created", 200, None, None)),
+            Some(BulkResponseItem(
+              0,
+              artificialKey,
+              getHistoricalStorageIndex(history.storage),
+              `type`,
+              1,
+              forcedRefresh = false,
+              found = false,
+              created = true,
+              "created",
+              200,
+              None,
+              None)),
             None,
             None,
             None)))
-        val sets = histories.map(history => indexInto(getHistoryIndex(history.storage) / `type`) fields getFields(history))
+        val sets = histories.map(history => indexInto(getHistoricalStorageIndex(history.storage) / `type`) fields getFields(
+          history))
         (fakeClient.execute[BulkDefinition, BulkResponse](_: BulkDefinition)(_: HttpExecutable[BulkDefinition, BulkResponse], _: ExecutionContext))
           .expects(ElasticDsl.bulk(sets), BulkExecutable, *)
           .returning(Future(Right(RequestSuccess(200, Option.empty, Map.empty, bulkResponse))))
@@ -65,26 +76,40 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
       it("should save a part of the list of historical records and return those that failed") {
         val bulkResponseItems = List(
           BulkResponseItems(
-            Some(BulkResponseItem(0, artificalKey, getHistoryIndex("someStorage2"), `type`, 1, forcedRefresh = false,
+            Some(BulkResponseItem(
+              0, artificialKey, getHistoricalStorageIndex("someStorage2"), `type`, 1, forcedRefresh = false,
               found = false, created = true, "created", 200, None, None)),
             None,
             None,
             None),
           BulkResponseItems(
-            Some(BulkResponseItem(1, artificalKey, getHistoryIndex("someStorage"), `type`, 1, forcedRefresh = false,
-              found = false, created = true, "created", 500, Some(BulkError("", "", "", 1, getHistoryIndex("someStorage"))), None)),
+            Some(BulkResponseItem(
+              1,
+              artificialKey,
+              getHistoricalStorageIndex("someStorage"),
+              `type`,
+              1,
+              forcedRefresh = false,
+              found = false,
+              created = true,
+              "created",
+              500,
+              Some(BulkError("", "", "", 1, getHistoricalStorageIndex("someStorage"))),
+              None)),
             None,
             None,
             None),
           BulkResponseItems(
-            Some(BulkResponseItem(2, artificalKey, getHistoryIndex("someStorage2"), `type`, 1, forcedRefresh = false,
+            Some(BulkResponseItem(
+              2, artificialKey, getHistoricalStorageIndex("someStorage2"), `type`, 1, forcedRefresh = false,
               found = false, created = true, "created", 200, None, None)),
             None,
             None,
             None)
         )
         val bulkResponse = BulkResponse(1, errors = true, bulkResponseItems)
-        val sets = histories.map(history => indexInto(getHistoryIndex(history.storage) / `type`) fields getFields(history))
+        val sets = histories.map(history => indexInto(getHistoricalStorageIndex(history.storage) / `type`) fields getFields(
+          history))
         (fakeClient.execute[BulkDefinition, BulkResponse](_: BulkDefinition)(_: HttpExecutable[BulkDefinition, BulkResponse], _: ExecutionContext))
           .expects(ElasticDsl.bulk(sets), BulkExecutable, *)
           .returning(Future(Right(RequestSuccess(200, Option.empty, Map.empty, bulkResponse))))
@@ -100,7 +125,8 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
       }
 
       it("should return all given histories if request fails") {
-        val sets = histories.map(history => indexInto(getHistoryIndex(history.storage) / `type`) fields getFields(history))
+        val sets = histories.map(history => indexInto(getHistoricalStorageIndex(history.storage) / `type`) fields getFields(
+          history))
         (fakeClient.execute[BulkDefinition, BulkResponse](_: BulkDefinition)(_: HttpExecutable[BulkDefinition, BulkResponse], _: ExecutionContext))
           .expects(ElasticDsl.bulk(sets), BulkExecutable, *)
           .returning(Future(Left(RequestFailure(404, Option.empty, Map.empty, ElasticError.fromThrowable(new RuntimeException())))))
@@ -116,8 +142,6 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
     }
 
   }
-
-  private def getHistoryIndex(storage: String) = s"history-storage-$storage"
 
   private def getFields(history: KvHistory) = Map(
     "key" -> history.key,

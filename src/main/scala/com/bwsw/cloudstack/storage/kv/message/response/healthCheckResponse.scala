@@ -17,11 +17,20 @@
 
 package com.bwsw.cloudstack.storage.kv.message.response
 
-import com.sksamuel.elastic4s.http.{RequestFailure, RequestSuccess}
-import com.sksamuel.elastic4s.http.index.admin.IndexExistsResponse
+import com.bwsw.cloudstack.storage.kv.entity.{Check, HealthStatus}
 
-case class HealthCheckResponse(
-  detailed: Boolean,
-  registryCheckResult: Either[RequestFailure, RequestSuccess[IndexExistsResponse]],
-  storageTemplateCheck: Boolean,
-  historyStorageTemplateCheck: Boolean)
+sealed trait HealthCheckResponse
+
+/** Contains detailed information about health checks performed to calculate total health status
+  *
+  * @param status total health status
+  * @param checks detailed information about checks
+  */
+case class DetailedHealthCheckResponse(status: HealthStatus, checks: Iterable[Check]) extends HealthCheckResponse
+
+/** Contains short information about total health status
+  *
+  * @param status total health status
+  */
+case class StatusHealthCheckResponse(status: HealthStatus) extends HealthCheckResponse
+

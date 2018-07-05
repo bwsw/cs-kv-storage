@@ -30,3 +30,16 @@ object StorageTemplate extends CheckName {
 object HistoryStorageTemplate extends CheckName {
   override def toString: String = "HISTORY_STORAGE_TEMPLATE"
 }
+
+object Unspecified extends CheckName {
+  override def toString: String = "UNSPECIFIED"
+}
+
+object CheckName {
+  def parse(string: String): CheckName = string match {
+    case "STORAGE_REGISTRY" => StorageRegistry
+    case "STORAGE_TEMPLATE" => StorageTemplate
+    case "HISTORY_STORAGE_TEMPLATE" => HistoryStorageTemplate
+    case _ => throw new IllegalArgumentException
+  }
+}

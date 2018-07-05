@@ -17,20 +17,21 @@
 
 package com.bwsw.cloudstack.storage.kv.actor
 
-import akka.actor.ActorLogging
+import akka.actor.{ActorLogging, Status}
 import akka.pattern.pipe
 import akka.stream.ActorMaterializer
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.HttpMethods.HEAD
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse, StatusCodes}
 import com.bwsw.cloudstack.storage.kv.configuration.ElasticsearchConfig
-import com.bwsw.cloudstack.storage.kv.message.request.CheckTemplateExistsRequest
+import com.bwsw.cloudstack.storage.kv.entity._
+import com.bwsw.cloudstack.storage.kv.message.request.TemplateCheckRequest
 import scaldi.Injector
 import scaldi.akka.AkkaInjectable._
 
 /** Performs checks under Elasticsearch **/
-class ElasticsearchCheckActor(implicit inj: Injector, materializer: ActorMaterializer)
-  extends CheckActor
+class ElasticsearchTemplateCheckActor(implicit inj: Injector, materializer: ActorMaterializer)
+  extends TemplateCheckActor
   with ActorLogging {
 
   import context.dispatcher
@@ -39,18 +40,21 @@ class ElasticsearchCheckActor(implicit inj: Injector, materializer: ActorMateria
   private val elasticsearchConfig = inject[ElasticsearchConfig]
 
   def receive: PartialFunction[Any, Unit] = {
-    case CheckTemplateExistsRequest(name) =>
+    case TemplateCheckRequest(name, checkName) =>
       val uri = elasticsearchConfig.getUri + "/_template/" + name
-      http.singleRequest(HttpRequest(HEAD, uri))
-        .pipeTo(self)(sender())
-
-    case resp@HttpResponse(code, _, _, _) =>
-      val answer = code match {
-        case StatusCodes.OK => true
-        case StatusCodes.NotFound => false
-        case _ => false
-      }
-      resp.discardEntityBytes()
-      sender() ! answer
+      http.singleRequest(HttpRequest(HEAD, uri)).map {
+        case resp@HttpResponse(code, _, _, _) =>
+          resp.discardEntityBytes()
+          code match {
+            case StatusCodes.OK => Check(checkName, Healthy, "OK")
+            case StatusCodes.NotFound => Check(checkName, Unhealthy, "Not found")
+            case unexpected => Check(checkName, Unhealthy, "Unexpected status: " + unexpected.intValue())
+          }
+      }.recover {
+        case ex => Check(checkName, Unhealthy, ex.getMessage)
+      }.pipeTo(sender())
   }
+
+  private case class TemplateCheckResponse(checkName: CheckName, response: HttpResponse)
+
 }

@@ -19,10 +19,11 @@ package com.bwsw.cloudstack.storage.kv.actor
 
 import akka.actor.{ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
-import akka.util.Timeout
 import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
 import com.bwsw.cloudstack.storage.kv.entity.{Check, _}
-import com.bwsw.cloudstack.storage.kv.message.request.{CheckTemplateExistsRequest, HealthCheckRequest}
+import com.bwsw.cloudstack.storage.kv.message.request.{TemplateCheckRequest, HealthCheckRequest}
+import com.bwsw.cloudstack.storage.kv.message.response.{DetailedHealthCheckResponse, HealthCheckResponse, StatusHealthCheckResponse}
+import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils._
 import com.sksamuel.elastic4s.admin.IndicesExists
 import com.sksamuel.elastic4s.http._
 import com.sksamuel.elastic4s.http.index.admin.IndexExistsResponse
@@ -46,15 +47,12 @@ class ElasticsearchHealthActorSpec
 
   private val checkTestProbe = TestProbe()
   private val appConf = mock[AppConfig]
-  private val registryIndex = "storage-registry"
-  private val storageTemplate = "storage"
-  private val historyStorageTemplate = "history-storage"
-  private val successMsg = ""
-  private val failMsg = "Not found"
+  private val successMsg = "OK"
+  private val notFoundMsg = "Not found"
   private val exceptionMsg = "Elasticsearch error"
   private val timeout = 1000.millis
 
-  class CheckActorMock(testProbe: TestProbe) extends CheckActor {
+  class TemplateCheckActorMock(testProbe: TestProbe) extends TemplateCheckActor {
     override def receive: Receive = {
       case msg: Any =>
         testProbe.ref.forward(msg)
@@ -68,17 +66,16 @@ class ElasticsearchHealthActorSpec
     implicit val testModule: Injector =
       new Module {
         bind[AppConfig] toNonLazy appConf
-        bind[CheckActor] toProvider new CheckActorMock(checkTestProbe)
+        bind[TemplateCheckActor] toProvider new TemplateCheckActorMock(checkTestProbe)
         bind[HttpClient] to client
       }
     val elasticsearchHealthActor = system.actorOf(Props(new ElasticsearchHealthActor))
 
     def test(
-        detailed: Boolean,
         healthStatus: HealthStatus,
         storageRegistryCheckResult: Either[Unit, Boolean] = Right(true),
         storageTemplateCheckResult: Boolean = true,
-        historyStorageTemplateCheckResult: Boolean = true): HealthCheckResponseBody = {
+        historyStorageTemplateCheckResult: Boolean = true): HealthCheckResponse = {
 
       val storageRegistryCheck = storageRegistryCheckResult match {
         case Right(true) =>
@@ -86,78 +83,66 @@ class ElasticsearchHealthActorSpec
           Check(StorageRegistry, Healthy, successMsg)
         case Right(false) =>
           expectStorageRegistryNotFound()
-          Check(StorageRegistry, Unhealthy, failMsg)
+          Check(StorageRegistry, Unhealthy, notFoundMsg)
         case Left(_) =>
           expectStorageRegistryRequestFailure(exceptionMsg)
           Check(StorageRegistry, Unhealthy, exceptionMsg)
       }
+      val storageCheck =
+        if (storageTemplateCheckResult)
+          Check(StorageTemplate, Healthy, successMsg)
+        else
+          Check(StorageTemplate, Unhealthy, notFoundMsg)
 
-      elasticsearchHealthActor ! HealthCheckRequest(detailed)
-      checkTestProbe.expectMsg(timeout, CheckTemplateExistsRequest(storageTemplate))
-      checkTestProbe.reply(storageTemplateCheckResult)
-      checkTestProbe.expectMsg(timeout, CheckTemplateExistsRequest(historyStorageTemplate))
-      checkTestProbe.reply(historyStorageTemplateCheckResult)
+      val historyStorageCheck =
+        if (historyStorageTemplateCheckResult)
+          Check(HistoryStorageTemplate, Healthy, successMsg)
+        else
+          Check(HistoryStorageTemplate, Unhealthy, notFoundMsg)
 
-      if (detailed)
-        expectMsg(
-          timeout, HealthCheckDetailedResponseBody(
-            healthStatus, Seq(
-              storageRegistryCheck,
-              Check(
-                StorageTemplate,
-                if (storageTemplateCheckResult) Healthy else Unhealthy,
-                if (storageTemplateCheckResult) successMsg else failMsg),
-              Check(
-                HistoryStorageTemplate,
-                if (historyStorageTemplateCheckResult) Healthy else Unhealthy,
-                if (historyStorageTemplateCheckResult) successMsg else failMsg))))
-      else
-        expectMsg(timeout, HealthCheckShortResponseBody(healthStatus))
+      elasticsearchHealthActor ! HealthCheckRequest(true)
+      checkTestProbe.expectMsg(timeout, TemplateCheckRequest(storageTemplate, StorageTemplate))
+      checkTestProbe.reply(storageCheck)
+      checkTestProbe.expectMsg(timeout, TemplateCheckRequest(historyStorageTemplate, HistoryStorageTemplate))
+      checkTestProbe.reply(historyStorageCheck)
+
+      expectMsg(
+        timeout, DetailedHealthCheckResponse(
+          healthStatus, Seq(
+            storageRegistryCheck,
+            storageCheck,
+            historyStorageCheck)))
     }
 
     describe("HealthCheckRequest(detailed = false)") {
 
-      it("should report Healthy if all checks passed") {
-        test(detailed = false, Healthy)
+      it("should report Healthy") {
+        elasticsearchHealthActor ! HealthCheckRequest(false)
+        expectMsg(timeout, StatusHealthCheckResponse(Healthy))
       }
 
-      it("should report Unhealthy if at least storage template check returned false") {
-        test(detailed = false, Unhealthy, storageTemplateCheckResult = false)
-      }
-
-      it("should report Unhealthy if at least history storage template check returned false") {
-        test(detailed = false, Unhealthy, historyStorageTemplateCheckResult = false)
-      }
-
-      it("should report Unhealthy if at least storage registry check failed") {
-        test(detailed = false, Unhealthy, storageRegistryCheckResult = Left())
-      }
-
-      it("should report Unhealthy if at least storage registry check returned false") {
-        test(detailed = false, Unhealthy, storageRegistryCheckResult = Right(false))
-      }
     }
 
     describe("HealthCheckRequest(detailed = true)") {
 
       it("should return Healthy detailed report if all checks passed") {
-        test(detailed = true, Healthy)
+        test(Healthy)
       }
 
       it("should return Unhealthy detailed report if at least storage template check returned false") {
-        test(detailed = true, Unhealthy, storageTemplateCheckResult = false)
+        test(Unhealthy, storageTemplateCheckResult = false)
       }
 
       it("should return Unhealthy detailed report if at least history storage template check returned false") {
-        test(detailed = true, Unhealthy, historyStorageTemplateCheckResult = false)
+        test(Unhealthy, historyStorageTemplateCheckResult = false)
       }
 
       it("should report Unhealthy if at least storage registry check failed") {
-        test(detailed = true, Unhealthy, storageRegistryCheckResult = Left())
+        test(Unhealthy, storageRegistryCheckResult = Left())
       }
 
       it("should return Unhealthy detailed report if at least storage registry check returned false") {
-        test(detailed = true, Unhealthy, storageRegistryCheckResult = Right(false))
+        test(Unhealthy, storageRegistryCheckResult = Right(false))
       }
     }
   }

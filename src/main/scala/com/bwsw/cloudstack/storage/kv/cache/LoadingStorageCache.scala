@@ -19,6 +19,7 @@ package com.bwsw.cloudstack.storage.kv.cache
 
 import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
 import com.bwsw.cloudstack.storage.kv.entity.Storage
+import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils._
 import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -36,7 +37,7 @@ class LoadingStorageCache(conf: AppConfig, loader: StorageLoader) extends Storag
 
   def isHistoryEnabled(storageUuid: String): Future[Option[Boolean]] = {
     cache.get(storageUuid).map {
-      case Some(storage) => Some(storage.keepHistory && storage.storageType != "TEMP")
+      case Some(storage) => Some(storage.keepHistory && storage.storageType != temporaryStorageType)
       case None => None
     }
   }

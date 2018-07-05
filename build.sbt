@@ -39,7 +39,7 @@ libraryDependencies ++= Seq(
   "com.typesafe" % "config" % "1.3.3",
   "com.typesafe.akka" %% "akka-actor" % akkaVersion,
   "com.typesafe.akka" %% "akka-http" % "10.1.3",
-  "com.typesafe.akka" %% "akka-stream" % "2.5.13",
+  "com.typesafe.akka" %% "akka-stream" % akkaVersion,
   "org.scalatra" %% "scalatra-json" % ScalatraVersion,
   "org.json4s" %% "json4s-jackson" % "3.5.4",
   "com.github.blemale" % "scaffeine_2.12" % "2.5.0",

@@ -21,7 +21,8 @@ import akka.actor.{ActorSystem, Props}
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 import akka.testkit.{ImplicitSender, TestKit}
 import com.bwsw.cloudstack.storage.kv.configuration.ElasticsearchConfig
-import com.bwsw.cloudstack.storage.kv.message.request.CheckTemplateExistsRequest
+import com.bwsw.cloudstack.storage.kv.entity._
+import com.bwsw.cloudstack.storage.kv.message.request.TemplateCheckRequest
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
 import com.github.tomakehurst.wiremock.client.WireMock._
@@ -31,7 +32,7 @@ import scaldi.{Injector, Module}
 
 import scala.concurrent.duration._
 
-class ElasticsearchCheckActorSpec
+class ElasticsearchTemplateCheckActorSpec
   extends TestKit(ActorSystem("cs-kv-storage"))
   with FunSpecLike
   with MockFactory
@@ -39,10 +40,14 @@ class ElasticsearchCheckActorSpec
   with BeforeAndAfterEach {
 
   implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system))
-  
+
   private val esConfig = mock[ElasticsearchConfig]
   private val uriBase = "http://localhost:"
   private val name = "someTemplate"
+  private val successMsg = "OK"
+  private val notFoundMsg = "Not found"
+  private val unexpectedMsg = "Unexpected status: "
+  private val checkName = Unspecified
   private val templatePath = "/_template/" + name
   private val wireMockServer = new WireMockServer(wireMockConfig().dynamicPort())
 
@@ -61,29 +66,29 @@ class ElasticsearchCheckActorSpec
         bind[ElasticsearchConfig] toNonLazy esConfig
       }
 
-    val elasticsearchCheckActor = system.actorOf(Props(new ElasticsearchCheckActor))
+    val elasticsearchCheckActor = system.actorOf(Props(new ElasticsearchTemplateCheckActor))
 
-    def test(status: Int, msg: Boolean, timeout: FiniteDuration) = {
+    def test(status: Int, msg: Check, timeout: FiniteDuration) = {
       (esConfig.getUri _).expects().returning(uriBase + wireMockServer.port())
       wireMockServer.stubFor(
         head(urlPathEqualTo(templatePath))
           .willReturn(aResponse()
             .withHeader("Content-Type", "application/json; charset=UTF-8")
             .withStatus(status)))
-      elasticsearchCheckActor ! CheckTemplateExistsRequest(name)
+      elasticsearchCheckActor ! TemplateCheckRequest(name, checkName)
       expectMsg(timeout, msg)
     }
 
     it("should return true if template exists") {
-      test(200, msg = true, 5000.millis)
+      test(200, Check(checkName, Healthy, successMsg), 5000.millis)
     }
 
     it("should return false if template does not exist") {
-      test(400, msg = false, 1500.millis)
+      test(404, Check(checkName, Unhealthy, notFoundMsg), 1500.millis)
     }
 
     it("should return false if request processing failed") {
-      test(500, msg = false, 1500.millis)
+      test(500, Check(checkName, Unhealthy, unexpectedMsg + 500), 1500.millis)
     }
   }
 

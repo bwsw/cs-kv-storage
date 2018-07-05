@@ -19,7 +19,7 @@ package com.bwsw.cloudstack.storage.kv.app
 
 import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
-import com.bwsw.cloudstack.storage.kv.actor.{CheckActor, HealthActor, KvActor}
+import com.bwsw.cloudstack.storage.kv.actor.{HealthActor, KvActor}
 import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
 import com.bwsw.cloudstack.storage.kv.manager.KvStorageManager
 import com.bwsw.cloudstack.storage.kv.processor.KvProcessor

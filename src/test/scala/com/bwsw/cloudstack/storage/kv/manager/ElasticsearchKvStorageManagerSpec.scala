@@ -18,7 +18,7 @@
 package com.bwsw.cloudstack.storage.kv.manager
 
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError}
-import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils
+import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils._
 import com.sksamuel.elastic4s.delete.DeleteByIdDefinition
 import com.sksamuel.elastic4s.get.GetDefinition
 import com.sksamuel.elastic4s.http.ElasticDsl._
@@ -38,10 +38,7 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
 
   private val storage = "someStorage"
   private val ttl = 300000
-  private val registry = "storage-registry"
-  private val `type` = "_doc"
   private val typeField = "type"
-  private val temporaryType = "TEMP"
   private val vmType = "VM"
 
   describe("An ElasticsearchStorageManager") {
@@ -50,7 +47,15 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
 
     describe("(update temp storage ttl)") {
       it("should update the value of ttl field in storage registry") {
-        val updateResponse = UpdateResponse(registry, `type`, storage, 2, "updated", forcedRefresh = false, Shards(2, 1, 0), None)
+        val updateResponse = UpdateResponse(
+          registryIndex,
+          `type`,
+          storage,
+          2,
+          "updated",
+          forcedRefresh = false,
+          Shards(2, 1, 0),
+          None)
         expectUpdateRequest(fakeClient).returning(getRequestSuccessFuture(updateResponse))
         manager.updateTempStorageTtl(storage, ttl).map {
           case Right(_) => succeed
@@ -59,7 +64,15 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
       }
 
       it("should return BadRequestError if type of the storage isn't TEMP") {
-        val updateResponse = UpdateResponse(registry, `type`, storage, 2, "noop", forcedRefresh = false, Shards(2, 1, 0), None)
+        val updateResponse = UpdateResponse(
+          registryIndex,
+          `type`,
+          storage,
+          2,
+          "noop",
+          forcedRefresh = false,
+          Shards(2, 1, 0),
+          None)
         expectUpdateRequest(fakeClient).returning(getRequestSuccessFuture(updateResponse))
         manager.updateTempStorageTtl(storage, ttl).map {
           case Left(_: BadRequestError) => succeed
@@ -85,8 +98,15 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
     }
 
     describe("(delete temp storage)") {
-      val getResponse = GetResponse(storage, registry, `type`, 2, found = true, Map.empty, Map(typeField -> temporaryType))
-      val deleteByIdResponse = DeleteResponse(Shards(2, 1, 0), registry, `type`, storage, 2, "deleted")
+      val getResponse = GetResponse(
+        storage,
+        registryIndex,
+        `type`,
+        2,
+        found = true,
+        Map.empty,
+        Map(typeField -> temporaryStorageType))
+      val deleteByIdResponse = DeleteResponse(Shards(2, 1, 0), registryIndex, `type`, storage, 2, "deleted")
 
       it("should delete the storage index and associated record in a registry") {
         expectGetRequest(fakeClient).returning(getRequestSuccessFuture(getResponse))
@@ -100,7 +120,14 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
       }
 
       it("should return BadRequestError if type of the storage isn't TEMP") {
-        val getResponse = GetResponse(storage, registry, `type`, 2, found = true, Map.empty, Map(typeField -> vmType))
+        val getResponse = GetResponse(
+          storage,
+          registryIndex,
+          `type`,
+          2,
+          found = true,
+          Map.empty,
+          Map(typeField -> vmType))
         expectGetRequest(fakeClient).returning(getRequestSuccessFuture(getResponse))
         expectDeleteByIdRequest(fakeClient).never
         expectDeleteIndexRequest(fakeClient).never
@@ -184,23 +211,24 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
 
   private def expectUpdateRequest(client: HttpClient) = {
     (client.execute[UpdateDefinition, UpdateResponse](_: UpdateDefinition)(_: HttpExecutable[UpdateDefinition, UpdateResponse], _: ExecutionContext))
-      .expects(update(storage) in registry / `type`
+      .expects(
+        update(storage) in registryIndex / `type`
         script "if (ctx._source.type == \"TEMP\"){ ctx._source.ttl = " + ttl + " } else { ctx.op=\"noop\"}", UpdateHttpExecutable, *)
   }
 
   private def expectGetRequest(client: HttpClient) = {
     (client.execute[GetDefinition, GetResponse](_: GetDefinition)(_: HttpExecutable[GetDefinition, GetResponse], _: ExecutionContext))
-      .expects(ElasticDsl.get(storage).from(registry / `type`), GetHttpExecutable, *)
+      .expects(ElasticDsl.get(storage).from(registryIndex / `type`), GetHttpExecutable, *)
   }
 
   private def expectDeleteByIdRequest(client: HttpClient) = {
     (client.execute[DeleteByIdDefinition, DeleteResponse](_: DeleteByIdDefinition)(_: HttpExecutable[DeleteByIdDefinition, DeleteResponse], _: ExecutionContext))
-      .expects(deleteById(registry, `type`, storage), DeleteByIdExecutable, *)
+      .expects(deleteById(registryIndex, `type`, storage), DeleteByIdExecutable, *)
   }
 
   private def expectDeleteIndexRequest(client: HttpClient) = {
     (client.execute[DeleteIndex, DeleteIndexResponse](_: DeleteIndex)(_: HttpExecutable[DeleteIndex, DeleteIndexResponse], _: ExecutionContext))
-      .expects(deleteIndex(ElasticsearchUtils.getStorageIndex(storage)), DeleteIndexHttpExecutable, *)
+      .expects(deleteIndex(getStorageIndex(storage)), DeleteIndexHttpExecutable, *)
   }
 
   private def getRequestSuccessFuture[T](response: T): Future[Right[RequestFailure, RequestSuccess[T]]] = {

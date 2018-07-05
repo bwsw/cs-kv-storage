@@ -18,6 +18,7 @@
 package com.bwsw.cloudstack.storage.kv.processor
 
 import com.bwsw.cloudstack.storage.kv.message.KvHistory
+import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils._
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.HttpClient
 
@@ -35,7 +36,7 @@ class ElasticsearchHistoryProcessor(client: HttpClient) extends HistoryProcessor
   def save(histories: List[KvHistory]): Future[Option[List[KvHistory]]] = {
     val indices = histories.map {
       record =>
-        indexInto(getHistoricalStorage(record.storage), `type`) fields getFields(record)
+        indexInto(getHistoricalStorageIndex(record.storage), `type`) fields getFields(record)
     }
     client.execute(bulk(indices)).map {
       case Left(_) => Some(histories)
@@ -50,11 +51,6 @@ class ElasticsearchHistoryProcessor(client: HttpClient) extends HistoryProcessor
 }
 
 object ElasticsearchHistoryProcessor {
-  protected val `type` = "_doc"
-
-  protected def getHistoricalStorage(storageUuid: String): String = {
-    s"history-storage-$storageUuid"
-  }
 
   protected def getFields(history: KvHistory): Map[String, Any] = {
     Map(

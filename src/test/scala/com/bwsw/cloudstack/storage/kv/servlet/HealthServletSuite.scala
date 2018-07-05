@@ -24,6 +24,7 @@ import akka.util.Timeout
 import com.bwsw.cloudstack.storage.kv.actor.HealthActor
 import com.bwsw.cloudstack.storage.kv.entity._
 import com.bwsw.cloudstack.storage.kv.message.request.HealthCheckRequest
+import com.bwsw.cloudstack.storage.kv.message.response.{DetailedHealthCheckResponse, StatusHealthCheckResponse}
 import com.bwsw.cloudstack.storage.kv.mock.MockActor
 import com.bwsw.cloudstack.storage.kv.mock.MockActor.ResponsiveExpectation
 import org.scalamock.scalatest.MockFactory
@@ -64,7 +65,7 @@ class HealthServletSuite
     describe("check non detailed") {
       it("should return 200 Ok if storage is running and set up properly") {
         healthActor.underlyingActor
-          .clearAndExpect(ResponsiveExpectation(HealthCheckRequest(false), () => HealthCheckShortResponseBody(Healthy)))
+          .clearAndExpect(ResponsiveExpectation(HealthCheckRequest(false), () => StatusHealthCheckResponse(Healthy)))
         get("/health") {
           status should equal(200)
         }
@@ -74,7 +75,7 @@ class HealthServletSuite
         healthActor.underlyingActor
           .clearAndExpect(ResponsiveExpectation(
             HealthCheckRequest(false),
-            () => HealthCheckShortResponseBody(Unhealthy)))
+            () => StatusHealthCheckResponse(Unhealthy)))
         get("/health") {
           status should equal(500)
         }
@@ -86,7 +87,7 @@ class HealthServletSuite
         healthActor.underlyingActor
           .clearAndExpect(ResponsiveExpectation(
             HealthCheckRequest(true),
-            () => HealthCheckDetailedResponseBody(
+            () => DetailedHealthCheckResponse(
               Healthy, Seq(
                 Check(StorageRegistry, Healthy, ""),
                 Check(StorageTemplate, Healthy, ""),
@@ -102,7 +103,7 @@ class HealthServletSuite
         healthActor.underlyingActor
           .clearAndExpect(ResponsiveExpectation(
             HealthCheckRequest(true),
-            () => HealthCheckDetailedResponseBody(
+            () => DetailedHealthCheckResponse(
               Unhealthy, Seq(
                 Check(StorageRegistry, Unhealthy, "Not found"),
                 Check(StorageTemplate, Healthy, ""),

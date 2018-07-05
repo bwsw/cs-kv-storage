@@ -29,5 +29,5 @@ class KvStorageModule extends Module {
   bind[StorageLoader] to injected[ElasticsearchStorageLoader]
   bind[StorageCache] to injected[LoadingStorageCache]
   bind[HealthActor] to injected[ElasticsearchHealthActor]
-  bind[CheckActor] to injected[ElasticsearchCheckActor]
+  bind[TemplateCheckActor] to injected[ElasticsearchTemplateCheckActor]
 }

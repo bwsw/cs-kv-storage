@@ -19,4 +19,5 @@ package com.bwsw.cloudstack.storage.kv.actor
 
 import akka.actor.Actor
 
+/** Actor responsible for health checks processing **/
 trait HealthActor extends Actor

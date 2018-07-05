@@ -17,4 +17,6 @@
 
 package com.bwsw.cloudstack.storage.kv.message.request
 
-case class CheckTemplateExistsRequest(name: String)
+import com.bwsw.cloudstack.storage.kv.entity.CheckName
+
+case class TemplateCheckRequest(name: String, checkName: CheckName)

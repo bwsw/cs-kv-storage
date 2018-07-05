@@ -20,9 +20,9 @@ package com.bwsw.cloudstack.storage.kv.servlet
 import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.util.Timeout
-import com.bwsw.cloudstack.storage.kv.actor.HealthActor
 import com.bwsw.cloudstack.storage.kv.entity._
 import com.bwsw.cloudstack.storage.kv.message.request.HealthCheckRequest
+import com.bwsw.cloudstack.storage.kv.message.response.{DetailedHealthCheckResponse, StatusHealthCheckResponse}
 import org.json4s.JsonAST.JString
 import org.json4s.{CustomSerializer, DefaultFormats, Formats}
 import org.scalatra._
@@ -47,9 +47,9 @@ class HealthServlet(system: ActorSystem, requestTimeout: FiniteDuration, healthA
       val is: Future[_] = {
         val detailed = params.getOrElse("detailed", "false").toBoolean
         (healthActor ? HealthCheckRequest(detailed)).map {
-          case HealthCheckShortResponseBody(Healthy) => Ok("")
-          case HealthCheckShortResponseBody(Unhealthy) => InternalServerError("")
-          case body: HealthCheckDetailedResponseBody =>
+          case StatusHealthCheckResponse(Healthy) => Ok("")
+          case StatusHealthCheckResponse(Unhealthy) => InternalServerError("")
+          case body: DetailedHealthCheckResponse =>
             contentType = formats("json")
             body.status match {
               case Healthy => Ok(body)
@@ -62,17 +62,14 @@ class HealthServlet(system: ActorSystem, requestTimeout: FiniteDuration, healthA
 
   private class HealthStatusSerializer extends CustomSerializer[HealthStatus](
     format => ( {
-      case JString("HEALTHY") => Healthy
-      case JString("UNHEALTHY") => Unhealthy
+      case JString(s) => HealthStatus.parse(s)
     }, {
       case op: HealthStatus => JString(op.toString)
     }))
 
   private class NameSerializer extends CustomSerializer[CheckName](
     format => ( {
-      case JString("STORAGE_REGISTRY") => StorageRegistry
-      case JString("STORAGE_TEMPLATE") => StorageTemplate
-      case JString("HISTORY_STORAGE_TEMPLATE") => HistoryStorageTemplate
+      case JString(s) => CheckName.parse(s)
     }, {
       case op: CheckName => JString(op.toString)
     }))

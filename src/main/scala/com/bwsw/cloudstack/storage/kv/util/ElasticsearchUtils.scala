@@ -23,7 +23,16 @@ import com.sksamuel.elastic4s.http.RequestFailure
 /** An utility for Elasticsearch operations **/
 object ElasticsearchUtils {
 
-  def getStorageIndex(storage: String): String = "storage-" + storage
+  val registryIndex = "storage-registry"
+  val storageTemplate = "storage"
+  val temporaryStorageType = "TEMP"
+  val historyStorageTemplate = "history-storage"
+  val `type` = "_doc"
+  val storageValueField = "value"
+
+  def getStorageIndex(storageUuid: String): String = storageTemplate + "-" + storageUuid
+
+  def getHistoricalStorageIndex(storageUuid: String): String = historyStorageTemplate + "-" + storageUuid
 
   def getError(requestFailure: RequestFailure): InternalError = {
     if (requestFailure.error == null)

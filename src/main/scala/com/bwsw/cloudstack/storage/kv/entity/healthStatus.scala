@@ -26,3 +26,11 @@ object Healthy extends HealthStatus {
 object Unhealthy extends HealthStatus {
   override def toString: String = "UNHEALTHY"
 }
+
+object HealthStatus {
+  def parse(string: String): HealthStatus = string match {
+    case "HEALTHY" => Healthy
+    case "UNHEALTHY" => Unhealthy
+    case _ => throw new IllegalArgumentException
+  }
+}

@@ -17,17 +17,18 @@
 
 package com.bwsw.cloudstack.storage.kv.actor
 
+import akka.actor.Status
 import com.bwsw.cloudstack.storage.kv.entity._
-import com.bwsw.cloudstack.storage.kv.message.request.{CheckTemplateExistsRequest, HealthCheckRequest}
+import com.bwsw.cloudstack.storage.kv.message.request.{TemplateCheckRequest, HealthCheckRequest}
 import com.sksamuel.elastic4s.http.ElasticDsl._
-import com.sksamuel.elastic4s.http.{HttpClient, RequestFailure, RequestSuccess}
+import com.sksamuel.elastic4s.http.HttpClient
 import scaldi.Injector
 import scaldi.akka.AkkaInjectable._
 import akka.pattern.{ask, pipe}
 import akka.util.Timeout
 import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
-import com.bwsw.cloudstack.storage.kv.message.response.HealthCheckResponse
-import com.sksamuel.elastic4s.http.index.admin.IndexExistsResponse
+import com.bwsw.cloudstack.storage.kv.message.response.{DetailedHealthCheckResponse, StatusHealthCheckResponse}
+import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils._
 
 import scala.concurrent.Future
 
@@ -35,64 +36,50 @@ class ElasticsearchHealthActor(implicit inj: Injector) extends HealthActor {
 
   import context.dispatcher
 
-  private val checkActor = injectActorRef[CheckActor]
+  private val checkActor = injectActorRef[TemplateCheckActor]
   private val client = inject[HttpClient]
   private val appConfig = inject[AppConfig]
-  private val registryIndex = "storage-registry"
 
   implicit val duration: Timeout = appConfig.getRequestTimeout
 
   def receive: PartialFunction[Any, Unit] = {
-    case HealthCheckRequest(detailed) =>
+    case HealthCheckRequest(true) =>
       (for {
-        registry <- client.execute(indexExists(registryIndex))
-        storageTemplate <- getIndexTemplate("storage")
-        historyStorageTemplate <- getIndexTemplate("history-storage")
-      } yield HealthCheckResponse(detailed, registry, storageTemplate, historyStorageTemplate)).pipeTo(self)(sender())
-    case HealthCheckResponse(true, registry, storageTemplate, historyStorageTemplate) =>
-      val checks = Seq(
-        indexExistsCheck(StorageRegistry, registry),
-        templateExistsCheck(StorageTemplate, storageTemplate),
-        templateExistsCheck(HistoryStorageTemplate, historyStorageTemplate)
-      )
+        registry <- checkIndex(registryIndex, StorageRegistry)
+        storageTemplate <- checkIndexTemplate(storageTemplate, StorageTemplate)
+        historyStorageTemplate <- checkIndexTemplate(historyStorageTemplate, HistoryStorageTemplate)
+      } yield HealthCheckRawResponse(Seq(registry, storageTemplate, historyStorageTemplate))).pipeTo(self)(sender())
+
+    case HealthCheckRequest(false) =>
+      sender() ! StatusHealthCheckResponse(Healthy)
+
+    case HealthCheckRawResponse(checks) =>
       val status = if (checks.forall(_.status == Healthy)) Healthy else Unhealthy
-      sender() ! HealthCheckDetailedResponseBody(status, checks)
-    case HealthCheckResponse(false, registry, storageTemplate, historyStorageTemplate) =>
-      sender() ! (registry match {
-        case Right(success) =>
-          if (success.result.exists && storageTemplate && historyStorageTemplate)
-            HealthCheckShortResponseBody(Healthy)
-          else
-            HealthCheckShortResponseBody(Unhealthy)
-        case _ => HealthCheckShortResponseBody(Unhealthy)
-      })
+      sender() ! DetailedHealthCheckResponse(status, checks)
+
+    case _: Status.Failure =>
+      sender() ! StatusHealthCheckResponse(Unhealthy)
   }
 
-  private def indexExistsCheck(
-      name: CheckName,
-      response: Either[RequestFailure, RequestSuccess[IndexExistsResponse]]): Check = {
-    response match {
+  private def checkIndex(index: String, name: CheckName): Future[Check] = {
+    client.execute(indexExists(index)).map {
       case Left(failure) =>
-        val message = if (failure.error == null) "Elasticsearch error" else failure.error.reason
-        Check(name, Unhealthy, message)
+        Check(name, Unhealthy, if (failure.error == null) "Elasticsearch error" else failure.error.reason)
       case Right(success) =>
-        val status = if (success.result.exists) Healthy else Unhealthy
-        val message = if (success.result.exists) "" else "Not found"
-        Check(name, status, message)
+        if (success.result.exists)
+          Check(name, Healthy, "OK")
+        else
+          Check(name, Unhealthy, "Not found")
+    }.recover {
+      case ex => Check(name, Unhealthy, ex.getMessage)
     }
   }
 
-  private def templateExistsCheck(name: CheckName, response: Boolean): Check = {
-    if (response)
-      Check(name, Healthy, "")
-    else
-      Check(name, Unhealthy, "Not found")
-  }
-
-  private def getIndexTemplate(name: String): Future[Boolean] = {
-    (checkActor ? CheckTemplateExistsRequest(name)).map {
-      case true => true
-      case false => false
+  private def checkIndexTemplate(name: String, checkName: CheckName): Future[Check] = {
+    (checkActor ? TemplateCheckRequest(name, checkName)).map {
+      case check: Check => check
     }
   }
+
+  private case class HealthCheckRawResponse(checks: Iterable[Check])
 }
