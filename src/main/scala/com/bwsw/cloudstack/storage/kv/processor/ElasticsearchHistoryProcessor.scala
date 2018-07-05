@@ -25,8 +25,8 @@ import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils
 import com.sksamuel.elastic4s.http.ElasticDsl.{search, _}
 import com.sksamuel.elastic4s.http.{HttpClient, RequestFailure}
 import com.sksamuel.elastic4s.http.search.SearchHits
+import com.sksamuel.elastic4s.searches.SearchDefinition
 import com.sksamuel.elastic4s.searches.queries.QueryDefinition
-import com.sksamuel.elastic4s.searches.queries.term.TermsQueryDefinition
 import com.sksamuel.elastic4s.searches.sort.{FieldSortDefinition, SortOrder}
 
 import scala.collection.mutable.ArrayBuffer
@@ -70,7 +70,7 @@ class ElasticsearchHistoryProcessor(
       size: Option[Int],
       scroll: Option[Long]): Future[Either[StorageError, SearchResponseBody[History]]] = {
 
-    val searchDef = search(getHistoricalStorage(storageUuid))
+    var searchDef: SearchDefinition = search(getHistoricalStorage(storageUuid))
     val queries: ArrayBuffer[QueryDefinition] = if (keys.nonEmpty) ArrayBuffer(termsQuery(
       "key",
       keys)) else ArrayBuffer.empty
@@ -89,37 +89,32 @@ class ElasticsearchHistoryProcessor(
           queries += rangeQuery("timestamp").gte(s).lte(e)
     }
 
-    val queryDef = queries.size match {
+    searchDef = queries.size match {
       case 0 => searchDef
       case 1 => searchDef.query(queries.head)
       case _ => searchDef.query(boolQuery().filter(queries))
     }
+
     val pageSize = size.getOrElse(elasticsearchConfig.getScrollPageSize)
+    searchDef = searchDef.size(pageSize)
 
-    val withSize = queryDef.size(pageSize)
-
-    val withPage = page match {
-      case Some(p) => withSize.from(pageSize * (p - 1))
-      case None => withSize
+    if (page.nonEmpty) {
+      searchDef = searchDef.from(pageSize * (page.get - 1))
     }
 
-    val withScroll = scroll match {
-      case Some(s) => withPage.scroll(s + "ms")
-      case None => withPage
+    if (scroll.nonEmpty) {
+      searchDef = searchDef.scroll(scroll.get + "ms")
     }
 
-    val withSort =
-      if (sort.nonEmpty)
-        withScroll.sortBy(sort.map { field =>
-          if (field.head == '-')
-            FieldSortDefinition(field.substring(1), order = SortOrder.DESC)
-          else
-            FieldSortDefinition(field, order = SortOrder.ASC)
-        })
-      else
-        withScroll
+    if (sort.nonEmpty)
+      searchDef = searchDef.sortBy(sort.map { field =>
+        if (field.head == '-')
+          FieldSortDefinition(field.substring(1), order = SortOrder.DESC)
+        else
+          FieldSortDefinition(field, order = SortOrder.ASC)
+      })
 
-    client.execute(withSort).map {
+    client.execute(searchDef).map {
       case Left(failure) => Left(ElasticsearchUtils.getError(failure))
       case Right(success) =>
         try {
