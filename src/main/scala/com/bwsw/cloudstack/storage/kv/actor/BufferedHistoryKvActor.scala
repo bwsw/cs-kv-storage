@@ -64,7 +64,7 @@ class BufferedHistoryKvActor(implicit inj: Injector)
       }
     case bulk: KvHistoryBulk =>
       buffer.appendAll(bulk.values)
-      if (buffer.length >= configuration.getFlushHistorySize) {
+      while (buffer.length >= configuration.getFlushHistorySize) {
         self ! flush(buffer)
       }
   }
@@ -88,8 +88,9 @@ class BufferedHistoryKvActor(implicit inj: Injector)
   }
 
   private def flush(aBuffer: ListBuffer[KvHistory]): KvHistoryFlush = {
-    val values = aBuffer.toList
-    aBuffer.clear()
+    val flushSize = configuration.getFlushHistorySize
+    val values = aBuffer.take(flushSize).toList
+    aBuffer.trimStart(flushSize min aBuffer.size)
     KvHistoryFlush(values)
   }
 }
