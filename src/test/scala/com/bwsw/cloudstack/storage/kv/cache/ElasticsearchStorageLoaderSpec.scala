@@ -35,7 +35,19 @@ class ElasticsearchStorageLoaderSpec extends AsyncFunSpec with AsyncMockFactory 
   private val storage = Storage(storageUuid, "ACC", keepHistory = true)
   private val source = Map(
     "type" -> storage.storageType,
+    "is_history_enabled" -> storage.keepHistory,
+    "deleted" -> false
+  ).asInstanceOf[Map[String, AnyRef]]
+
+  private val deletedNotSetSource = Map(
+    "type" -> storage.storageType,
     "is_history_enabled" -> storage.keepHistory
+  ).asInstanceOf[Map[String, AnyRef]]
+
+  private val deletedSource = Map(
+    "type" -> storage.storageType,
+    "is_history_enabled" -> storage.keepHistory,
+    "deleted" -> true
   ).asInstanceOf[Map[String, AnyRef]]
 
   describe("An ElasticsearchStorageLoader") {
@@ -52,7 +64,25 @@ class ElasticsearchStorageLoaderSpec extends AsyncFunSpec with AsyncMockFactory 
       }
     }
 
+    it("should load value from Elasticsearch if no deleted field specified") {
+      val getResponse = GetResponse(storageUuid, registry, `type`, 1, found = true, Map.empty, deletedNotSetSource)
+      expectGetRequest(fakeClient).returning(getRequestSuccessFuture(getResponse))
+      loader.load(storageUuid).map {
+        case Some(s) => assert(s == storage)
+        case None => fail
+      }
+    }
+
     it("should return None if no storage found in Elasticsearch") {
+      val getResponse = GetResponse(storageUuid, registry, `type`, 1, found = false, Map.empty, deletedSource)
+      expectGetRequest(fakeClient).returning(getRequestSuccessFuture(getResponse))
+      loader.load(storageUuid).map {
+        case Some(s) => fail
+        case None => succeed
+      }
+    }
+
+    it("should return None if storage market as deleted in Elasticsearch") {
       val getResponse = GetResponse(storageUuid, registry, `type`, 1, found = false, Map.empty, Map.empty)
       expectGetRequest(fakeClient).returning(getRequestSuccessFuture(getResponse))
       loader.load(storageUuid).map {
