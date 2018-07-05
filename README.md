@@ -316,7 +316,7 @@ GET /health
 
 | Name       | Mandatory             | Description                                                         |
 |------------|-----------------------|---------------------------------------------------------------------|
-| detailed  | no (false by default) | Specifies whether it is need to check components that it depends on  |
+| detailed  | no (false by default) | A boolean value whether it is need to check components that it depends on  |
 
 #### Response
 ##### Status code
