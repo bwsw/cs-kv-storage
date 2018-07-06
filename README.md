@@ -422,15 +422,16 @@ The example of the configuration file can be found [here](/src/test/resources/ap
 | elasticsearch.uri | Elasticsearch addesses in the format elasticsearch://host:port,host:port, http://host:port,host:port or https://host:port,host:port. |
 | elasticsearch.auth.username | Elasticsearch username for authentication. |
 | elasticsearch.auth.password | Elasticsearch password for authentication. | 
-| elasticsearch.search.pagesize | Batch size to retrieve all results (scroll) for key listing. |
-| elasticsearch.search.keepalive | Timeout between batch requests to retrieve all results (scroll) for key listing. |
-| elasticsearch.limit.max-value-size | Max length of the value. |
-| elasticsearch.limit.max-key-size | Max length of the key. |
+| elasticsearch.scroll.page-size | Batch size to retrieve all results for key listing. |
+| elasticsearch.scroll.keep-alive | Timeout between batch requests to retrieve all results for key listing. |
+| elasticsearch.limit.value.max-size | Max length of the value. |
+| elasticsearch.limit.key.max-size | Max length of the key. |
 | app.cache.max-size | Max size of the storage cache. |
 | app.cache.expiration-time | TTL for the storage cache items. |
 | app.history.flush-size | Size of batch requests to save a history of the storage operations. |
 | app.history.flush-timeout | Timeout between batch/retry requests to save a history of the storage operations. |
 | app.history.retry-limit | Amount of attempts to try to log the storage operation. |
+| app.history.default-page-size | Default value for 'size' parameter of GET /history/<storage_uuid> request |
 | app.request-timeout | Maximum time to process the request. |
 
 
