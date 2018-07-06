@@ -61,7 +61,7 @@ class ElasticsearchHealthActor(implicit inj: Injector)
       sender() ! DetailedHealthCheckResponse(status, checks)
 
     case failure: Status.Failure =>
-      log.error(getClass + ": " + failure.cause.getMessage)
+      log.error(failure.cause, getClass.getName)
       sender() ! StatusHealthCheckResponse(Unhealthy)
   }
 
@@ -79,7 +79,7 @@ class ElasticsearchHealthActor(implicit inj: Injector)
           Check(name, Unhealthy, NotFound)
     }.recover {
       case ex =>
-        log.error("Index '" + index + "' existence check failed: " + ex.getMessage)
+        log.error(ex, "Index {} existence check failed:", index)
         Check(name, Unhealthy, Unexpected(ex.getMessage))
     }
   }

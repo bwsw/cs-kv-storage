@@ -50,14 +50,12 @@ class ElasticsearchTemplateCheckActor(implicit inj: Injector, materializer: Acto
             case StatusCodes.OK => Check(checkName, Healthy, Ok)
             case StatusCodes.NotFound => Check(checkName, Unhealthy, NotFound)
             case unexpected =>
-              if (unexpected.isFailure()) {
-                log.error("Template '" + name + "' existence check failed: " + unexpected.reason())
-              }
+              log.error("Template {} existence check finished unexpectedly: {}", name, unexpected.reason())
               Check(checkName, Unhealthy, Unexpected("Unexpected status: " + unexpected.intValue()))
           }
       }.recover {
         case ex =>
-          log.error("Template '" + name + "' existence check failed: " + ex.getMessage)
+          log.error(ex, "Template {} existence check failed:", name)
           Check(checkName, Unhealthy, Unexpected(ex.getMessage))
       }.pipeTo(sender())
   }
