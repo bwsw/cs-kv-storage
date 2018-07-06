@@ -70,7 +70,6 @@ class ElasticsearchKvProcessor(client: HttpClient, conf: ElasticsearchConfig) ex
   }
 
   def set(storage: String, key: String, value: String): Future[Either[StorageError, Unit]] = {
-    logger.error("HIDUDE\n")
     if (isKvValid(key, value))
       client.execute {
         indexInto(ElasticsearchUtils.getStorageIndex(storage) / Type) id key fields (ValueField -> value)
