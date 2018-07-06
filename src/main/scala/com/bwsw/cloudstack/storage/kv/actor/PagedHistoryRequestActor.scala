@@ -30,7 +30,9 @@ import scaldi.akka.AkkaInjectable.inject
 import scala.concurrent.Future
 
 /** Actor responsible for page-by-page retrieving of history records **/
-class PagedHistoryRequestActor(implicit inj: Injector) extends HistoryRequestActor {
+class PagedHistoryRequestActor(implicit inj: Injector)
+  extends HistoryRequestActor
+  with akka.actor.ActorLogging {
 
   import context.dispatcher
 
@@ -62,6 +64,7 @@ class PagedHistoryRequestActor(implicit inj: Injector) extends HistoryRequestAct
     case KvHistoryResponse(body) =>
       sender() ! body
     case failure: Status.Failure =>
+      log.error(getClass + ": " + failure.cause.getMessage)
       sender() ! Left(InternalError(failure.cause.getMessage))
   }
 }

@@ -28,6 +28,7 @@ import com.sksamuel.elastic4s.http.search.{SearchHits, SearchResponse}
 import com.sksamuel.elastic4s.searches.SearchDefinition
 import com.sksamuel.elastic4s.searches.queries.QueryDefinition
 import com.sksamuel.elastic4s.searches.sort.{FieldSortDefinition, SortOrder}
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -49,7 +50,9 @@ class ElasticsearchHistoryProcessor(
         indexInto(getHistoricalStorageIndex(record.storage), `type`) fields getFields(record)
     }
     client.execute(bulk(indices)).map {
-      case Left(_) => Some(histories)
+      case Left(failure) =>
+        logger.error(failure.error.reason)
+        Some(histories)
       case Right(success) =>
         val erroneous = success.result.items.filter(_.error.isDefined).map(item => histories(item.itemId))
         if (erroneous.isEmpty)
@@ -84,7 +87,9 @@ class ElasticsearchHistoryProcessor(
         .scroll(scroll)
 
     search.execute.map {
-      case Left(failure) => Left(getError(failure))
+      case Left(failure) =>
+        logger.error(failure.error.reason)
+        Left(getError(failure))
       case Right(RequestSuccess(status, body, headers, result)) =>
         try {
           result.scrollId match {
@@ -118,6 +123,7 @@ class ElasticsearchHistoryProcessor(
         case Left(RequestFailure(400, _, _, _)) =>
           Left(BadRequestError())
         case Left(failure) =>
+          logger.error(failure.error.reason)
           Left(getError(failure))
         case Right(success) =>
           try {
@@ -137,6 +143,7 @@ class ElasticsearchHistoryProcessor(
 
 object ElasticsearchHistoryProcessor {
   protected val `type` = "_doc"
+  protected val logger: Logger = LoggerFactory.getLogger(getClass)
 
   protected def getFields(history: KvHistory): Map[String, Any] = {
     Map(
