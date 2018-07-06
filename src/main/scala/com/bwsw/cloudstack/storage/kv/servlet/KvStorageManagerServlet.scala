@@ -40,7 +40,6 @@ class KvStorageManagerServlet(system: ActorSystem, manager: KvStorageManager) ex
                 case Right(_) => Ok()
                 case Left(_: BadRequestError) => BadRequest()
                 case Left(_: NotFoundError) => NotFound("")
-                case Left(InternalError(m)) => InternalServerError(m)
                 case _ => InternalServerError()
               }
           } catch {
