@@ -314,9 +314,9 @@ GET /health
 ```
 ##### Parameters
 
-| Name       | Mandatory             | Description                                                         |
-|------------|-----------------------|---------------------------------------------------------------------|
-| detailed  | no (false by default) | A boolean value whether it is need to check components that it depends on  |
+| Parameter |                                              Description                                                  |
+| --------- | --------------------------------------------------------------------------------------------------------- |
+| detailed  | An optional boolean parameter whether it is need to check components that it depends on(false by default) |
 
 #### Response
 ##### Status code
@@ -327,7 +327,7 @@ GET /health
 | 500 | Unhealthy |
 
 ##### Body
-If Detailed = false, body is empty, otherwise it presented in json format:
+If Detailed = false, than body is empty, otherwise it presented in json format, Content-Type header is set to application/json :
 
 ```json
 {
