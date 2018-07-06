@@ -20,7 +20,8 @@ package com.bwsw.cloudstack.storage.kv.servlet
 import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.util.Timeout
-import com.bwsw.cloudstack.storage.kv.entity.{StatusMessage, Healthy, Unhealthy, HealthStatus, CheckName}
+import com.bwsw.cloudstack.storage.kv.entity.HealthStatus.{Healthy, Unhealthy}
+import com.bwsw.cloudstack.storage.kv.entity.{CheckName, HealthStatus, StatusMessage}
 import com.bwsw.cloudstack.storage.kv.message.request.HealthCheckRequest
 import com.bwsw.cloudstack.storage.kv.message.response.{DetailedHealthCheckResponse, StatusHealthCheckResponse}
 import org.json4s.JsonAST.JString
