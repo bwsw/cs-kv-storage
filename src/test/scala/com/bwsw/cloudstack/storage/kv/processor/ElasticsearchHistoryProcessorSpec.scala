@@ -17,7 +17,7 @@
 
 package com.bwsw.cloudstack.storage.kv.processor
 
-import com.bwsw.cloudstack.storage.kv.configuration.ElasticsearchConfig
+import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError}
 import com.bwsw.cloudstack.storage.kv.entity._
 import com.bwsw.cloudstack.storage.kv.message.KvHistory
@@ -64,8 +64,8 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
   describe("An ElasticsearchHistoryProcessor") {
     val fakeClient = mock[HttpClient]
     implicit val client: HttpClient = fakeClient
-    implicit val elasticsearchConfig: ElasticsearchConfig = mock[ElasticsearchConfig]
-    val processor = new ElasticsearchHistoryProcessor(fakeClient, elasticsearchConfig)
+    implicit val appConfig: AppConfig = mock[AppConfig]
+    val processor = new ElasticsearchHistoryProcessor(fakeClient, appConfig)
 
     describe("(save histories)") {
       it("should save a list of historical records") {
@@ -440,9 +440,9 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
   }
 
   private def expectSearch(searchDefinition: SearchDefinition, isSizeSet: Boolean = false)
-    (implicit client: HttpClient, elasticsearchConfig: ElasticsearchConfig) = {
+    (implicit client: HttpClient, appConfig: AppConfig) = {
     if (!isSizeSet)
-      (elasticsearchConfig.getSearchPageSize _).expects().returning(defaultSizeValue)
+      (appConfig.getDefaultPageSize _).expects().returning(defaultSizeValue)
     (client.execute[SearchDefinition, SearchResponse](_: SearchDefinition)(
       _: HttpExecutable[SearchDefinition, SearchResponse],
       _: ExecutionContext))

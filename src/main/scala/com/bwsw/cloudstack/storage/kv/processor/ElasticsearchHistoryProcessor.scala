@@ -17,7 +17,7 @@
 
 package com.bwsw.cloudstack.storage.kv.processor
 
-import com.bwsw.cloudstack.storage.kv.configuration.ElasticsearchConfig
+import com.bwsw.cloudstack.storage.kv.configuration.{AppConfig, ElasticsearchConfig}
 import com.bwsw.cloudstack.storage.kv.entity._
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, StorageError}
 import com.bwsw.cloudstack.storage.kv.message._
@@ -39,7 +39,7 @@ import scala.concurrent.Future
   */
 class ElasticsearchHistoryProcessor(
     client: HttpClient,
-    elasticsearchConfig: ElasticsearchConfig) extends HistoryProcessor {
+    appConfig: AppConfig) extends HistoryProcessor {
 
   import ElasticsearchHistoryProcessor._
 
@@ -72,7 +72,7 @@ class ElasticsearchHistoryProcessor(
       size: Option[Int],
       scroll: Option[Long]): Future[Either[StorageError, SearchResult[History]]] = {
 
-    implicit val esConfig: ElasticsearchConfig = elasticsearchConfig
+    implicit val ac: AppConfig = appConfig
     implicit val esClient: HttpClient = client
 
     val search =
@@ -182,7 +182,7 @@ private case class Search(
     query: Seq[QueryDefinition],
     size: Option[Int],
     page: Option[Int])
-  (implicit elasticsearchConfig: ElasticsearchConfig, client: HttpClient) {
+  (implicit appConfig: AppConfig, client: HttpClient) {
 
   def storage(storageUuid: String): Search = {
     this.copy(searchDef = search(getHistoricalStorageIndex(storageUuid)))
@@ -243,7 +243,7 @@ private case class Search(
   }
 
   def execute: Future[Either[RequestFailure, RequestSuccess[SearchResponse]]] = {
-    val pageSize = size.getOrElse(elasticsearchConfig.getSearchPageSize)
+    val pageSize = size.getOrElse(appConfig.getDefaultPageSize)
     val queryDefinition = query.size match {
       case 0 => searchDef
       case 1 => searchDef.query(query.head)
@@ -262,7 +262,7 @@ private case class Search(
 }
 
 private object Search {
-  def storage(storageUuid: String)(implicit elasticsearchConfig: ElasticsearchConfig, client: HttpClient): Search = {
+  def storage(storageUuid: String)(implicit appConfig: AppConfig, client: HttpClient): Search = {
     Search(searchDef = search(getHistoricalStorageIndex(storageUuid)), Seq.empty, None, None)
   }
 }
