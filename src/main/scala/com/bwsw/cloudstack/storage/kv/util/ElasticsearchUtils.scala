@@ -25,6 +25,10 @@ object ElasticsearchUtils {
 
   def getStorageIndex(storage: String): String = "storage-" + storage
 
+  def getHistoricalStorageIndex(storageUuid: String): String = {
+    s"history-storage-$storageUuid"
+  }
+
   def getError(requestFailure: RequestFailure): InternalError = {
     if (requestFailure.error == null)
       InternalError("Elasticsearch error")
