@@ -24,6 +24,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.HttpMethods.HEAD
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse, StatusCodes}
 import com.bwsw.cloudstack.storage.kv.configuration.ElasticsearchConfig
+import com.bwsw.cloudstack.storage.kv.entity.HealthStatus.{Healthy, Unhealthy}
 import com.bwsw.cloudstack.storage.kv.entity._
 import com.bwsw.cloudstack.storage.kv.message.request.TemplateCheckRequest
 import scaldi.Injector

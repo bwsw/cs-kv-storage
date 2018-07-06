@@ -22,6 +22,7 @@ import akka.pattern.ask
 import akka.testkit.{TestActorRef, TestProbe}
 import akka.util.Timeout
 import com.bwsw.cloudstack.storage.kv.actor.HealthActor
+import com.bwsw.cloudstack.storage.kv.entity.HealthStatus.{Healthy, Unhealthy}
 import com.bwsw.cloudstack.storage.kv.entity._
 import com.bwsw.cloudstack.storage.kv.message.request.HealthCheckRequest
 import com.bwsw.cloudstack.storage.kv.message.response.{DetailedHealthCheckResponse, StatusHealthCheckResponse}

@@ -18,17 +18,18 @@
 package com.bwsw.cloudstack.storage.kv.actor
 
 import akka.actor.{ActorLogging, Status}
+import akka.pattern.{ask, pipe}
+import akka.util.Timeout
+import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
+import com.bwsw.cloudstack.storage.kv.entity.HealthStatus.{Healthy, Unhealthy}
 import com.bwsw.cloudstack.storage.kv.entity._
 import com.bwsw.cloudstack.storage.kv.message.request.{HealthCheckRequest, TemplateCheckRequest}
+import com.bwsw.cloudstack.storage.kv.message.response.{DetailedHealthCheckResponse, StatusHealthCheckResponse}
+import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils._
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.HttpClient
 import scaldi.Injector
 import scaldi.akka.AkkaInjectable._
-import akka.pattern.{ask, pipe}
-import akka.util.Timeout
-import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
-import com.bwsw.cloudstack.storage.kv.message.response.{DetailedHealthCheckResponse, StatusHealthCheckResponse}
-import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils._
 
 import scala.concurrent.Future
 

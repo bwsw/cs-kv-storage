@@ -19,18 +19,22 @@ package com.bwsw.cloudstack.storage.kv.entity
 
 sealed trait HealthStatus
 
-object Healthy extends HealthStatus {
-  override def toString: String = "HEALTHY"
-}
-
-object Unhealthy extends HealthStatus {
-  override def toString: String = "UNHEALTHY"
-}
-
 object HealthStatus {
+
+  private val HealthyValue = "HEALTHY"
+  private val UnhealthyValue = "UNHEALTHY"
+
+  object Healthy extends HealthStatus {
+    override def toString: String = HealthyValue
+  }
+
+  object Unhealthy extends HealthStatus {
+    override def toString: String = UnhealthyValue
+  }
+
   def parse(string: String): HealthStatus = string match {
-    case "HEALTHY" => Healthy
-    case "UNHEALTHY" => Unhealthy
+    case HealthyValue => Healthy
+    case UnhealthyValue => Unhealthy
     case _ => throw new IllegalArgumentException
   }
 }
