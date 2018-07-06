@@ -64,7 +64,7 @@ class DefaultHistoryRequestActor(implicit inj: Injector)
     case KvHistoryResponse(response) =>
       sender() ! response
     case failure: Status.Failure =>
-      log.error(getClass + ": " + failure.cause.getMessage)
+      log.error(failure.cause, getClass.getName)
       sender() ! Left(InternalError(failure.cause.getMessage))
   }
 }

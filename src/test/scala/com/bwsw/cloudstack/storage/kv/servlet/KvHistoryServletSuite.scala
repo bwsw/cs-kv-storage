@@ -19,6 +19,7 @@ package com.bwsw.cloudstack.storage.kv.servlet
 
 import akka.actor.ActorSystem
 import akka.testkit.TestActorRef
+import com.bwsw.cloudstack.storage.kv.entity.Sorting.Asc
 import com.bwsw.cloudstack.storage.kv.entity.{PageSearchResult, _}
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError}
 import com.bwsw.cloudstack.storage.kv.message.request.{KvHistoryGetRequest, KvHistoryScrollRequest}
@@ -64,12 +65,11 @@ class KvHistoryServletSuite extends ScalatraSuite with FunSpecLike with MockFact
     describe("(search)") {
       val pathBase = "/history/" + storage.uUID
       it("should return body with simple paging") {
-        val path = s"$pathBase?page=$page&size=$pagesize"
         historyRequestActor.underlyingActor
           .clearAndExpect(ResponsiveExpectation(
             getRequest(size = Some(pagesize), page = Some(page)),
             () => Right(pagedBody)))
-        get(path) {
+        get(pathBase, Seq(("page", page.toString), ("size", pagesize.toString))) {
           status should equal(200)
           response.getContentType should include("application/json")
           body should equal(getPagedJson)
@@ -77,12 +77,11 @@ class KvHistoryServletSuite extends ScalatraSuite with FunSpecLike with MockFact
       }
 
       it("should return body with scroll") {
-        val path = s"$pathBase?size=$pagesize&scroll=$scroll"
         historyRequestActor.underlyingActor
           .clearAndExpect(ResponsiveExpectation(
             getRequest(size = Some(pagesize), scroll = Some(scroll)),
             () => Right(scrolledBody)))
-        get(path) {
+        get(pathBase, Seq(("size", pagesize.toString), ("scroll", scroll.toString))) {
           status should equal(200)
           response.getContentType should include("application/json")
           body should equal(getScrolledJson)
@@ -90,76 +89,167 @@ class KvHistoryServletSuite extends ScalatraSuite with FunSpecLike with MockFact
       }
 
       it("should return 400 Bad Request on request with bad operations") {
-        val path = s"$pathBase?operations=set,clear,euthanasia"
-        get(path) {
+        get(pathBase, Seq(("operations", "set,clear,euthanasia"))) {
           status should equal(400)
           body should equal("")
         }
       }
 
       it("should return 400 Bad Request on request with bad start") {
-        val path = s"$pathBase?start=today"
-        get(path) {
+        get(pathBase, Seq(("start", "today"))) {
+          status should equal(400)
+          body should equal("")
+        }
+      }
+
+      it("should return 400 Bad Request on request with negative start") {
+        get(pathBase, Seq(("start", "-1000"))) {
           status should equal(400)
           body should equal("")
         }
       }
 
       it("should return 400 Bad Request on request with bad end") {
-        val path = s"$pathBase?end=today"
-        get(path) {
+        get(pathBase, Seq(("end", "today"))) {
+          status should equal(400)
+          body should equal("")
+        }
+      }
+
+      it("should return 400 Bad Request on request with negative end") {
+        get(pathBase, Seq(("end", "-1000"))) {
+          status should equal(400)
+          body should equal("")
+        }
+      }
+
+      it("should return 400 Bad Request on request with start > end") {
+        get(pathBase, Seq(("start", "1000"), ("end", "500"))) {
           status should equal(400)
           body should equal("")
         }
       }
 
       it("should return 400 Bad Request on request with bad size") {
-        val path = s"$pathBase?size=large"
-        get(path) {
+        get(pathBase, Seq(("size", "large"))) {
+          status should equal(400)
+          body should equal("")
+        }
+      }
+
+      it("should return 400 Bad Request on request with negative size") {
+        get(pathBase, Seq(("size", "-1000"))) {
+          status should equal(400)
+          body should equal("")
+        }
+      }
+
+      it("should return 400 Bad Request on request with bad page") {
+        get(pathBase, Seq(("page", "first"))) {
+          status should equal(400)
+          body should equal("")
+        }
+      }
+
+      it("should return 400 Bad Request on request with negative page") {
+        get(pathBase, Seq(("page", "-1000"))) {
           status should equal(400)
           body should equal("")
         }
       }
 
       it("should return 400 Bad Request on request with bad scroll") {
-        val path = s"$pathBase?scroll=1.day"
-        get(path) {
+        get(pathBase, Seq(("scroll", "1.day"))) {
           status should equal(400)
           body should equal("")
         }
       }
 
+      it("should return 400 Bad Request on request with negative scroll") {
+        get(pathBase, Seq(("scroll", "-1000"))) {
+          status should equal(400)
+          body should equal("")
+        }
+      }
+
+      it("should return 400 Bad Request on request with bad sort") {
+        get(pathBase, Seq(("sort", "bubble"))) {
+          status should equal(400)
+          body should equal("")
+        }
+      }
+
+      it("should return 400 Bad Request on request with opposite sort") {
+        get(pathBase, Seq(("sort", "timestamp,key,-timestamp"))) {
+          status should equal(400)
+          body should equal("")
+        }
+      }
+
+      it("should successfully skip duplicating operations") {
+        historyRequestActor.underlyingActor
+          .clearAndExpect(ResponsiveExpectation(
+            getRequest(size = Some(pagesize), scroll = Some(scroll), operations = immutable.Set(Set)),
+            () => Right(scrolledBody)))
+        get(pathBase, Seq(("size", pagesize.toString), ("scroll", scroll.toString), ("operations", "set,set"))) {
+          status should equal(200)
+          response.getContentType should include("application/json")
+          body should equal(getScrolledJson)
+        }
+      }
+
+      it("should successfully skip duplicating keys") {
+        historyRequestActor.underlyingActor
+          .clearAndExpect(ResponsiveExpectation(
+            getRequest(size = Some(pagesize), scroll = Some(scroll), keys = immutable.Set("key1")),
+            () => Right(scrolledBody)))
+        get(pathBase, Seq(("size", pagesize.toString), ("scroll", scroll.toString), ("keys", "key1,key1"))) {
+          status should equal(200)
+          response.getContentType should include("application/json")
+          body should equal(getScrolledJson)
+        }
+      }
+
+      it("should successfully skip duplicating sorts") {
+        historyRequestActor.underlyingActor
+          .clearAndExpect(ResponsiveExpectation(
+            getRequest(size = Some(pagesize), scroll = Some(scroll), sort = immutable.Set(SortField("key", Asc))),
+            () => Right(scrolledBody)))
+        get(pathBase, Seq(("size", pagesize.toString), ("scroll", scroll.toString), ("sort", "key,key"))) {
+          status should equal(200)
+          response.getContentType should include("application/json")
+          body should equal(getScrolledJson)
+        }
+      }
+
       it("should transfer BadRequestError from HistoryRequestActor") {
-        val path = s"$pathBase?size=$pagesize&scroll=$scroll"
         historyRequestActor.underlyingActor
           .clearAndExpect(ResponsiveExpectation(
             getRequest(size = Some(pagesize), scroll = Some(scroll)),
             () => Left(BadRequestError())))
-        get(path) {
+        get(pathBase, Seq(("size", pagesize.toString), ("scroll", scroll.toString))) {
           status should equal(400)
           body should equal("")
         }
       }
 
       it("should transfer InternalError from HistoryRequestActor") {
-        val path = s"$pathBase?size=$pagesize&scroll=$scroll"
         historyRequestActor.underlyingActor
           .clearAndExpect(ResponsiveExpectation(
             getRequest(size = Some(pagesize), scroll = Some(scroll)),
             () => Left(InternalError("Error"))))
-        get(path) {
+        get(pathBase, Seq(("size", pagesize.toString), ("scroll", scroll.toString))) {
           status should equal(500)
           body should equal("")
         }
       }
 
       it("should transfer NotFoundError from HistoryRequestActor") {
-        val path = s"$pathBase?size=$pagesize&scroll=$scroll"
         historyRequestActor.underlyingActor
           .clearAndExpect(ResponsiveExpectation(
             getRequest(size = Some(pagesize), scroll = Some(scroll)),
             () => Left(NotFoundError())))
-        get(path) {
+        get(pathBase, Seq(("size", pagesize.toString), ("scroll", scroll.toString))) {
           status should equal(404)
           body should equal("")
         }
