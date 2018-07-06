@@ -44,7 +44,7 @@ class ElasticsearchKvStorageManager(client: HttpClient) extends KvStorageManager
           case 404 =>
             Left(NotFoundError())
           case _ =>
-            logger.error(failure.error.reason)
+            logger.error(s"""Elasticsearch update request failure: ${failure.error}""")
             Left(getError(failure))
         }
         case Right(RequestSuccess(status, body, headers, updateRequest)) => updateRequest.result match {
@@ -58,7 +58,7 @@ class ElasticsearchKvStorageManager(client: HttpClient) extends KvStorageManager
     def checkType: Future[Either[StorageError, Unit]] = {
       client.execute(get(Registry, Type, storage)).map {
         case Left(failure) =>
-          logger.error(failure.error.reason)
+          logger.error(s"""Elasticsearch get request failure: ${failure.error}""")
           Left(getError(failure))
         case Right(success) =>
           if (success.result.found)
@@ -75,7 +75,7 @@ class ElasticsearchKvStorageManager(client: HttpClient) extends KvStorageManager
       case Right(_) =>
         client.execute(deleteById(Registry, Type, storage)).map {
           case Left(failure) =>
-            logger.error(failure.error.reason)
+            logger.error(s"""Elasticsearch delete by id request failure: ${failure.error}""")
             Left(getError(failure))
           case Right(_) => Right(Unit)
         }
@@ -97,7 +97,7 @@ class ElasticsearchKvStorageManager(client: HttpClient) extends KvStorageManager
               else
                 Right(Unit)
             } else {
-              logger.error(failure.error.reason)
+              logger.error(s"""Elasticsearch delete index request failure: ${failure.error}""")
               Left(getError(failure))
             }
           case Right(_) => Right(Unit)

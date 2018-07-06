@@ -41,7 +41,7 @@ class ElasticsearchHistoryProcessor(client: HttpClient) extends HistoryProcessor
     }
     client.execute(bulk(indices)).map {
       case Left(failure) =>
-        logger.error(failure.error.reason)
+        logger.error(s"""Elasticsearch history save request failure: ${failure.error}""")
         Some(histories)
       case Right(success) =>
         val erroneous = success.result.items.filter(_.error.isDefined).map(item => histories(item.itemId))

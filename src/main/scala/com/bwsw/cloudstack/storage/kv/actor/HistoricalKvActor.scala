@@ -107,7 +107,7 @@ class HistoricalKvActor(implicit inj: Injector)
     case KvErrorResponse(error) =>
       sender() ! Left(error)
     case failure: Status.Failure =>
-      log.error(getClass + " : " + failure.cause.getMessage)
+      log.error(failure.cause, getClass.getName)
       sender() ! Left(InternalError(failure.cause.getMessage))
   }
 
