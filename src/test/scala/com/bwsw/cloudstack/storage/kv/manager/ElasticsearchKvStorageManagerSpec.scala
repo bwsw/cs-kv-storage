@@ -17,6 +17,7 @@
 
 package com.bwsw.cloudstack.storage.kv.manager
 
+import com.bwsw.cloudstack.storage.kv.cache.StorageCache
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError}
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.update.UpdateResponse
@@ -37,7 +38,8 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
 
   describe("An ElasticsearchStorageManager") {
     implicit val fakeClient: HttpClient = mock[HttpClient]
-    val manager = new ElasticsearchKvStorageManager(fakeClient)
+    val cache = mock[StorageCache]
+    val manager = new ElasticsearchKvStorageManager(fakeClient, cache)
 
     describe("(update temp storage ttl)") {
       it("should update the value of ttl field in storage registry") {
@@ -87,7 +89,9 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
           forcedRefresh = false,
           Shards(2, 1, 0),
           None)
+
         expectDeleteRequest.returning(getRequestSuccessFuture(updateResponse))
+        (cache.delete _).expects(storage).returning(())
 
         manager.deleteTempStorage(storage).map {
           case Right(_) => succeed
@@ -105,7 +109,9 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
           forcedRefresh = false,
           Shards(2, 1, 0),
           None)
+
         expectDeleteRequest.returning(getRequestSuccessFuture(updateResponse))
+
         manager.deleteTempStorage(storage).map {
           case Left(_: BadRequestError) => succeed
           case _ => fail
@@ -122,6 +128,7 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
 
       it("should return InternalError if update request fails") {
         expectDeleteRequest.returning(getRequestFailureFuture(500))
+
         manager.deleteTempStorage(storage).map {
           case Left(_: InternalError) => succeed
           case _ => fail
@@ -131,6 +138,7 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
 
       it("should return InternalError if delete index request fails") {
         expectDeleteRequest.returning(getRequestFailureFuture(500))
+
         manager.deleteTempStorage(storage).map {
           case Left(_: InternalError) => succeed
           case _ => fail

@@ -17,6 +17,7 @@
 
 package com.bwsw.cloudstack.storage.kv.manager
 
+import com.bwsw.cloudstack.storage.kv.cache.StorageCache
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError, StorageError}
 import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils
 import com.sksamuel.elastic4s.http.ElasticDsl._
@@ -28,7 +29,7 @@ import scala.concurrent.Future
   *
   * @param client the client to send requests to Elasticsearch
   */
-class ElasticsearchKvStorageManager(client: HttpClient) extends KvStorageManager {
+class ElasticsearchKvStorageManager(client: HttpClient, cache: StorageCache) extends KvStorageManager {
 
   import ElasticsearchKvStorageManager._
 
@@ -60,7 +61,9 @@ class ElasticsearchKvStorageManager(client: HttpClient) extends KvStorageManager
           case _ => Left(getError(failure))
         }
         case Right(RequestSuccess(status, body, headers, updateRequest)) => updateRequest.result match {
-          case "updated" => Right(Unit)
+          case "updated" =>
+            cache.delete(storage)
+            Right(Unit)
           case "noop" => Left(BadRequestError())
         }
       }

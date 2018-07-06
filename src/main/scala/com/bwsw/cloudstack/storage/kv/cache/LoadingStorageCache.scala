@@ -45,4 +45,7 @@ class LoadingStorageCache(conf: AppConfig, loader: StorageLoader) extends Storag
     cache.get(storageUuid)
   }
 
+  def delete(storageUuid: String): Unit = {
+    cache.put(storageUuid, Future(None))
+  }
 }
