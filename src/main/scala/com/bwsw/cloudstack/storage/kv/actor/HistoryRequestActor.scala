@@ -19,5 +19,5 @@ package com.bwsw.cloudstack.storage.kv.actor
 
 import akka.actor.Actor
 
-/** Actor responsible for history record retrieving **/
+/** Actor responsible for history retrieval **/
 trait HistoryRequestActor extends Actor

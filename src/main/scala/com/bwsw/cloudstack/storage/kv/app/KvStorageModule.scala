@@ -42,7 +42,7 @@ class KvStorageModule extends Module {
   bind[KvStorageManager] to injected[ElasticsearchKvStorageManager]
   bind[HistoryKvActor] to injected[BufferedHistoryKvActor]
   bind[KvActor] to injected[HistoricalKvActor]
-  bind[HistoryRequestActor] to injected[PagedHistoryRequestActor]
+  bind[HistoryRequestActor] to injected[DefaultHistoryRequestActor]
   bind[HistoryProcessor] to injected[ElasticsearchHistoryProcessor]
   bind[StorageLoader] to injected[ElasticsearchStorageLoader]
   bind[StorageCache] to injected[LoadingStorageCache]

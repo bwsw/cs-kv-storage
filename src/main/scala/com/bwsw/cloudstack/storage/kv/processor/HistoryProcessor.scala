@@ -17,7 +17,7 @@
 
 package com.bwsw.cloudstack.storage.kv.processor
 
-import com.bwsw.cloudstack.storage.kv.entity.{History, Operation, SearchResponseBody, SearchScrolledBody}
+import com.bwsw.cloudstack.storage.kv.entity._
 import com.bwsw.cloudstack.storage.kv.error.StorageError
 import com.bwsw.cloudstack.storage.kv.message._
 
@@ -32,27 +32,35 @@ trait HistoryProcessor {
     */
   def save(histories: List[KvHistory]): Future[Option[List[KvHistory]]]
 
-  /** Searches for history records suitable to parameters gotten
+  /** Searches for operation history of the storage by specified criteria.
     *
-    * @param storageUuid UUID of storage to search from
-    * @return a [[Future]] of response body or StorageError if any error occurred
+    * @param storageUuid UUID of the storage
+    * @param keys        keys
+    * @param operations  operations
+    * @param start       the start timestamp of the period
+    * @param end         the end timestamp of the period
+    * @param sort        fields to sort results
+    * @param page        the page of results
+    * @param size        amount of results for one page/batch
+    * @param scroll      time in ms to keep the search context open for subsequent scroll requests
+    * @return a [[Future]] with results or StorageError if any error occurred
     */
   def get(
       storageUuid: String,
-      keys: Iterable[String],
-      operations: Iterable[Operation],
+      keys: Set[String],
+      operations: Set[Operation],
       start: Option[Long],
       end: Option[Long],
-      sort: Iterable[String],
+      sort: Set[SortField],
       page: Option[Int],
       size: Option[Int],
-      scroll: Option[Long]): Future[Either[StorageError, SearchResponseBody[History]]]
+      scroll: Option[Long]): Future[Either[StorageError, SearchResult[History]]]
 
-  /** Retrieves a single page of the request
+  /** Retrieves the next batch of results.
     *
-    * @param scrollId Id of the scroll
-    * @param timeout  time to keep the search context open for in milliseconds
-    * @return a [[Future]] of response body or StorageError if any error occurred
+    * @param scrollId scroll id
+    * @param timeout  time in ms to keep the search context open for subsequent scroll requests
+    * @return a [[Future]] with results or StorageError if any error occurred
     */
-  def scroll(scrollId: String, timeout: Long): Future[Either[StorageError, SearchScrolledBody[History]]]
+  def scroll(scrollId: String, timeout: Long): Future[Either[StorageError, ScrollSearchResult[History]]]
 }

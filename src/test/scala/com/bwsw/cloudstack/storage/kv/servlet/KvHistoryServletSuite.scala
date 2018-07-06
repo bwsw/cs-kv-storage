@@ -19,7 +19,7 @@ package com.bwsw.cloudstack.storage.kv.servlet
 
 import akka.actor.ActorSystem
 import akka.testkit.TestActorRef
-import com.bwsw.cloudstack.storage.kv.entity.{SearchPagedBody, _}
+import com.bwsw.cloudstack.storage.kv.entity.{PageSearchResult, _}
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError}
 import com.bwsw.cloudstack.storage.kv.message.request.{KvHistoryGetRequest, KvHistoryScrollRequest}
 import com.bwsw.cloudstack.storage.kv.mock.MockActor
@@ -28,6 +28,7 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.FunSpecLike
 import org.scalatra.test.scalatest.ScalatraSuite
 
+import scala.collection.immutable
 import scala.concurrent.duration._
 
 class KvHistoryServletSuite extends ScalatraSuite with FunSpecLike with MockFactory {
@@ -50,8 +51,8 @@ class KvHistoryServletSuite extends ScalatraSuite with FunSpecLike with MockFact
     History(someKey, someValue, timestamp, Set),
     History(someKey, null, timestamp, Delete),
     History(null, null, timestamp, Clear))
-  private val pagedBody = SearchPagedBody(total, pagesize, page, historyList)
-  private val scrolledBody = SearchScrolledBody(total, pagesize, scrollId, historyList)
+  private val pagedBody = PageSearchResult(total, pagesize, page, historyList)
+  private val scrolledBody = ScrollSearchResult(total, pagesize, scrollId, historyList)
   private val scrollRequestBody: Array[Byte] = s"""{\"scroll\":\"$scrollId\",\"timeout\":$scroll}"""
   private val scrollRequestBodyWrong: Array[Byte] = s"""[{\"scroll\":\"$scrollId\"},{\"timeout\":$scroll}]"""
   private val jsonContentType = Seq(("Content-Type", "application/json"))
@@ -223,11 +224,11 @@ class KvHistoryServletSuite extends ScalatraSuite with FunSpecLike with MockFact
   }
 
   private def getRequest(
-      keys: Iterable[String] = List(),
-      operations: Iterable[Operation] = List(),
+      keys: Set[String] = immutable.Set.empty,
+      operations: Set[Operation] = immutable.Set.empty,
       start: Option[Long] = None,
       end: Option[Long] = None,
-      sort: Iterable[String] = List(),
+      sort: Set[SortField] = immutable.Set.empty,
       page: Option[Int] = None,
       size: Option[Int] = None,
       scroll: Option[Long] = None) = KvHistoryGetRequest(

@@ -23,14 +23,13 @@ import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, Sto
 import com.bwsw.cloudstack.storage.kv.message._
 import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils._
 import com.sksamuel.elastic4s.http.ElasticDsl.{search, _}
-import com.sksamuel.elastic4s.http.{HttpClient, RequestFailure, RequestSuccess}
 import com.sksamuel.elastic4s.http.search.{SearchHits, SearchResponse}
+import com.sksamuel.elastic4s.http.{HttpClient, RequestFailure, RequestSuccess}
 import com.sksamuel.elastic4s.searches.SearchDefinition
 import com.sksamuel.elastic4s.searches.queries.QueryDefinition
 import com.sksamuel.elastic4s.searches.sort.{FieldSortDefinition, SortOrder}
 import org.slf4j.{Logger, LoggerFactory}
 
-import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -64,17 +63,18 @@ class ElasticsearchHistoryProcessor(
 
   def get(
       storageUuid: String,
-      keys: Iterable[String],
-      operations: Iterable[Operation],
+      keys: Set[String],
+      operations: Set[Operation],
       start: Option[Long],
       end: Option[Long],
-      sort: Iterable[String],
+      sort: Set[SortField],
       page: Option[Int],
       size: Option[Int],
-      scroll: Option[Long]): Future[Either[StorageError, SearchResponseBody[History]]] = {
+      scroll: Option[Long]): Future[Either[StorageError, SearchResult[History]]] = {
 
     implicit val esConfig: ElasticsearchConfig = elasticsearchConfig
     implicit val esClient: HttpClient = client
+
     val search =
       Search
         .storage(storageUuid)
@@ -94,14 +94,14 @@ class ElasticsearchHistoryProcessor(
         try {
           result.scrollId match {
             case Some(scrollId) =>
-              Right(SearchScrolledBody(
+              Right(ScrollSearchResult(
                 result.totalHits,
                 result.size,
                 scrollId,
                 getItems(result.hits)
               ))
             case None =>
-              Right(SearchPagedBody(
+              Right(PageSearchResult(
                 result.totalHits,
                 result.size,
                 page.getOrElse(1),
@@ -115,7 +115,7 @@ class ElasticsearchHistoryProcessor(
     }
   }
 
-  def scroll(scrollId: String, timeout: Long): Future[Either[StorageError, SearchScrolledBody[History]]] = {
+  def scroll(scrollId: String, timeout: Long): Future[Either[StorageError, ScrollSearchResult[History]]] = {
     client.execute(searchScroll(scrollId).keepAlive(timeout + "ms"))
       .map {
         case Left(RequestFailure(404, _, _, _)) =>
@@ -127,7 +127,7 @@ class ElasticsearchHistoryProcessor(
           Left(getError(failure))
         case Right(success) =>
           try {
-            Right(SearchScrolledBody(
+            Right(ScrollSearchResult(
               success.result.totalHits,
               success.result.size,
               success.result.scrollId.get,
@@ -142,10 +142,11 @@ class ElasticsearchHistoryProcessor(
 }
 
 object ElasticsearchHistoryProcessor {
-  protected val `type` = "_doc"
-  protected val logger: Logger = LoggerFactory.getLogger(getClass)
 
-  protected def getFields(history: KvHistory): Map[String, Any] = {
+  private val `type` = "_doc"
+  private val logger: Logger = LoggerFactory.getLogger(getClass)
+
+  private def getFields(history: KvHistory): Map[String, Any] = {
     Map(
       "key" -> history.key,
       "value" -> history.value,
@@ -153,28 +154,27 @@ object ElasticsearchHistoryProcessor {
       "operation" -> history.operation.toString)
   }
 
-  protected def getString(name: String)(implicit fields: Map[String, Any]): String = {
+  private def getString(name: String)(implicit fields: Map[String, Any]): String = {
     fields.get(name) match {
       case Some(null) => null
       case Some(value: String) => value
-      case _ => throw new IllegalArgumentException("Invalid String result")
+      case _ => throw new IllegalArgumentException("Not a string")
     }
   }
 
-  protected def getLong(name: String)(implicit fields: Map[String, Any]): Long = {
+  private def getLong(name: String)(implicit fields: Map[String, Any]): Long = {
     fields.get(name) match {
       case Some(value: Long) => value
       case Some(value: Int) => value
-      case _ => throw new IllegalArgumentException("Invalid Long result")
+      case _ => throw new IllegalArgumentException("Not an integer")
     }
   }
 
-  protected def getItems(searchHits: SearchHits): List[History] = searchHits.hits.map {
+  private def getItems(searchHits: SearchHits): List[History] = searchHits.hits.map {
     hit =>
       implicit val fields: Map[String, Any] = hit.sourceAsMap
       History(getString("key"), getString("value"), getLong("timestamp"), Operation.parse(getString("operation")))
   }.toList
-
 }
 
 private case class Search(
@@ -188,14 +188,14 @@ private case class Search(
     this.copy(searchDef = search(getHistoricalStorageIndex(storageUuid)))
   }
 
-  def keys(keys: Iterable[String]): Search = {
+  def keys(keys: Set[String]): Search = {
     if (keys.nonEmpty)
       this.copy(query = query :+ termsQuery("key", keys))
     else
       this
   }
 
-  def operations(operations: Iterable[Operation]): Search = {
+  def operations(operations: Set[Operation]): Search = {
     if (operations.nonEmpty)
       this.copy(query = query :+ termsQuery("operation", operations.map(_.toString)))
     else
@@ -230,21 +230,20 @@ private case class Search(
       this
   }
 
-  def sort(sort: Iterable[String]): Search = {
+  def sort(sort: Set[SortField]): Search = {
     if (sort.nonEmpty)
       this.copy(searchDef =
-        searchDef.sortBy(sort.map { field =>
-          if (field.head == '-')
-            FieldSortDefinition(field.substring(1), order = SortOrder.DESC)
-          else
-            FieldSortDefinition(field, order = SortOrder.ASC)
-        }))
+                  searchDef.sortBy(sort.map { sortField =>
+                    FieldSortDefinition(
+                      sortField.field,
+                      order = convert(sortField.order))
+                  }))
     else
       this
   }
 
   def execute: Future[Either[RequestFailure, RequestSuccess[SearchResponse]]] = {
-    val pageSize = size.getOrElse(elasticsearchConfig.getScrollPageSize)
+    val pageSize = size.getOrElse(elasticsearchConfig.getSearchPageSize)
     val queryDefinition = query.size match {
       case 0 => searchDef
       case 1 => searchDef.query(query.head)
@@ -254,6 +253,11 @@ private case class Search(
       client.execute(queryDefinition.size(pageSize).from(pageSize * (page.get - 1)))
     else
       client.execute(queryDefinition.size(pageSize))
+  }
+
+  private def convert(sorting: Sorting): SortOrder = sorting match {
+    case Sorting.Asc => SortOrder.ASC
+    case Sorting.Desc => SortOrder.DESC
   }
 }
 

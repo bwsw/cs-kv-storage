@@ -29,9 +29,10 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.FunSpecLike
 import scaldi.{Injector, Module}
 
+import scala.collection.immutable
 import scala.concurrent.Future
 
-class PagedHistoryRequestActorSpec
+class DefaultHistoryRequestActorSpec
   extends TestKit(ActorSystem("cs-kv-storage"))
   with FunSpecLike
   with MockFactory
@@ -47,9 +48,9 @@ class PagedHistoryRequestActorSpec
   private val someKey = "someKey"
   private val someValue = "someValue"
   private val timestamp = System.currentTimeMillis()
-  private val someKeys = List.empty
-  private val someOperations = List.empty
-  private val someSort = List.empty
+  private val someKeys = immutable.Set.empty[String]
+  private val someOperations = immutable.Set.empty[Operation]
+  private val someSort = immutable.Set.empty[SortField]
   private val someStart = Some(0.asInstanceOf[Long])
   private val someEnd = Some(0.asInstanceOf[Long])
   private val someSize = Some(50)
@@ -71,7 +72,7 @@ class PagedHistoryRequestActorSpec
       someSize,
       somePage,
       someScroll)
-  private val body = SearchScrolledBody(3, 3, someScrollId, historyList)
+  private val body = ScrollSearchResult(3, 3, someScrollId, historyList)
   private val error = "ElasticsearchError"
 
   describe("a PagedHistoryRequestActor") {
@@ -82,9 +83,9 @@ class PagedHistoryRequestActorSpec
     }
 
     describe("GetHistoryRequest") {
-      val pagedHistoryRequestActor = system.actorOf(Props(new PagedHistoryRequestActor()))
+      val pagedHistoryRequestActor = system.actorOf(Props(new DefaultHistoryRequestActor()))
 
-      def test(isHistoryEnabled: Option[Boolean], expect: Either[StorageError, SearchResponseBody[History]]) = {
+      def test(isHistoryEnabled: Option[Boolean], expect: Either[StorageError, SearchResult[History]]) = {
         (storageCache.isHistoryEnabled _).expects(storage.uUID).returning(Future(isHistoryEnabled))
         if (expect.isRight)
           expectGetHistories()
@@ -106,9 +107,9 @@ class PagedHistoryRequestActorSpec
     }
 
     describe("ScrollHistoryRequest") {
-      val pagedHistoryRequestActor = system.actorOf(Props(new PagedHistoryRequestActor))
+      val pagedHistoryRequestActor = system.actorOf(Props(new DefaultHistoryRequestActor))
 
-      def test(scrollResult: Either[StorageError, SearchScrolledBody[History]]) = {
+      def test(scrollResult: Either[StorageError, ScrollSearchResult[History]]) = {
         expectScrollHistories().returning(Future(scrollResult))
         pagedHistoryRequestActor ! KvHistoryScrollRequest(someScrollId, someScroll.get)
         expectMsg(scrollResult)

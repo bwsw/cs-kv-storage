@@ -17,12 +17,8 @@
 
 package com.bwsw.cloudstack.storage.kv.entity
 
-sealed trait SearchResponseBody[T]
+sealed trait SearchResult[T]
 
-case class SearchScrolledBody[T](
-    total: Long,
-    size: Long,
-    scrollId: String,
-    items: List[T]) extends SearchResponseBody[T]
+case class ScrollSearchResult[T](total: Long, size: Long, scrollId: String, items: List[T]) extends SearchResult[T]
 
-case class SearchPagedBody[T](total: Long, size: Long, page: Int, items: List[T]) extends SearchResponseBody[T]
+case class PageSearchResult[T](total: Long, size: Long, page: Int, items: List[T]) extends SearchResult[T]

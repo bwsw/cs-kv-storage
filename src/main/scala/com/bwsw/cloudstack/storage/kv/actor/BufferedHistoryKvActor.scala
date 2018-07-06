@@ -17,9 +17,8 @@
 
 package com.bwsw.cloudstack.storage.kv.actor
 
-import akka.actor.{Status, Timers}
+import akka.actor.Timers
 import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
-import com.bwsw.cloudstack.storage.kv.error.InternalError
 import com.bwsw.cloudstack.storage.kv.message.{KvHistory, KvHistoryBulk, KvHistoryFlush, KvHistoryRetry}
 import com.bwsw.cloudstack.storage.kv.processor.HistoryProcessor
 import scaldi.Injector
@@ -68,8 +67,6 @@ class BufferedHistoryKvActor(implicit inj: Injector)
       if (buffer.length >= configuration.getFlushHistorySize) {
         self ! flush(buffer)
       }
-    case failure: Status.Failure =>
-      sender() ! Left(InternalError(failure.cause.getMessage))
   }
 
   private def retry(histories: Iterable[KvHistory]): Unit = {

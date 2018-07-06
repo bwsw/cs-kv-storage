@@ -15,17 +15,15 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package com.bwsw.cloudstack.storage.kv.message.request
+package com.bwsw.cloudstack.storage.kv.entity
 
-import com.bwsw.cloudstack.storage.kv.entity.{Operation, SortField}
+sealed trait Sorting
 
-case class KvHistoryGetRequest(
-    storageUuid: String,
-    keys: Set[String],
-    operations: Set[Operation],
-    start: Option[Long],
-    end: Option[Long],
-    sort: Set[SortField],
-    page: Option[Int],
-    size: Option[Int],
-    scroll: Option[Long])
+object Sorting {
+
+  case object Desc extends Sorting
+
+  case object Asc extends Sorting
+
+  def descPrefix = "-"
+}

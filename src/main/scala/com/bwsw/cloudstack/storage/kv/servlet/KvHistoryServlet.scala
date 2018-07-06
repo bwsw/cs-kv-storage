@@ -20,8 +20,8 @@ package com.bwsw.cloudstack.storage.kv.servlet
 import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.util.Timeout
-import com.bwsw.cloudstack.storage.kv.entity.Operation
-import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError}
+import com.bwsw.cloudstack.storage.kv.entity.{Operation, SortField, Sorting}
+import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, NotFoundError}
 import com.bwsw.cloudstack.storage.kv.message.request.{KvHistoryGetRequest, KvHistoryScrollRequest}
 import org.json4s.JsonAST._
 import org.json4s.{CustomSerializer, DefaultFormats, Formats}
@@ -42,15 +42,16 @@ class KvHistoryServlet(
 
   protected implicit lazy val jsonFormats: Formats = DefaultFormats.preservingEmptyValues + new OperationSerializer
   protected implicit val akkaTimeout: Timeout = requestTimeout
-  protected implicit val itc: TypeConverter[String, Int] = new ToIntConverter
-  protected implicit val ltc: TypeConverter[String, Long] = new ToLongConverter
+  protected implicit val toIntConverter: TypeConverter[String, Int] = new ToIntConverter
+  protected implicit val toLongConverter: TypeConverter[String, Long] = new ToLongConverter
+
   protected val fieldList = List("key", "value", "timestamp", "operation")
 
   protected implicit def executor: ExecutionContext = system.dispatcher
 
   get("/:storage_uuid") {
     new AsyncResult() {
-      val is: Future[_] = validate(params) match {
+      val is: Future[_] = parse(params) match {
         case Some(getHistoryRequest) =>
           (historyRequestActor ? getHistoryRequest)
             .map {
@@ -59,7 +60,7 @@ class KvHistoryServlet(
                 value
               case Left(_: NotFoundError) => NotFound("")
               case Left(_: BadRequestError) => BadRequest("")
-              case _ => InternalServerError()
+              case _ => InternalServerError("")
             }
         case None => Future(BadRequest(""))
       }
@@ -89,18 +90,37 @@ class KvHistoryServlet(
   }
 
 
-  protected def validate(params: Params): Option[KvHistoryGetRequest] = {
+  protected def parse(params: Params): Option[KvHistoryGetRequest] = {
     try {
-      Some(KvHistoryGetRequest(
-        params("storage_uuid"),
-        params.getOrElse("keys", "").split(",").filter(_.nonEmpty),
-        params.getOrElse("operations", "").split(",").filter(_.nonEmpty).map(Operation.parse),
-        params.getAs[Long]("start"),
-        params.getAs[Long]("end"),
-        params.getOrElse("sort", "").split(",").filter(fieldList.contains(_)),
-        params.getAs[Int]("page"),
-        params.getAs[Int]("size"),
-        params.getAs[Long]("scroll")))
+      val storage = params("storage_uuid")
+      val keys = params.getOrElse("keys", "").split(",").filter(_.nonEmpty).toSet
+      val operations = params.getOrElse("operations", "").split(",").filter(_.nonEmpty).map(Operation.parse).toSet
+      val start = params.getAs[Long]("start")
+      val end = params.getAs[Long]("end")
+      val sort = params.getOrElse("sort", "").split(",").filter(_.nonEmpty).map { s =>
+        if (s.startsWith(Sorting.descPrefix))
+          SortField(s.substring(Sorting.descPrefix.length), Sorting.Desc)
+        else SortField(s, Sorting.Asc)
+      }.toSet
+      val page = params.getAs[Int]("page")
+      val size = params.getAs[Int]("size")
+      val scroll = params.getAs[Long]("scroll")
+
+      if (isValidStartEnd(start, end) && isValidSort(sort) && page.forall(_ > 0) && size.forall(_ > 0) && scroll
+        .forall(_ > 0)) {
+        val pageIfScroll = if (scroll.isEmpty) page else None
+        Some(KvHistoryGetRequest(
+          storage,
+          keys,
+          operations,
+          start,
+          end,
+          sort,
+          pageIfScroll,
+          size,
+          scroll))
+      }
+      else None
     } catch {
       case _: NumberFormatException => None
       case _: IllegalArgumentException => None
@@ -122,4 +142,15 @@ class KvHistoryServlet(
       case op: Operation => JString(op.toString)
     }))
 
+  private def isValidStartEnd(start: Option[Long], end: Option[Long]) = (start, end) match {
+    case (None, None) => true
+    case (Some(s), None) => s > 0
+    case (None, Some(e)) => e > 0
+    case (Some(s), Some(e)) => s > 0 && e > 0 && s <= e
+  }
+
+  private def isValidSort(sort: Set[SortField]) = {
+    sort.map(_.field).forall(fieldList.contains(_)) && sort.groupBy(_.field).forall(_._2.size == 1)
+  }
+  
 }
