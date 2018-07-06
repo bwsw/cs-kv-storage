@@ -18,11 +18,11 @@
 package com.bwsw.cloudstack.storage.kv.actor
 
 import akka.actor.ActorLogging
-import akka.pattern.pipe
-import akka.stream.ActorMaterializer
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.HttpMethods.HEAD
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse, StatusCodes}
+import akka.pattern.pipe
+import akka.stream.ActorMaterializer
 import com.bwsw.cloudstack.storage.kv.configuration.ElasticsearchConfig
 import com.bwsw.cloudstack.storage.kv.entity.HealthStatus.{Healthy, Unhealthy}
 import com.bwsw.cloudstack.storage.kv.entity._
@@ -30,7 +30,7 @@ import com.bwsw.cloudstack.storage.kv.message.request.TemplateCheckRequest
 import scaldi.Injector
 import scaldi.akka.AkkaInjectable._
 
-/** Performs checks under Elasticsearch **/
+/** Actor to check whether the index template exists in Elasticsearch **/
 class ElasticsearchTemplateCheckActor(implicit inj: Injector, materializer: ActorMaterializer)
   extends TemplateCheckActor
   with ActorLogging {
@@ -50,7 +50,7 @@ class ElasticsearchTemplateCheckActor(implicit inj: Injector, materializer: Acto
             case StatusCodes.OK => Check(checkName, Healthy, Ok)
             case StatusCodes.NotFound => Check(checkName, Unhealthy, NotFound)
             case unexpected =>
-              log.error("Template {} existence check finished unexpectedly: {}", name, unexpected.reason())
+              log.error("Template {} existence check finished unexpectedly: {}", name, unexpected.intValue())
               Check(checkName, Unhealthy, Unexpected("Unexpected status: " + unexpected.intValue()))
           }
       }.recover {
@@ -59,7 +59,4 @@ class ElasticsearchTemplateCheckActor(implicit inj: Injector, materializer: Acto
           Check(checkName, Unhealthy, Unexpected(ex.getMessage))
       }.pipeTo(sender())
   }
-
-  private case class TemplateCheckResponse(checkName: CheckName, response: HttpResponse)
-
 }
