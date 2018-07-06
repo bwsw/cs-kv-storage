@@ -18,7 +18,7 @@
 package com.bwsw.cloudstack.storage.kv.servlet
 
 import akka.actor.ActorSystem
-import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError}
+import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, NotFoundError}
 import com.bwsw.cloudstack.storage.kv.manager.KvStorageManager
 import org.scalatra._
 
