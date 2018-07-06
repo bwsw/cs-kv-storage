@@ -17,9 +17,9 @@
 
 package com.bwsw.cloudstack.storage.kv.actor
 
-import akka.actor.Status
+import akka.actor.{ActorLogging, Status}
 import com.bwsw.cloudstack.storage.kv.entity._
-import com.bwsw.cloudstack.storage.kv.message.request.{TemplateCheckRequest, HealthCheckRequest}
+import com.bwsw.cloudstack.storage.kv.message.request.{HealthCheckRequest, TemplateCheckRequest}
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.HttpClient
 import scaldi.Injector
@@ -32,7 +32,9 @@ import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils._
 
 import scala.concurrent.Future
 
-class ElasticsearchHealthActor(implicit inj: Injector) extends HealthActor {
+class ElasticsearchHealthActor(implicit inj: Injector)
+  extends HealthActor
+  with ActorLogging {
 
   import context.dispatcher
 
@@ -57,7 +59,8 @@ class ElasticsearchHealthActor(implicit inj: Injector) extends HealthActor {
       val status = if (checks.forall(_.status == Healthy)) Healthy else Unhealthy
       sender() ! DetailedHealthCheckResponse(status, checks)
 
-    case _: Status.Failure =>
+    case failure: Status.Failure =>
+      log.error(getClass + ": " + failure.cause.getMessage)
       sender() ! StatusHealthCheckResponse(Unhealthy)
   }
 
@@ -74,7 +77,9 @@ class ElasticsearchHealthActor(implicit inj: Injector) extends HealthActor {
         else
           Check(name, Unhealthy, NotFound)
     }.recover {
-      case ex => Check(name, Unhealthy, Unexpected(ex.getMessage))
+      case ex =>
+        log.error("Index '" + index + "' existence check failed: " + ex.getMessage)
+        Check(name, Unhealthy, Unexpected(ex.getMessage))
     }
   }
 
@@ -85,4 +90,5 @@ class ElasticsearchHealthActor(implicit inj: Injector) extends HealthActor {
   }
 
   private case class HealthCheckRawResponse(checks: Iterable[Check])
+
 }
