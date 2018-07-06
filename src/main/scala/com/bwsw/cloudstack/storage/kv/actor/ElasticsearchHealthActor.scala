@@ -33,6 +33,7 @@ import scaldi.akka.AkkaInjectable._
 
 import scala.concurrent.Future
 
+/** Actor responsible for health checks for Elasticsearch storages **/
 class ElasticsearchHealthActor(implicit inj: Injector)
   extends HealthActor
   with ActorLogging {
