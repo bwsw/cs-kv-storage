@@ -1,5 +1,7 @@
 {
-  "index_patterns": ["storage-*"] ,
+  "index_patterns": [
+    "storage-data-*"
+  ],
   "settings": {
     "number_of_replicas": 2
   },
