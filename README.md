@@ -275,25 +275,27 @@ GET /history/<storage UUID>
 ```
 ##### Parameters
 
-| Name  | Mandatory | Description |
-|-------|-----------|-------------|
-| keys  | no | Comma separated list of keys. |
-| operations | no | Comma separated list of operations. |
-| start | no | The start date/time as Unix timestamp |
-| end | no | The end  date/time as Unix timestamp |
-| sort | no | Comma separated list of fields prefixed with - for descending order |
-| page | no (1 by default) | A page number of results |
-| size | no (default value set in configuration file) | A number of results returned in the page |
-| scroll | no | A timeout for Scroll API in ms |
+All parameters are optional. If both page and scroll parameters specified, scroll has higher priority
+
+| Parameter  | Description |
+| ----- | ----------- |
+| keys  | Comma separated list of keys. |
+| operations | Comma separated list of operations.(set, delete or clear) |
+| start | The start date/time as Unix timestamp |
+| end | The end  date/time as Unix timestamp |
+| sort | Comma separated list of fields, optionally prefixed with - (minus) for descending order |
+| page | A page number of results(1 by default) |
+| size | A number of results returned in the page(default value set in configuration file) |
+| scroll | A timeout for Scroll API in ms |
 
 #### Response
 
-| Use case  | Status code | Body |
-|-------|-----------|-------------|
-| The storage does not exist  | 404 | &lt;empty&gt; |
-| Elasticsearch is not available | 500 | &lt;empty&gt; |
-| The storage does not support history | 400 | &lt;empty&gt; |
-| The storage exists and supports history | 200 | Results in the format specified below |
+| HTTP Status code | Description |
+| ---------------- | ----------- |
+| 200 | The storage exists and supports history. Results in the format specified below. The content type is application/json.|
+| 400 | The storage does not support history, or request contains bad parameters. |
+| 404 | The storage does not exist. |
+| 500 | The request can not be processed because of an internal error. |
 
 ##### Response body examples
 For requests with page parameter specified
@@ -338,18 +340,17 @@ POST /history
 Content-Type: application/json
 
 {
-   "scroll":"scroll id",
-   "size": 100,
+   "scrollId":"scroll id",
    "timeout": 60000
 }
 ```
 #### Response
 
-| Use case  | Status code | Body |
-|-------|-----------|-------------|
-| Elasticsearch is not available | 500 | &lt;empty&gt; |
-| Invalid/expired scroll id | 400 | &lt;empty&gt; |
-| Scroll request is successful | 200 | Results in the format as specified above for requests with page and scroll |
+| HTTP Status code | Body |
+| ---------------- | ---- |
+| 200 | Scroll request is successful. Result has format specified above for requests with scroll. The content type is application/json. |
+| 400 | Invalid/expired scroll id |
+| 500 | The request can not be processed because of an internal error. |
 
 ##### Response body example
 
