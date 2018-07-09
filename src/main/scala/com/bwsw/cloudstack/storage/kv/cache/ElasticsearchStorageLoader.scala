@@ -30,7 +30,7 @@ class ElasticsearchStorageLoader(client: HttpClient) extends StorageLoader {
 
   def load: String => Future[Option[Storage]] = {
     id: String =>
-      client.execute(get(registryIndex, `type`, id)).map {
+      client.execute(get(RegistryIndex, DocumentType, id)).map {
         case Left(_) => throw new RuntimeException("Storage info loading failed")
         case Right(success) =>
           if (success.result.found) {

@@ -37,7 +37,8 @@ class HealthServlet(system: ActorSystem, requestTimeout: FiniteDuration, healthA
   with FutureSupport
   with JacksonJsonSupport {
 
-  protected implicit lazy val jsonFormats: Formats = DefaultFormats.preservingEmptyValues + new HealthStatusSerializer + new NameSerializer + new StatusMessageSerializer
+  protected implicit lazy val jsonFormats: Formats = DefaultFormats
+    .preservingEmptyValues + new HealthStatusSerializer + new NameSerializer + new StatusMessageSerializer
 
   protected implicit val akkaTimeout: Timeout = requestTimeout
 
@@ -51,11 +52,11 @@ class HealthServlet(system: ActorSystem, requestTimeout: FiniteDuration, healthA
           (healthActor ? HealthCheckRequest(detailed)).map {
             case StatusHealthCheckResponse(Healthy) => Ok("")
             case StatusHealthCheckResponse(Unhealthy) => InternalServerError("")
-            case body: DetailedHealthCheckResponse =>
+            case detailedResponse: DetailedHealthCheckResponse =>
               contentType = formats("json")
-              body.status match {
-                case Healthy => Ok(body)
-                case Unhealthy => InternalServerError(body)
+              detailedResponse.status match {
+                case Healthy => Ok(detailedResponse)
+                case Unhealthy => InternalServerError(detailedResponse)
               }
           }
         }

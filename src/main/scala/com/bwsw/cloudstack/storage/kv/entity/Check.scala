@@ -17,5 +17,5 @@
 
 package com.bwsw.cloudstack.storage.kv.entity
 
-/** Single check performed on the system **/
+/** A health check result **/
 case class Check(name: CheckName, status: HealthStatus, message: StatusMessage)

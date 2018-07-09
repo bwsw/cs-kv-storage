@@ -17,11 +17,9 @@
 
 package com.bwsw.cloudstack.storage.kv.servlet
 
-import akka.actor.{ActorSystem, Props}
-import akka.pattern.ask
-import akka.testkit.{TestActorRef, TestProbe}
-import akka.util.Timeout
-import com.bwsw.cloudstack.storage.kv.actor.HealthActor
+import akka.actor.ActorSystem
+import akka.testkit.TestActorRef
+import com.bwsw.cloudstack.storage.kv.entity.CheckName.{HistoryStorageTemplate, StorageRegistry, StorageTemplate}
 import com.bwsw.cloudstack.storage.kv.entity.HealthStatus.{Healthy, Unhealthy}
 import com.bwsw.cloudstack.storage.kv.entity._
 import com.bwsw.cloudstack.storage.kv.message.request.HealthCheckRequest
@@ -52,19 +50,11 @@ class HealthServletSuite
     s"""{\"name\":\"HISTORY_STORAGE_TEMPLATE\",\"status\":\"HEALTHY\",\"message\":\"$Ok\"}""" +
     "]}"
 
-
-  class HealthActorMock(testProbe: TestProbe) extends HealthActor {
-
-    override def receive: Receive = {
-      case msg: Any => testProbe.ref ! msg
-    }
-  }
-
   describe("a HealthServlet") {
     addServlet(new HealthServlet(system, 1500.millis, healthActor), "/health/*")
 
     describe("check non detailed") {
-      it("should return 200 Ok if storage is running and set up properly") {
+      it("should return 200 Ok if the storage is running and set up properly") {
         healthActor.underlyingActor
           .clearAndExpect(ResponsiveExpectation(HealthCheckRequest(false), () => StatusHealthCheckResponse(Healthy)))
         get("/health") {
@@ -72,7 +62,7 @@ class HealthServletSuite
         }
       }
 
-      it("should return 500 Internal Server Error if storage have problems") {
+      it("should return 500 Internal Server Error if the storage has problems") {
         healthActor.underlyingActor
           .clearAndExpect(ResponsiveExpectation(
             HealthCheckRequest(false),
@@ -84,7 +74,7 @@ class HealthServletSuite
     }
 
     describe("check detailed") {
-      it("should return 200 Ok and all checks should be healthy") {
+      it("should return 200 Ok if all checks are healthy") {
         healthActor.underlyingActor
           .clearAndExpect(ResponsiveExpectation(
             HealthCheckRequest(true),
@@ -97,10 +87,11 @@ class HealthServletSuite
         get("/health?detailed=true") {
           status should equal(200)
           body should equal(jsonOk)
+          response.getContentType should include("application/json")
         }
       }
 
-      it("should return 500 Internal Server Error if storage have problems") {
+      it("should return 500 Internal Server Error if the storage has problems") {
         healthActor.underlyingActor
           .clearAndExpect(ResponsiveExpectation(
             HealthCheckRequest(true),
@@ -113,12 +104,13 @@ class HealthServletSuite
         get("/health?detailed=true") {
           status should equal(500)
           body should equal(jsonError)
+          response.getContentType should include("application/json")
         }
       }
     }
 
     describe("check bad request") {
-      it("should return 400 Bad Request if bad detailed parameter given") {
+      it("should return 400 Bad Request if detailed parameter value is invalid") {
         get("/health?detailed=bad") {
           status should equal(400)
           body should equal("")

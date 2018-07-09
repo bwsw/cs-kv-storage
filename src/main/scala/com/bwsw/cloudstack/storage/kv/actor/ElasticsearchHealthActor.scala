@@ -21,10 +21,12 @@ import akka.actor.{ActorLogging, Status}
 import akka.pattern.{ask, pipe}
 import akka.util.Timeout
 import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
+import com.bwsw.cloudstack.storage.kv.entity.CheckName.{HistoryStorageTemplate, StorageRegistry, StorageTemplate}
 import com.bwsw.cloudstack.storage.kv.entity.HealthStatus.{Healthy, Unhealthy}
 import com.bwsw.cloudstack.storage.kv.entity._
 import com.bwsw.cloudstack.storage.kv.message.request.{HealthCheckRequest, TemplateCheckRequest}
 import com.bwsw.cloudstack.storage.kv.message.response.{DetailedHealthCheckResponse, StatusHealthCheckResponse}
+import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils
 import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils._
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.HttpClient
@@ -49,9 +51,9 @@ class ElasticsearchHealthActor(implicit inj: Injector)
   def receive: PartialFunction[Any, Unit] = {
     case HealthCheckRequest(true) =>
       (for {
-        registry <- checkIndex(registryIndex, StorageRegistry)
-        storageTemplate <- checkIndexTemplate(storageTemplate, StorageTemplate)
-        historyStorageTemplate <- checkIndexTemplate(historyStorageTemplate, HistoryStorageTemplate)
+        registry <- checkIndex(RegistryIndex, StorageRegistry)
+        storageTemplate <- checkIndexTemplate(ElasticsearchUtils.StorageTemplate, StorageTemplate)
+        historyStorageTemplate <- checkIndexTemplate(ElasticsearchUtils.HistoryStorageTemplate, HistoryStorageTemplate)
       } yield HealthCheckRawResponse(Seq(registry, storageTemplate, historyStorageTemplate))).pipeTo(self)(sender())
 
     case HealthCheckRequest(false) =>

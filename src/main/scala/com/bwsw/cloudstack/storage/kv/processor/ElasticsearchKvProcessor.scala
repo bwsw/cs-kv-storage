@@ -40,7 +40,7 @@ class ElasticsearchKvProcessor(client: HttpClient, conf: ElasticsearchConfig) ex
 
   def get(storage: String, key: String): Future[Either[StorageError, String]] = {
     client.execute {
-      ElasticDsl.get(key).from(getStorageIndex(storage) / `type`)
+      ElasticDsl.get(key).from(getStorageIndex(storage) / DocumentType)
     }.map {
       case Left(failure) => Left(getError(failure))
       case Right(success) =>
@@ -53,7 +53,7 @@ class ElasticsearchKvProcessor(client: HttpClient, conf: ElasticsearchConfig) ex
 
   def get(storage: String, keys: Iterable[String]): Future[Either[StorageError, Map[String, Option[String]]]] = {
     val gets = keys.map {
-      ElasticDsl.get(_).from(getStorageIndex(storage) / `type`)
+      ElasticDsl.get(_).from(getStorageIndex(storage) / DocumentType)
     }
     client.execute {
       multiget(gets)
@@ -66,7 +66,7 @@ class ElasticsearchKvProcessor(client: HttpClient, conf: ElasticsearchConfig) ex
   def set(storage: String, key: String, value: String): Future[Either[StorageError, Unit]] = {
     if (isKvValid(key, value))
       client.execute {
-        indexInto(getStorageIndex(storage) / `type`) id key fields (storageValueField -> value)
+        indexInto(getStorageIndex(storage) / DocumentType) id key fields (StorageValueField -> value)
       }.map {
         case Left(failure) => Left(getError(failure))
         case Right(_) => Right(Unit)
@@ -78,7 +78,7 @@ class ElasticsearchKvProcessor(client: HttpClient, conf: ElasticsearchConfig) ex
   def set(storage: String, kvs: Map[String, String]): Future[Either[StorageError, Map[String, Boolean]]] = {
     val splitKvs = kvs.partition { kv => isKvValid(kv._1, kv._2) }
     val sets = splitKvs._1.map { case (key, value) =>
-      indexInto(getStorageIndex(storage) / `type`) id key fields (storageValueField -> value)
+      indexInto(getStorageIndex(storage) / DocumentType) id key fields (StorageValueField -> value)
     }
     val bad = splitKvs._2.map { case (key, _) => (key, false) }
     if (sets.nonEmpty) {
@@ -96,7 +96,7 @@ class ElasticsearchKvProcessor(client: HttpClient, conf: ElasticsearchConfig) ex
 
   def delete(storage: String, key: String): Future[Either[StorageError, Unit]] = {
     client.execute {
-      deleteById(getStorageIndex(storage), `type`, key)
+      deleteById(getStorageIndex(storage), DocumentType, key)
     }.map {
       case Left(failure) => Left(getError(failure))
       case Right(_) => Right(Unit)
@@ -105,7 +105,7 @@ class ElasticsearchKvProcessor(client: HttpClient, conf: ElasticsearchConfig) ex
 
   def delete(storage: String, keys: Iterable[String]): Future[Either[StorageError, Map[String, Boolean]]] = {
     val deletes = keys.map {
-      deleteById(getStorageIndex(storage), `type`, _)
+      deleteById(getStorageIndex(storage), DocumentType, _)
     }
     client.execute {
       bulk(deletes)
@@ -135,7 +135,7 @@ class ElasticsearchKvProcessor(client: HttpClient, conf: ElasticsearchConfig) ex
 
   def clear(storage: String): Future[Either[StorageError, Unit]] = {
     client.execute {
-      deleteByQuery(getStorageIndex(storage), `type`, matchAllQuery)
+      deleteByQuery(getStorageIndex(storage), DocumentType, matchAllQuery)
         .proceedOnConflicts(true)
     }
       .map {
@@ -181,7 +181,7 @@ class ElasticsearchKvProcessor(client: HttpClient, conf: ElasticsearchConfig) ex
 /** ElasticsearchKvProcessor companion object. **/
 object ElasticsearchKvProcessor {
   private def getValue(fields: Map[String, Any]): Either[StorageError, String] = {
-    fields.get(storageValueField) match {
+    fields.get(StorageValueField) match {
       case Some(null) => Right(null)
       case Some(s: String) => Right(s)
       case _ => Left(InternalError("Invalid result"))

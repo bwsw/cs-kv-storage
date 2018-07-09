@@ -20,21 +20,24 @@ package com.bwsw.cloudstack.storage.kv.actor
 import akka.actor.{ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
+import com.bwsw.cloudstack.storage.kv.entity.CheckName.{HistoryStorageTemplate, StorageRegistry, StorageTemplate}
 import com.bwsw.cloudstack.storage.kv.entity.HealthStatus.{Healthy, Unhealthy}
 import com.bwsw.cloudstack.storage.kv.entity.{Check, _}
 import com.bwsw.cloudstack.storage.kv.message.request.{HealthCheckRequest, TemplateCheckRequest}
-import com.bwsw.cloudstack.storage.kv.message.response.{DetailedHealthCheckResponse, HealthCheckResponse, StatusHealthCheckResponse}
+import com.bwsw.cloudstack.storage.kv.message.response.{DetailedHealthCheckResponse, HealthCheckResponse,
+  StatusHealthCheckResponse}
+import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils
 import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils._
 import com.sksamuel.elastic4s.admin.IndicesExists
+import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http._
 import com.sksamuel.elastic4s.http.index.admin.IndexExistsResponse
-import com.sksamuel.elastic4s.http.ElasticDsl._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.FunSpecLike
 import scaldi.{Injector, Module}
 
-import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{ExecutionContext, Future}
 
 class ElasticsearchHealthActorSpec
   extends TestKit(ActorSystem("cs-kv-storage"))
@@ -56,7 +59,6 @@ class ElasticsearchHealthActorSpec
         testProbe.ref.forward(msg)
     }
   }
-
 
   describe("a ElasticsearchHealthActor") {
     (appConf.getRequestTimeout _).expects().returning(1.second)
@@ -86,6 +88,7 @@ class ElasticsearchHealthActorSpec
           expectStorageRegistryRequestFailure(ElasticsearchError().toString)
           Check(StorageRegistry, Unhealthy, ElasticsearchError())
       }
+
       val storageCheck =
         if (storageTemplateCheckResult)
           Check(StorageTemplate, Healthy, Ok)
@@ -99,9 +102,10 @@ class ElasticsearchHealthActorSpec
           Check(HistoryStorageTemplate, Unhealthy, NotFound)
 
       elasticsearchHealthActor ! HealthCheckRequest(true)
-      checkTestProbe.expectMsg(timeout, TemplateCheckRequest(storageTemplate, StorageTemplate))
+      checkTestProbe.expectMsg(timeout, TemplateCheckRequest(ElasticsearchUtils.StorageTemplate, StorageTemplate))
       checkTestProbe.reply(storageCheck)
-      checkTestProbe.expectMsg(timeout, TemplateCheckRequest(historyStorageTemplate, HistoryStorageTemplate))
+      checkTestProbe
+        .expectMsg(timeout, TemplateCheckRequest(ElasticsearchUtils.HistoryStorageTemplate, HistoryStorageTemplate))
       checkTestProbe.reply(historyStorageCheck)
 
       expectMsg(
@@ -123,23 +127,23 @@ class ElasticsearchHealthActorSpec
 
     describe("HealthCheckRequest(detailed = true)") {
 
-      it("should return Healthy detailed report if all checks passed") {
+      it("should return Healthy detailed response if all checks passed") {
         test(Healthy)
       }
 
-      it("should return Unhealthy detailed report if at least storage template check returned false") {
+      it("should return Unhealthy detailed response if the storage template check returns false") {
         test(Unhealthy, storageTemplateCheckResult = false)
       }
 
-      it("should return Unhealthy detailed report if at least history storage template check returned false") {
+      it("should return Unhealthy detailed response if the history storage template check returns false") {
         test(Unhealthy, historyStorageTemplateCheckResult = false)
       }
 
-      it("should report Unhealthy if at least storage registry check failed") {
+      it("should report Unhealthy detailed response if the storage registry check fails") {
         test(Unhealthy, storageRegistryCheckResult = Left())
       }
 
-      it("should return Unhealthy detailed report if at least storage registry check returned false") {
+      it("should return Unhealthy detailed response if the storage registry check returns false") {
         test(Unhealthy, storageRegistryCheckResult = Right(false))
       }
     }
@@ -155,13 +159,13 @@ class ElasticsearchHealthActorSpec
     expectIndexExistsRequest().returning(Future(Left(
       RequestFailure(500, Option.empty, Map.empty, ElasticError.fromThrowable(new RuntimeException(error))))))
 
-  private def getRequestSuccessFuture[T](response: T): Future[Right[RequestFailure, RequestSuccess[T]]] =
-    Future(Right(RequestSuccess(200, Option.empty, Map.empty, response)))
-
   private def expectIndexExistsRequest()(implicit client: HttpClient) =
     (client.execute[IndicesExists, IndexExistsResponse]
       (_: IndicesExists)
       (_: HttpExecutable[IndicesExists, IndexExistsResponse], _: ExecutionContext))
-      .expects(indexExists(registryIndex), IndexExistsHttpExecutable, *)
+      .expects(indexExists(RegistryIndex), IndexExistsHttpExecutable, *)
+
+  private def getRequestSuccessFuture[T](response: T): Future[Right[RequestFailure, RequestSuccess[T]]] =
+    Future(Right(RequestSuccess(200, Option.empty, Map.empty, response)))
 
 }

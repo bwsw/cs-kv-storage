@@ -36,7 +36,7 @@ class ElasticsearchHistoryProcessor(client: HttpClient) extends HistoryProcessor
   def save(histories: List[KvHistory]): Future[Option[List[KvHistory]]] = {
     val indices = histories.map {
       record =>
-        indexInto(getHistoricalStorageIndex(record.storage), `type`) fields getFields(record)
+        indexInto(getHistoricalStorageIndex(record.storage), DocumentType) fields getFields(record)
     }
     client.execute(bulk(indices)).map {
       case Left(_) => Some(histories)

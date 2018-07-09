@@ -37,7 +37,7 @@ class LoadingStorageCache(conf: AppConfig, loader: StorageLoader) extends Storag
 
   def isHistoryEnabled(storageUuid: String): Future[Option[Boolean]] = {
     cache.get(storageUuid).map {
-      case Some(storage) => Some(storage.keepHistory && storage.storageType != temporaryStorageType)
+      case Some(storage) => Some(storage.keepHistory && storage.storageType != TemporaryStorageType)
       case None => None
     }
   }

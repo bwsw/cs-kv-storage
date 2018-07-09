@@ -19,27 +19,28 @@ package com.bwsw.cloudstack.storage.kv.entity
 
 sealed trait CheckName
 
-object StorageRegistry extends CheckName {
-  override def toString: String = "STORAGE_REGISTRY"
-}
-
-object StorageTemplate extends CheckName {
-  override def toString: String = "STORAGE_TEMPLATE"
-}
-
-object HistoryStorageTemplate extends CheckName {
-  override def toString: String = "HISTORY_STORAGE_TEMPLATE"
-}
-
-object Unspecified extends CheckName {
-  override def toString: String = "UNSPECIFIED"
-}
-
 object CheckName {
+
+  private val StorageRegistryValue = "STORAGE_REGISTRY"
+  private val StorageTemplateValue = "STORAGE_TEMPLATE"
+  private val HistoryStorageTemplateValue = "HISTORY_STORAGE_TEMPLATE"
+
+  object StorageRegistry extends CheckName {
+    override def toString: String = StorageRegistryValue
+  }
+
+  object StorageTemplate extends CheckName {
+    override def toString: String = StorageTemplateValue
+  }
+
+  object HistoryStorageTemplate extends CheckName {
+    override def toString: String = HistoryStorageTemplateValue
+  }
+
   def parse(string: String): CheckName = string match {
-    case "STORAGE_REGISTRY" => StorageRegistry
-    case "STORAGE_TEMPLATE" => StorageTemplate
-    case "HISTORY_STORAGE_TEMPLATE" => HistoryStorageTemplate
+    case StorageRegistryValue => StorageRegistry
+    case StorageTemplateValue => StorageTemplate
+    case HistoryStorageTemplateValue => HistoryStorageTemplate
     case _ => throw new IllegalArgumentException
   }
 }

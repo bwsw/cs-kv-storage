@@ -21,12 +21,13 @@ import akka.actor.{ActorSystem, Props}
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 import akka.testkit.{ImplicitSender, TestKit}
 import com.bwsw.cloudstack.storage.kv.configuration.ElasticsearchConfig
+import com.bwsw.cloudstack.storage.kv.entity.CheckName.StorageTemplate
 import com.bwsw.cloudstack.storage.kv.entity.HealthStatus.{Healthy, Unhealthy}
 import com.bwsw.cloudstack.storage.kv.entity._
 import com.bwsw.cloudstack.storage.kv.message.request.TemplateCheckRequest
 import com.github.tomakehurst.wiremock.WireMockServer
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
 import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{BeforeAndAfterEach, FunSpecLike}
 import scaldi.{Injector, Module}
@@ -46,7 +47,7 @@ class ElasticsearchTemplateCheckActorSpec
   private val uriBase = "http://localhost:"
   private val name = "someTemplate"
   private val unexpectedMsg = "Unexpected status: "
-  private val checkName = Unspecified
+  private val checkName = StorageTemplate
   private val templatePath = "/_template/" + name
   private val wireMockServer = new WireMockServer(wireMockConfig().dynamicPort())
 
@@ -72,21 +73,21 @@ class ElasticsearchTemplateCheckActorSpec
       wireMockServer.stubFor(
         head(urlPathEqualTo(templatePath))
           .willReturn(aResponse()
-            .withHeader("Content-Type", "application/json; charset=UTF-8")
-            .withStatus(status)))
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withStatus(status)))
       elasticsearchCheckActor ! TemplateCheckRequest(name, checkName)
       expectMsg(timeout, msg)
     }
 
-    it("should return true if template exists") {
+    it("should return true if the template exists") {
       test(200, Check(checkName, Healthy, Ok), 5000.millis)
     }
 
-    it("should return false if template does not exist") {
+    it("should return false if the template does not exist") {
       test(404, Check(checkName, Unhealthy, NotFound), 1500.millis)
     }
 
-    it("should return false if request processing failed") {
+    it("should return false if the request processing fails") {
       test(500, Check(checkName, Unhealthy, Unexpected(unexpectedMsg + 500)), 1500.millis)
     }
   }

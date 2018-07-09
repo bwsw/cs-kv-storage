@@ -19,5 +19,5 @@ package com.bwsw.cloudstack.storage.kv.actor
 
 import akka.actor.Actor
 
-/** Performs checks under storage system **/
+/** Actor to check Elasticsearch templates **/
 trait TemplateCheckActor extends Actor

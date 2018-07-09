@@ -48,8 +48,8 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
     describe("(update temp storage ttl)") {
       it("should update the value of ttl field in storage registry") {
         val updateResponse = UpdateResponse(
-          registryIndex,
-          `type`,
+          RegistryIndex,
+          DocumentType,
           storage,
           2,
           "updated",
@@ -65,8 +65,8 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
 
       it("should return BadRequestError if type of the storage isn't TEMP") {
         val updateResponse = UpdateResponse(
-          registryIndex,
-          `type`,
+          RegistryIndex,
+          DocumentType,
           storage,
           2,
           "noop",
@@ -100,13 +100,13 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
     describe("(delete temp storage)") {
       val getResponse = GetResponse(
         storage,
-        registryIndex,
-        `type`,
+        RegistryIndex,
+        DocumentType,
         2,
         found = true,
         Map.empty,
-        Map(typeField -> temporaryStorageType))
-      val deleteByIdResponse = DeleteResponse(Shards(2, 1, 0), registryIndex, `type`, storage, 2, "deleted")
+        Map(typeField -> TemporaryStorageType))
+      val deleteByIdResponse = DeleteResponse(Shards(2, 1, 0), RegistryIndex, DocumentType, storage, 2, "deleted")
 
       it("should delete the storage index and associated record in a registry") {
         expectGetRequest(fakeClient).returning(getRequestSuccessFuture(getResponse))
@@ -122,8 +122,8 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
       it("should return BadRequestError if type of the storage isn't TEMP") {
         val getResponse = GetResponse(
           storage,
-          registryIndex,
-          `type`,
+          RegistryIndex,
+          DocumentType,
           2,
           found = true,
           Map.empty,
@@ -212,18 +212,18 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
   private def expectUpdateRequest(client: HttpClient) = {
     (client.execute[UpdateDefinition, UpdateResponse](_: UpdateDefinition)(_: HttpExecutable[UpdateDefinition, UpdateResponse], _: ExecutionContext))
       .expects(
-        update(storage) in registryIndex / `type`
+        update(storage) in RegistryIndex / DocumentType
         script "if (ctx._source.type == \"TEMP\"){ ctx._source.ttl = " + ttl + " } else { ctx.op=\"noop\"}", UpdateHttpExecutable, *)
   }
 
   private def expectGetRequest(client: HttpClient) = {
     (client.execute[GetDefinition, GetResponse](_: GetDefinition)(_: HttpExecutable[GetDefinition, GetResponse], _: ExecutionContext))
-      .expects(ElasticDsl.get(storage).from(registryIndex / `type`), GetHttpExecutable, *)
+      .expects(ElasticDsl.get(storage).from(RegistryIndex / DocumentType), GetHttpExecutable, *)
   }
 
   private def expectDeleteByIdRequest(client: HttpClient) = {
     (client.execute[DeleteByIdDefinition, DeleteResponse](_: DeleteByIdDefinition)(_: HttpExecutable[DeleteByIdDefinition, DeleteResponse], _: ExecutionContext))
-      .expects(deleteById(registryIndex, `type`, storage), DeleteByIdExecutable, *)
+      .expects(deleteById(RegistryIndex, DocumentType, storage), DeleteByIdExecutable, *)
   }
 
   private def expectDeleteIndexRequest(client: HttpClient) = {

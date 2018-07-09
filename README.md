@@ -309,16 +309,19 @@ DELETE /storage/<storage UUID>
 ### Check health
 
 #### Request
+
 ```
 GET /health
 ```
+
 ##### Parameters
 
 | Parameter |                                              Description                                                  |
 | --------- | --------------------------------------------------------------------------------------------------------- |
-| detailed  | An optional boolean parameter whether it is need to check components that it depends on(false by default) |
+| detailed  | An optional boolean parameter whether it is need to check components that it depends on. Default value - false. |
 
 #### Response
+
 ##### Status code
 
 | HTTP Status Code | Description |
@@ -327,7 +330,9 @@ GET /health
 | 500 | Unhealthy |
 
 ##### Body
-If Detailed = false, than body is empty, otherwise it presented in json format, Content-Type header is set to application/json :
+
+If detailed = false then response body is empty, otherwise results are in the response body in the format specified 
+below and the content type is application/json:
 
 ```json
 {
@@ -341,7 +346,6 @@ If Detailed = false, than body is empty, otherwise it presented in json format, 
    ]
 }
 ```
-
 
 # Configuration
 
