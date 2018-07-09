@@ -38,6 +38,8 @@ libraryDependencies ++= Seq(
   "com.sksamuel.elastic4s" % "elastic4s-http_2.12" % elastic4sVersion,
   "com.typesafe" % "config" % "1.3.3",
   "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+  "com.typesafe.akka" %% "akka-http" % "10.1.3",
+  "com.typesafe.akka" %% "akka-stream" % akkaVersion,
   "org.scalatra" %% "scalatra-json" % ScalatraVersion,
   "org.json4s" %% "json4s-jackson" % "3.5.4",
   "com.github.blemale" % "scaffeine_2.12" % "2.5.0",
@@ -49,7 +51,8 @@ libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "3.0.5" % Test,
   "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % Test,
   "org.scalamock" %% "scalamock" % "4.1.0" % Test,
-  "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test
+  "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
+  "com.github.tomakehurst" % "wiremock" % "2.18.0" % Test
 )
 
 assemblyJarName := s"${name.value}-${version.value}-jar-with-dependencies.jar"

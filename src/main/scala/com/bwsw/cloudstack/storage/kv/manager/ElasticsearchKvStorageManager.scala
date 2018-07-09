@@ -18,7 +18,7 @@
 package com.bwsw.cloudstack.storage.kv.manager
 
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError, StorageError}
-import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils
+import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils._
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.{HttpClient, RequestFailure, RequestSuccess}
 import org.slf4j.LoggerFactory
@@ -36,7 +36,7 @@ class ElasticsearchKvStorageManager(client: HttpClient) extends KvStorageManager
   import scala.concurrent.ExecutionContext.Implicits.global
 
   def updateTempStorageTtl(storage: String, ttl: Long): Future[Either[StorageError, Unit]] = {
-    client.execute(update(storage) in Registry / Type
+    client.execute(update(storage) in RegistryIndex / DocumentType
       script
       s"""if (ctx._source.type == "$TemporaryStorageType"){ ctx._source.ttl = $ttl } else { ctx.op="noop"}""")
       .map {
@@ -56,7 +56,7 @@ class ElasticsearchKvStorageManager(client: HttpClient) extends KvStorageManager
 
   def deleteTempStorage(storage: String): Future[Either[StorageError, Unit]] = {
     def checkType: Future[Either[StorageError, Unit]] = {
-      client.execute(get(Registry, Type, storage)).map {
+      client.execute(get(RegistryIndex, DocumentType, storage)).map {
         case Left(failure) =>
           logger.error(s"""Elasticsearch get request failure: ${failure.error}""")
           Left(getError(failure))
@@ -73,7 +73,7 @@ class ElasticsearchKvStorageManager(client: HttpClient) extends KvStorageManager
     def deleteStorage(either: Either[StorageError, Unit]): Future[Either[StorageError, Unit]] = either match {
       case Left(error) => Future(Left(error))
       case Right(_) =>
-        client.execute(deleteById(Registry, Type, storage)).map {
+        client.execute(deleteById(RegistryIndex, DocumentType, storage)).map {
           case Left(failure) =>
             logger.error(s"""Elasticsearch delete by id request failure: ${failure.error}""")
             Left(getError(failure))
@@ -88,7 +88,7 @@ class ElasticsearchKvStorageManager(client: HttpClient) extends KvStorageManager
     }
 
     def deleteStorageIndex(storageNotFound: Boolean): Future[Either[StorageError, Unit]] = {
-      client.execute(deleteIndex(ElasticsearchUtils.getStorageIndex(storage)))
+      client.execute(deleteIndex(getStorageIndex(storage)))
         .map {
           case Left(failure) =>
             if (failure.status == 404) {
@@ -114,9 +114,6 @@ class ElasticsearchKvStorageManager(client: HttpClient) extends KvStorageManager
 
 /** ElasticsearchKvStorageManager companion object. **/
 object ElasticsearchKvStorageManager {
-  private val Registry = "storage-registry"
-  private val Type = "_doc"
-  private val TemporaryStorageType = "TEMP"
   private val logger = LoggerFactory.getLogger(getClass)
 
   private def getError(requestFailure: RequestFailure): StorageError = {

@@ -18,6 +18,7 @@
 package com.bwsw.cloudstack.storage.kv.cache
 
 import com.bwsw.cloudstack.storage.kv.entity.Storage
+import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils._
 import com.sksamuel.elastic4s.http.ElasticDsl.{get, _}
 import com.sksamuel.elastic4s.http.HttpClient
 
@@ -26,13 +27,11 @@ import scala.concurrent.Future
 
 /** Provides access to information about storages existing in Elasticsearch **/
 class ElasticsearchStorageLoader(client: HttpClient) extends StorageLoader {
-  private val registry = "storage-registry"
-  private val `type` = "_doc"
 
   def load: String => Future[Option[Storage]] = {
     id: String =>
-      client.execute(get(registry, `type`, id)).map {
-        case Left(_) => throw new RuntimeException("Storage " + id + "info loading failed")
+      client.execute(get(RegistryIndex, DocumentType, id)).map {
+        case Left(_) => throw new RuntimeException("Storage info loading failed")
         case Right(success) =>
           if (success.result.found) {
             Some(Storage(success.result.id, getValue(success.result.source, "type").toString,

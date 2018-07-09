@@ -15,16 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package com.bwsw.cloudstack.storage.kv.message
+package com.bwsw.cloudstack.storage.kv.entity
 
-import com.bwsw.cloudstack.storage.kv.entity.Operation
-
-case class KvHistory(storage: String, key: String, value: String, timestamp: Long, operation: Operation, attempt: Int = 0) {
-  /** Returns copy of this history with incremented attempts
-    *
-    * @return new KvHistory
-    */
-  def makeAttempt: KvHistory = {
-    KvHistory(storage, key, value, timestamp, operation, attempt + 1)
-  }
-}
+/** A health check result **/
+case class Check(name: CheckName, status: HealthStatus, message: StatusMessage)
