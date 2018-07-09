@@ -22,7 +22,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.HttpMethods.HEAD
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse, StatusCodes}
 import akka.pattern.pipe
-import akka.stream.ActorMaterializer
+import akka.stream.Materializer
 import com.bwsw.cloudstack.storage.kv.configuration.ElasticsearchConfig
 import com.bwsw.cloudstack.storage.kv.entity.HealthStatus.{Healthy, Unhealthy}
 import com.bwsw.cloudstack.storage.kv.entity._
@@ -31,7 +31,7 @@ import scaldi.Injector
 import scaldi.akka.AkkaInjectable._
 
 /** Actor to check whether the index template exists in Elasticsearch **/
-class ElasticsearchTemplateCheckActor(implicit inj: Injector, materializer: ActorMaterializer)
+class ElasticsearchTemplateCheckActor(implicit inj: Injector, materializer: Materializer)
   extends TemplateCheckActor
   with ActorLogging {
 

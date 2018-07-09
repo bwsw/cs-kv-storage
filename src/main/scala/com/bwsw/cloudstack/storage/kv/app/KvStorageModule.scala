@@ -1,5 +1,7 @@
 package com.bwsw.cloudstack.storage.kv.app
 
+import akka.actor.ActorSystem
+import akka.stream.{ActorMaterializer, Materializer}
 import com.bwsw.cloudstack.storage.kv.actor._
 import com.bwsw.cloudstack.storage.kv.cache.{ElasticsearchStorageLoader, LoadingStorageCache, StorageCache,
   StorageLoader}
@@ -18,9 +20,15 @@ class KvStorageModule extends Module {
   val elasticsearchConfig = new ElasticsearchConfig
   val clock = new Clock
 
+  implicit val actorSystem: ActorSystem = ActorSystem("cs-kv-storage")
+  implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
+
   bind[Clock] toNonLazy clock
   bind[AppConfig] toNonLazy appConfig
   bind[ElasticsearchConfig] toNonLazy elasticsearchConfig
+
+  bind[ActorSystem] toNonLazy actorSystem
+  bind[Materializer] toNonLazy actorMaterializer
 
   bind[HttpClient] toNonLazy HttpClient(ElasticsearchClientUri(elasticsearchConfig.getUri))
   bind[KvProcessor] to injected[ElasticsearchKvProcessor]
