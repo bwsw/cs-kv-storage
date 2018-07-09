@@ -19,6 +19,7 @@ package com.bwsw.cloudstack.storage.kv.processor
 
 import com.bwsw.cloudstack.storage.kv.configuration.{AppConfig, ElasticsearchConfig}
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError}
+import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils._
 import com.sksamuel.elastic4s.bulk.BulkDefinition
 import com.sksamuel.elastic4s.delete.{DeleteByIdDefinition, DeleteByQueryDefinition}
 import com.sksamuel.elastic4s.get.{GetDefinition, MultiGetDefinition}
@@ -43,8 +44,6 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
   private val keyValues = Map("key1" -> "value1", "key2" -> "value2", "key3" -> "value3")
   private val index = "storage-someStorage"
   private val storage = "someStorage"
-  private val `type` = "_doc"
-  private val valueField = "value"
   private val scrollSize = 1000
   private val exception = new RuntimeException("Test message")
   private val keepAlive = "1m"
@@ -58,7 +57,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
 
     describe("(get by the key)") {
       it("should return the value if the key exists") {
-        val getResponse = GetResponse(key, index, `type`, 1, found = true, null, Map(valueField -> value))
+        val getResponse = GetResponse(key, index, DocumentType, 1, found = true, null, Map(StorageValueField -> value))
         expectGetRequest(fakeClient).returning(getRequestSuccessFuture(getResponse))
 
         elasticsearchKvProcessor.get(storage, key).map {
@@ -68,7 +67,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
       }
 
       it("should return NotFoundError if the key does not exist") {
-        val getResponse = GetResponse(key, index, `type`, 1, found = false, null, Map.empty)
+        val getResponse = GetResponse(key, index, DocumentType, 1, found = false, null, Map.empty)
         expectGetRequest(fakeClient).returning(getRequestSuccessFuture(getResponse))
 
         elasticsearchKvProcessor.get(storage, key).map {
@@ -98,7 +97,14 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
 
     describe("(get by keys)") {
       it("should return values if keys exist") {
-        val multiGetResponse = MultiGetResponse(keyValues.toList.map(kv => GetResponse(kv._1, index, `type`, 1, found = true, null, Map(valueField -> kv._2))))
+        val multiGetResponse = MultiGetResponse(keyValues.toList.map(kv => GetResponse(
+          kv._1,
+          index,
+          DocumentType,
+          1,
+          found = true,
+          null,
+          Map(StorageValueField -> kv._2))))
         expectsMultiGetRequest(fakeClient).returning(getRequestSuccessFuture(multiGetResponse))
 
         elasticsearchKvProcessor.get(storage, keyValues.keys).map {
@@ -111,9 +117,9 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
         val noneKeyValues = keyValues + (keyValues.keys.head -> null)
         val multiGetResponse = MultiGetResponse(keyValues.toList.map(kv => {
           if (kv._2 == null)
-            GetResponse(kv._1, index, `type`, 1, found = false, null, null)
+            GetResponse(kv._1, index, DocumentType, 1, found = false, null, null)
           else
-            GetResponse(kv._1, index, `type`, 1, found = true, null, Map(valueField -> kv._2))
+            GetResponse(kv._1, index, DocumentType, 1, found = true, null, Map(StorageValueField -> kv._2))
         }))
         expectsMultiGetRequest(fakeClient).returning(getRequestSuccessFuture(multiGetResponse))
 
@@ -149,7 +155,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
 
     describe("(set the key/value)") {
       def testSuccess(key: String, value: String, maxKeyLength: Int, maxValueLength: Int) = {
-        val indexResponse = IndexResponse(key, index, `type`, 1, "created", forcedRefresh = false, null)
+        val indexResponse = IndexResponse(key, index, DocumentType, 1, "created", forcedRefresh = false, null)
         expectsMaxKeyValueLength(fakeEsConf, key.length, value.length)
         expectsIndexRequest(fakeClient).returning(getRequestSuccessFuture(indexResponse))
 
@@ -173,7 +179,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
       }
 
       it("should set null value by the key") {
-        val indexResponse = IndexResponse(key, index, `type`, 1, "created", forcedRefresh = false, null)
+        val indexResponse = IndexResponse(key, index, DocumentType, 1, "created", forcedRefresh = false, null)
         (fakeEsConf.getMaxKeyLength _).expects().returning(key.length).atLeastOnce()
         expectsIndexRequest(fakeClient, key, null).returning(getRequestSuccessFuture(indexResponse))
 
@@ -239,7 +245,19 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
       def testSuccess(keyValues: Map[String, String], maxKeyLength: Int, maxValueLength: Int) = {
         val bulkResponse = BulkResponse(1, errors = false,
           keyValues.toList.map(kv => BulkResponseItems(
-            Some(BulkResponseItem(0, kv._1, index, `type`, 1, forcedRefresh = false, found = false, created = false, "created", 200, None, None)),
+            Some(BulkResponseItem(
+              0,
+              kv._1,
+              index,
+              DocumentType,
+              1,
+              forcedRefresh = false,
+              found = false,
+              created = false,
+              "created",
+              200,
+              None,
+              None)),
             None,
             None,
             None)))
@@ -279,7 +297,19 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
       it("should not set too long values by keys") {
         val bulkResponse = BulkResponse(1, errors = false,
           keyValues.toList.map(kv => BulkResponseItems(
-            Some(BulkResponseItem(0, kv._1, index, `type`, 1, forcedRefresh = false, found = false, created = false, "created", 200, None, None)),
+            Some(BulkResponseItem(
+              0,
+              kv._1,
+              index,
+              DocumentType,
+              1,
+              forcedRefresh = false,
+              found = false,
+              created = false,
+              "created",
+              200,
+              None,
+              None)),
             None,
             None,
             None)))
@@ -332,7 +362,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
 
     describe("(delete by the key)") {
       it("should delete the value by the key") {
-        val deleteResponse = DeleteResponse(Shards(1, 0, 1), index, `type`, key, 1, "deleted")
+        val deleteResponse = DeleteResponse(Shards(1, 0, 1), index, DocumentType, key, 1, "deleted")
         expectsDeleteRequest(fakeClient).returning(getRequestSuccessFuture(deleteResponse))
 
         elasticsearchKvProcessor.delete(storage, key).map {
@@ -365,7 +395,19 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
         val bulkResponse = BulkResponse(1, errors = false,
           keyValues.toList.map(kv => BulkResponseItems(
             None,
-            Some(BulkResponseItem(1, kv._1, index, `type`, 1, forcedRefresh = false, found = false, created = false, "deleted", 200, None, None)),
+            Some(BulkResponseItem(
+              1,
+              kv._1,
+              index,
+              DocumentType,
+              1,
+              forcedRefresh = false,
+              found = false,
+              created = false,
+              "deleted",
+              200,
+              None,
+              None)),
             None,
             None)))
         expectsBulkDeleteRequest(fakeClient).returning(getRequestSuccessFuture(bulkResponse))
@@ -399,7 +441,22 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
       val scrollId1 = "one"
       val scrollId2 = "two"
       val scrollId3 = "three"
-      val hits = keyValues.toList.map(kv => SearchHit(kv._1, index, `type`, 1, 1, None, None, None, None, None, None, Map(valueField -> kv._2), null, null, null)).toArray
+      val hits = keyValues.toList.map(kv => SearchHit(
+        kv._1,
+        index,
+        DocumentType,
+        1,
+        1,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        Map(StorageValueField -> kv._2),
+        null,
+        null,
+        null)).toArray
       val searchResponse = SearchResponse(1, isTimedOut = false, isTerminatedEarly = false, Map.empty, Shards(1, 0, 1), Some(scrollId1), Map.empty, SearchHits(hits.length, 1,
         hits.slice(0, hits.length - 1)))
 
@@ -505,38 +562,38 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
 
   private def expectGetRequest(client: HttpClient) = {
     (client.execute[GetDefinition, GetResponse](_: GetDefinition)(_: HttpExecutable[GetDefinition, GetResponse], _: ExecutionContext))
-      .expects(ElasticDsl.get(key).from(index / `type`), GetHttpExecutable, *)
+      .expects(ElasticDsl.get(key).from(index / DocumentType), GetHttpExecutable, *)
   }
 
   private def expectsMultiGetRequest(client: HttpClient) = {
-    val gets = keyValues.toList.map(kv => ElasticDsl.get(kv._1).from(index, `type`))
+    val gets = keyValues.toList.map(kv => ElasticDsl.get(kv._1).from(index, DocumentType))
     (client.execute[MultiGetDefinition, MultiGetResponse](_: MultiGetDefinition)(_: HttpExecutable[MultiGetDefinition, MultiGetResponse], _: ExecutionContext))
       .expects(multiget(gets), MultiGetHttpExecutable, *)
   }
 
   private def expectsIndexRequest(client: HttpClient) = {
     (client.execute[IndexDefinition, IndexResponse](_: IndexDefinition)(_: HttpExecutable[IndexDefinition, IndexResponse], _: ExecutionContext))
-      .expects(indexInto(index / `type`) id key fields (valueField -> value), IndexHttpExecutable, *)
+      .expects(indexInto(index / DocumentType) id key fields (StorageValueField -> value), IndexHttpExecutable, *)
   }
 
   private def expectsIndexRequest(client: HttpClient, key: String, value: String) = {
     (client.execute[IndexDefinition, IndexResponse](_: IndexDefinition)(_: HttpExecutable[IndexDefinition, IndexResponse], _: ExecutionContext))
-      .expects(indexInto(index / `type`) id key fields (valueField -> value), IndexHttpExecutable, *)
+      .expects(indexInto(index / DocumentType) id key fields (StorageValueField -> value), IndexHttpExecutable, *)
   }
 
   private def expectsBulkIndexRequest(client: HttpClient, kvs: Map[String, String]) = {
-    val sets = kvs.toList.map(kv => indexInto(index / `type`) id kv._1 fields (valueField -> kv._2))
+    val sets = kvs.toList.map(kv => indexInto(index / DocumentType) id kv._1 fields (StorageValueField -> kv._2))
     (client.execute[BulkDefinition, BulkResponse](_: BulkDefinition)(_: HttpExecutable[BulkDefinition, BulkResponse], _: ExecutionContext))
       .expects(ElasticDsl.bulk(sets), BulkExecutable, *)
   }
 
   private def expectsDeleteRequest(client: HttpClient) = {
     (client.execute[DeleteByIdDefinition, DeleteResponse](_: DeleteByIdDefinition)(_: HttpExecutable[DeleteByIdDefinition, DeleteResponse], _: ExecutionContext))
-      .expects(deleteById(index, `type`, key), DeleteByIdExecutable, *)
+      .expects(deleteById(index, DocumentType, key), DeleteByIdExecutable, *)
   }
 
   private def expectsBulkDeleteRequest(client: HttpClient) = {
-    val deletes = keyValues.keySet.map(k => deleteById(index, `type`, k))
+    val deletes = keyValues.keySet.map(k => deleteById(index, DocumentType, k))
     (client.execute[BulkDefinition, BulkResponse](_: BulkDefinition)(_: HttpExecutable[BulkDefinition, BulkResponse], _: ExecutionContext))
       .expects(ElasticDsl.bulk(deletes), BulkExecutable, *)
   }
@@ -555,7 +612,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
 
   private def expectsDeleteByQueryRequest(client: HttpClient) = {
     (client.execute[DeleteByQueryDefinition, DeleteByQueryResponse](_: DeleteByQueryDefinition)(_: HttpExecutable[DeleteByQueryDefinition, DeleteByQueryResponse], _: ExecutionContext))
-      .expects(deleteByQuery(index, `type`, matchAllQuery).proceedOnConflicts(true), DeleteByQueryExecutable, *)
+      .expects(deleteByQuery(index, DocumentType, matchAllQuery).proceedOnConflicts(true), DeleteByQueryExecutable, *)
   }
 
   private def expectsClearScrollRequest(client: HttpClient, scrollId: String) = {

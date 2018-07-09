@@ -15,19 +15,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package com.bwsw.cloudstack.storage.kv.message
+package com.bwsw.cloudstack.storage.kv.actor
 
-/** Operation that where used to change data existing in some storage **/
-sealed trait Operation
+import akka.actor.Actor
 
-object Set extends Operation {
-  override def toString: String = "set"
-}
-
-object Delete extends Operation {
-  override def toString: String = "delete"
-}
-
-object Clear extends Operation {
-  override def toString: String = "clear"
-}
+/** Actor to check Elasticsearch templates **/
+trait TemplateCheckActor extends Actor

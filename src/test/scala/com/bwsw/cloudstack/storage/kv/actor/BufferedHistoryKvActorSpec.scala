@@ -20,8 +20,8 @@ package com.bwsw.cloudstack.storage.kv.actor
 import akka.actor.{ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit}
 import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
-import com.bwsw.cloudstack.storage.kv.entity.Storage
-import com.bwsw.cloudstack.storage.kv.message.{Clear, Delete, KvHistory, KvHistoryBulk, Set}
+import com.bwsw.cloudstack.storage.kv.entity.{Clear, Delete, Set, Storage}
+import com.bwsw.cloudstack.storage.kv.message.{KvHistory, KvHistoryBulk}
 import com.bwsw.cloudstack.storage.kv.processor.HistoryProcessor
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.Eventually
@@ -72,7 +72,9 @@ class BufferedHistoryKvActorSpec
         expectHistoryProcessing(List(history), Future(None), historyLogged)
         val bufferedHistoryKvActor = system.actorOf(Props(new BufferedHistoryKvActor))
         bufferedHistoryKvActor ! history
-        eventually(timeout(scaled(flushTimeout * verifyTimeoutFactor))) {historyLogged.isCompleted should be(true)}
+        eventually(timeout(scaled(flushTimeout * verifyTimeoutFactor))) {
+          historyLogged.isCompleted should be(true)
+        }
       }
 
       def testRetry(flushSize: Int) = {
@@ -122,7 +124,9 @@ class BufferedHistoryKvActorSpec
         expectHistoryProcessing(historyBulk.values.toList, Future(None), historyLogged)
         val bufferedHistoryKvActor = system.actorOf(Props(new BufferedHistoryKvActor))
         bufferedHistoryKvActor ! historyBulk
-        eventually(timeout(scaled(flushTimeout * verifyTimeoutFactor))) {historyLogged.isCompleted should be(true)}
+        eventually(timeout(scaled(flushTimeout * verifyTimeoutFactor))) {
+          historyLogged.isCompleted should be(true)
+        }
       }
 
       def testRetry(flushSizeFactor: Int) = {

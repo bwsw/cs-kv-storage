@@ -15,16 +15,22 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package com.bwsw.cloudstack.storage.kv.message
+package com.bwsw.cloudstack.storage.kv.entity
 
-import com.bwsw.cloudstack.storage.kv.entity.Operation
+sealed trait StatusMessage
 
-case class KvHistory(storage: String, key: String, value: String, timestamp: Long, operation: Operation, attempt: Int = 0) {
-  /** Returns copy of this history with incremented attempts
-    *
-    * @return new KvHistory
-    */
-  def makeAttempt: KvHistory = {
-    KvHistory(storage, key, value, timestamp, operation, attempt + 1)
-  }
+object Ok extends StatusMessage {
+  override def toString: String = "OK"
+}
+
+object NotFound extends StatusMessage {
+  override def toString: String = "Not found"
+}
+
+case class ElasticsearchError(message: String = "Elasticsearch error") extends StatusMessage {
+  override def toString: String = message
+}
+
+case class Unexpected(message: String) extends StatusMessage {
+  override def toString: String = message
 }
