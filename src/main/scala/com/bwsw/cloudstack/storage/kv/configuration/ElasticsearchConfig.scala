@@ -43,10 +43,6 @@ class ElasticsearchConfig {
     conf.getString("scroll.keep-alive")
   }
 
-  def getSearchPageSize: Int = {
-    conf.getInt("search.page-size")
-  }
-
   def getMaxValueLength: Int = {
     conf.getInt("limit.value.max-size")
   }
