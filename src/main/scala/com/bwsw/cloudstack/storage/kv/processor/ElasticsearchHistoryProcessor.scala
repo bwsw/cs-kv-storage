@@ -17,10 +17,10 @@
 
 package com.bwsw.cloudstack.storage.kv.processor
 
-import com.bwsw.cloudstack.storage.kv.configuration.{AppConfig, ElasticsearchConfig}
+import com.bwsw.cloudstack.storage.kv.message.KvHistory
+import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
 import com.bwsw.cloudstack.storage.kv.entity._
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, StorageError}
-import com.bwsw.cloudstack.storage.kv.message._
 import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils._
 import com.sksamuel.elastic4s.http.ElasticDsl.{search, _}
 import com.sksamuel.elastic4s.http.search.{SearchHits, SearchResponse}
@@ -46,11 +46,11 @@ class ElasticsearchHistoryProcessor(
   def save(histories: List[KvHistory]): Future[Option[List[KvHistory]]] = {
     val indices = histories.map {
       record =>
-        indexInto(getHistoricalStorageIndex(record.storage), `type`) fields getFields(record)
+        indexInto(getHistoricalStorageIndex(record.storage), DocumentType) fields getFields(record)
     }
     client.execute(bulk(indices)).map {
       case Left(failure) =>
-        logger.error(failure.error.reason)
+        logger.error(s"Elasticsearch bulk index request failure $failure.error")
         Some(histories)
       case Right(success) =>
         val erroneous = success.result.items.filter(_.error.isDefined).map(item => histories(item.itemId))

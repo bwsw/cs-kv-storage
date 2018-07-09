@@ -17,9 +17,10 @@
 
 package com.bwsw.cloudstack.storage.kv.processor
 
+import com.bwsw.cloudstack.storage.kv.entity.{Set, Clear, Delete, Operation, SortField, History, PageSearchResult, ScrollSearchResult, Sorting}
+import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils._
 import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError}
-import com.bwsw.cloudstack.storage.kv.entity._
 import com.bwsw.cloudstack.storage.kv.message.KvHistory
 import com.sksamuel.elastic4s.bulk.BulkDefinition
 import com.sksamuel.elastic4s.http.ElasticDsl.{indexInto, _}
@@ -35,6 +36,7 @@ import scala.collection.immutable
 import scala.concurrent.{ExecutionContext, Future}
 
 class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
+  private val artificialKey = "cbIaz2MBpp4Ypizt4vT5"
   private val defaultKeys = immutable.Set.empty[String]
   private val defaultOperations = immutable.Set.empty[Operation]
   private val defaultSort = immutable.Set.empty[SortField]
@@ -49,7 +51,6 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
   private val someTimeout = 1000
   private val defaultScrollId = None
   private val `type` = "_doc"
-  private val artificialKey = "cbIaz2MBpp4Ypizt4vT5"
   private val storageUuid = "someStorage"
   private val kvHistories = List(
     KvHistory("someStorage2", "someKey", "someValue", 1, Set),
@@ -71,12 +72,24 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
       it("should save a list of historical records") {
         val bulkResponse = BulkResponse(
           1, errors = false,
-          kvHistories.map(history => BulkResponseItems(
+          kvHistories.map(kvHistory => BulkResponseItems(
             Some(BulkResponseItem(
-              0, artificialKey, getHistoryIndex(history.storage), `type`,
-              1, forcedRefresh = false, found = false, created = true, "created", 200, None, None))
-            , None, None, None)))
-        val sets = kvHistories.map(history => indexInto(getHistoryIndex(history.storage) / `type`) fields getFields(
+              0,
+              artificialKey,
+              getHistoricalStorageIndex(kvHistory.storage),
+              DocumentType,
+              1,
+              forcedRefresh = false,
+              found = false,
+              created = true,
+              "created",
+              200,
+              None,
+              None)),
+            None,
+            None,
+            None)))
+        val sets = kvHistories.map(history => indexInto(getHistoricalStorageIndex(history.storage) / DocumentType) fields getFields(
           history))
         (fakeClient.execute[BulkDefinition, BulkResponse](_: BulkDefinition)(
           _: HttpExecutable[BulkDefinition, BulkResponse],
@@ -94,26 +107,42 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
         val bulkResponseItems = List(
           BulkResponseItems(
             Some(BulkResponseItem(
-              0, artificialKey, getHistoryIndex("someStorage2"), `type`, 1, forcedRefresh = false,
-              found = false, created = true, "created", 200, None, None)), None, None, None),
+              0, artificialKey, getHistoricalStorageIndex("someStorage2"), DocumentType, 1, forcedRefresh = false,
+              found = false, created = true, "created", 200, None, None)),
+            None,
+            None,
+            None),
           BulkResponseItems(
             Some(BulkResponseItem(
-              1, artificialKey, getHistoryIndex("someStorage"), `type`,
-              1, forcedRefresh = false, found = false, created = true, "created", 500,
-              Some(BulkError("", "", "", 1, getHistoryIndex("someStorage"))), None)),
-            None, None, None),
+              1,
+              artificialKey,
+              getHistoricalStorageIndex("someStorage"),
+              DocumentType,
+              1,
+              forcedRefresh = false,
+              found = false,
+              created = true,
+              "created",
+              500,
+              Some(BulkError("", "", "", 1, getHistoricalStorageIndex("someStorage"))),
+              None)),
+            None,
+            None,
+            None),
           BulkResponseItems(
             Some(BulkResponseItem(
-              2, artificialKey, getHistoryIndex("someStorage2"), `type`,
-              1, forcedRefresh = false, found = false, created = true, "created", 200, None, None)),
-            None, None, None)
+              2, artificialKey, getHistoricalStorageIndex("someStorage2"), DocumentType, 1, forcedRefresh = false,
+              found = false, created = true, "created", 200, None, None)),
+            None,
+            None,
+            None)
         )
         val bulkResponse = BulkResponse(1, errors = true, bulkResponseItems)
-        val sets = kvHistories.map(history =>
-          indexInto(getHistoryIndex(history.storage) / `type`) fields getFields(history))
-        (fakeClient.execute[BulkDefinition, BulkResponse]
-          (_: BulkDefinition)
-          (_: HttpExecutable[BulkDefinition, BulkResponse], _: ExecutionContext))
+        val sets = kvHistories.map(kvHistory =>
+          indexInto(getHistoricalStorageIndex(kvHistory.storage) / DocumentType) fields getFields(kvHistory))
+        (fakeClient.execute[BulkDefinition, BulkResponse](_: BulkDefinition)(
+          _: HttpExecutable[BulkDefinition, BulkResponse],
+          _: ExecutionContext))
           .expects(ElasticDsl.bulk(sets), BulkExecutable, *)
           .returning(Future(Right(RequestSuccess(200, Option.empty, Map.empty, bulkResponse))))
 
@@ -127,9 +156,9 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
         }
       }
 
-      it("should return all given kvHistories if request fails") {
-        val sets = kvHistories.map(history =>
-          indexInto(getHistoryIndex(history.storage) / `type`) fields getFields(history))
+      it("should return all given histories if request fails") {
+        val sets = kvHistories.map(kvHistory =>
+          indexInto(getHistoricalStorageIndex(kvHistory.storage) / DocumentType) fields getFields(kvHistory))
         (fakeClient.execute[BulkDefinition, BulkResponse]
           (_: BulkDefinition)
           (_: HttpExecutable[BulkDefinition, BulkResponse], _: ExecutionContext))
@@ -152,7 +181,7 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
 
     describe("(get histories)") {
       it("should retrieve by storageUuid only") {
-        val searchDefinition = ElasticDsl.search(getHistoryIndex(storageUuid)).size(defaultSizeValue)
+        val searchDefinition = ElasticDsl.search(getHistoricalStorageIndex(storageUuid)).size(defaultSizeValue)
         val searchResponse = getSearchResponse(historyList, 3, defaultScrollId)
         expectSearch(searchDefinition).returning(getRequestSuccessFuture(searchResponse))
 
@@ -166,7 +195,7 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
 
       it("should retrieve by keys") {
         val keys = immutable.Set("key1")
-        val searchDefinition = ElasticDsl.search(getHistoryIndex(storageUuid))
+        val searchDefinition = ElasticDsl.search(getHistoricalStorageIndex(storageUuid))
           .size(defaultSizeValue).query(termsQuery("key", keys))
         val searchResponse = getSearchResponse(historyList.slice(0, 2), 2, defaultScrollId)
         expectSearch(searchDefinition).returning(getRequestSuccessFuture(searchResponse))
@@ -181,7 +210,7 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
 
       it("should retrieve by operations") {
         val operations: immutable.Set[Operation] = immutable.Set(Set)
-        val searchDefinition = ElasticDsl.search(getHistoryIndex(storageUuid))
+        val searchDefinition = ElasticDsl.search(getHistoricalStorageIndex(storageUuid))
           .size(defaultSizeValue).query(termsQuery("operation", operations.map(_.toString)))
         val searchResponse = getSearchResponse(historyList.slice(0, 1), 1, defaultScrollId)
         expectSearch(searchDefinition).returning(getRequestSuccessFuture(searchResponse))
@@ -196,7 +225,7 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
 
       it("should retrieve by timestamp start") {
         val start = Some(2.asInstanceOf[Long])
-        val searchDefinition = ElasticDsl.search(getHistoryIndex(storageUuid))
+        val searchDefinition = ElasticDsl.search(getHistoricalStorageIndex(storageUuid))
           .size(defaultSizeValue).query(rangeQuery("timestamp").gte(start.get))
         val searchResponse = getSearchResponse(historyList.slice(1, 3), 2, defaultScrollId)
         expectSearch(searchDefinition).returning(getRequestSuccessFuture(searchResponse))
@@ -211,7 +240,7 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
 
       it("should retrieve by timestamp end") {
         val end = Some(2.asInstanceOf[Long])
-        val searchDefinition = ElasticDsl.search(getHistoryIndex(storageUuid))
+        val searchDefinition = ElasticDsl.search(getHistoricalStorageIndex(storageUuid))
           .size(defaultSizeValue).query(rangeQuery("timestamp").lte(end.get))
         val searchResponse = getSearchResponse(historyList.slice(0, 2), 2, defaultScrollId)
         expectSearch(searchDefinition).returning(getRequestSuccessFuture(searchResponse))
@@ -227,7 +256,7 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
       it("should retrieve by different timestamp start and end") {
         val start = Some(1.asInstanceOf[Long])
         val end = Some(2.asInstanceOf[Long])
-        val searchDefinition = ElasticDsl.search(getHistoryIndex(storageUuid))
+        val searchDefinition = ElasticDsl.search(getHistoricalStorageIndex(storageUuid))
           .size(defaultSizeValue).query(rangeQuery("timestamp").gte(start.get).lte(end.get))
         val searchResponse = getSearchResponse(historyList.slice(0, 2), 2, defaultScrollId)
         expectSearch(searchDefinition).returning(getRequestSuccessFuture(searchResponse))
@@ -242,7 +271,7 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
 
       it("should retrieve by same timestamp start and end") {
         val startAndEnd = Some(2.asInstanceOf[Long])
-        val searchDefinition = ElasticDsl.search(getHistoryIndex(storageUuid))
+        val searchDefinition = ElasticDsl.search(getHistoricalStorageIndex(storageUuid))
           .size(defaultSizeValue).query(termQuery("timestamp", startAndEnd.get))
         val searchResponse = getSearchResponse(historyList.slice(0, 2), 2, defaultScrollId)
         expectSearch(searchDefinition).returning(getRequestSuccessFuture(searchResponse))
@@ -260,7 +289,7 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
         val operations: immutable.Set[Operation] = immutable.Set(Set)
         val start = Some(1.asInstanceOf[Long])
         val end = Some(2.asInstanceOf[Long])
-        val searchDefinition = ElasticDsl.search(getHistoryIndex(storageUuid))
+        val searchDefinition = ElasticDsl.search(getHistoricalStorageIndex(storageUuid))
           .size(defaultSizeValue).query(boolQuery().filter(List(
           termsQuery("key", keys),
           termsQuery("operation", operations.map(_.toString)),
@@ -286,7 +315,7 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
         val end = Some(2.asInstanceOf[Long])
         val scroll = Some(2000.asInstanceOf[Long])
         val sort = immutable.Set(SortField("key", Sorting.Asc), SortField("timestamp", Sorting.Desc))
-        val searchDefinition = ElasticDsl.search(getHistoryIndex(storageUuid)).
+        val searchDefinition = ElasticDsl.search(getHistoricalStorageIndex(storageUuid)).
           size(pageSize.get).scroll(scroll.get + "ms").query(boolQuery().filter(List(
           termsQuery("key", keys),
           termsQuery("operation", operations.map(_.toString)),
@@ -309,7 +338,7 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
       }
 
       it("should return InternalError if Elasticsearch request fails") {
-        val searchDefinition = ElasticDsl.search(getHistoryIndex(storageUuid)).size(defaultSizeValue)
+        val searchDefinition = ElasticDsl.search(getHistoricalStorageIndex(storageUuid)).size(defaultSizeValue)
         expectSearch(searchDefinition).returning(getRequestFailureFuture())
 
         processor.get(
@@ -321,7 +350,7 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
       }
 
       it("should return InternalError if bad value of String field returned form Elasticsearch") {
-        val searchDefinition = ElasticDsl.search(getHistoryIndex(storageUuid)).size(defaultSizeValue)
+        val searchDefinition = ElasticDsl.search(getHistoricalStorageIndex(storageUuid)).size(defaultSizeValue)
         val searchResponse = getBadResponse(Map(
           "key" -> "someKey",
           "value" -> 1.asInstanceOf[AnyRef],
@@ -339,7 +368,7 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
       }
 
       it("should return InternalError if bad value of Long field returned form Elasticsearch") {
-        val searchDefinition = ElasticDsl.search(getHistoryIndex(storageUuid)).size(defaultSizeValue)
+        val searchDefinition = ElasticDsl.search(getHistoricalStorageIndex(storageUuid)).size(defaultSizeValue)
         val searchResponse = getBadResponse(Map(
           "key" -> "someKey",
           "value" -> "someValue",
@@ -356,7 +385,7 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
       }
 
       it("should return InternalError if bad value of Operation returned form Elasticsearch") {
-        val searchDefinition = ElasticDsl.search(getHistoryIndex(storageUuid)).size(defaultSizeValue)
+        val searchDefinition = ElasticDsl.search(getHistoricalStorageIndex(storageUuid)).size(defaultSizeValue)
         val searchResponse = getBadResponse(Map(
           "key" -> "someKey",
           "value" -> "someValue",
@@ -510,8 +539,6 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
           Map.empty,
           Map.empty,
           Map.empty))))
-
-  private def getHistoryIndex(storage: String) = s"history-storage-$storage"
 
   private def getFields(history: KvHistory) = Map(
     "key" -> history.key,
