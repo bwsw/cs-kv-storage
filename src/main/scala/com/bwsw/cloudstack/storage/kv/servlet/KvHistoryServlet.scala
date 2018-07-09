@@ -72,7 +72,7 @@ class KvHistoryServlet(
       val is: Future[_] =
         if (request.getHeader("Content-Type") == formats("json")) {
           parsedBody match {
-            case JObject(List(("scroll", scrollId: JString), ("timeout", timeout: JInt))) =>
+            case JObject(List(("scrollId", scrollId: JString), ("timeout", timeout: JInt))) =>
               val scrollRequest = KvHistoryScrollRequest(scrollId.values, timeout.values.toLong)
               (historyRequestActor ? scrollRequest).map {
                 case Right(value) =>
@@ -152,5 +152,5 @@ class KvHistoryServlet(
   private def isValidSort(sort: Set[SortField]) = {
     sort.map(_.field).forall(fieldList.contains(_)) && sort.groupBy(_.field).forall(_._2.size == 1)
   }
-  
+
 }
