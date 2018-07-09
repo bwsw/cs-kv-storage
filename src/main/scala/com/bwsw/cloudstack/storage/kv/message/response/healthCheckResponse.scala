@@ -15,16 +15,22 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package com.bwsw.cloudstack.storage.kv.message
+package com.bwsw.cloudstack.storage.kv.message.response
 
-import com.bwsw.cloudstack.storage.kv.entity.Operation
+import com.bwsw.cloudstack.storage.kv.entity.{Check, HealthStatus}
 
-case class KvHistory(storage: String, key: String, value: String, timestamp: Long, operation: Operation, attempt: Int = 0) {
-  /** Returns copy of this history with incremented attempts
-    *
-    * @return new KvHistory
-    */
-  def makeAttempt: KvHistory = {
-    KvHistory(storage, key, value, timestamp, operation, attempt + 1)
-  }
-}
+sealed trait HealthCheckResponse
+
+/** Contains detailed information about health checks performed to calculate total health status
+  *
+  * @param status total health status
+  * @param checks detailed information about checks
+  */
+case class DetailedHealthCheckResponse(status: HealthStatus, checks: Iterable[Check]) extends HealthCheckResponse
+
+/** Contains short information about total health status
+  *
+  * @param status total health status
+  */
+case class StatusHealthCheckResponse(status: HealthStatus) extends HealthCheckResponse
+

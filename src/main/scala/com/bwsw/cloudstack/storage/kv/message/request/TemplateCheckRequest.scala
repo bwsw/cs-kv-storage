@@ -15,16 +15,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package com.bwsw.cloudstack.storage.kv.message
+package com.bwsw.cloudstack.storage.kv.message.request
 
-import com.bwsw.cloudstack.storage.kv.entity.Operation
+import com.bwsw.cloudstack.storage.kv.entity.CheckName
 
-case class KvHistory(storage: String, key: String, value: String, timestamp: Long, operation: Operation, attempt: Int = 0) {
-  /** Returns copy of this history with incremented attempts
-    *
-    * @return new KvHistory
-    */
-  def makeAttempt: KvHistory = {
-    KvHistory(storage, key, value, timestamp, operation, attempt + 1)
-  }
-}
+case class TemplateCheckRequest(name: String, checkName: CheckName)

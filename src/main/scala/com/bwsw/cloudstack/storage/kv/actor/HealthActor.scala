@@ -15,16 +15,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package com.bwsw.cloudstack.storage.kv.message
+package com.bwsw.cloudstack.storage.kv.actor
 
-import com.bwsw.cloudstack.storage.kv.entity.Operation
+import akka.actor.Actor
 
-case class KvHistory(storage: String, key: String, value: String, timestamp: Long, operation: Operation, attempt: Int = 0) {
-  /** Returns copy of this history with incremented attempts
-    *
-    * @return new KvHistory
-    */
-  def makeAttempt: KvHistory = {
-    KvHistory(storage, key, value, timestamp, operation, attempt + 1)
-  }
-}
+/** Actor responsible for health check request processing **/
+trait HealthActor extends Actor
