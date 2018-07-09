@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "64dc9765-b6a0-46b7-8520-cd161f1db601",
+      "_postman_id": "1f7ac9c2-4862-4670-9782-421c9478cc86",
 		"name": "cs-kv-storage",
 		"description": "E2E tests for cs-kv-storage",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -8,7 +8,7 @@
 	"item": [
 		{
 			"name": "kv-storage",
-			"description": "",
+          "description": null,
 			"item": [
 				{
 					"name": "List keys",
@@ -43,7 +43,10 @@
 							"request": {
 								"method": "GET",
 								"header": [],
-								"body": {},
+                              "body": {
+                                "mode": "raw",
+                                "raw": ""
+                              },
 								"url": {
                                   "raw": "{{url}}/list/{{read_only_storage}}",
 									"host": [
@@ -129,18 +132,16 @@
 								{
 									"listen": "test",
 									"script": {
-                                      "id": "ba93799b-5a46-42d1-88c7-b32892ad5324",
+                                      "id": "1554d6eb-03b7-4d64-ae88-eaac04c9fed4",
 										"type": "text/javascript",
 										"exec": [
                                           "pm.test(\"Status code is 404\", function() {",
                                           "  pm.response.to.have.status(404);",
 											"});",
 											"",
-											"pm.test(\"Response body is empty\", function () {",
-											"    var text = pm.response.text();",
-											"    pm.expect(text).to.eql(\"\");",
-											"});",
-											""
+                                          "pm.test(\"Body is empty\", function () {",
+                                          "    pm.response.to.have.body(\"\");",
+                                          "});"
 										]
 									}
 								}
@@ -148,7 +149,10 @@
 							"request": {
 								"method": "GET",
 								"header": [],
-								"body": {},
+                              "body": {
+                                "mode": "raw",
+                                "raw": ""
+                              },
 								"url": {
 									"raw": "{{url}}/list/nonexistent",
 									"host": [
@@ -189,7 +193,7 @@
 				},
 				{
 					"name": "Get value",
-					"description": "",
+                  "description": null,
 					"item": [
 						{
 							"name": "Get a value",
@@ -220,7 +224,10 @@
 							"request": {
 								"method": "GET",
 								"header": [],
-								"body": {},
+                              "body": {
+                                "mode": "raw",
+                                "raw": ""
+                              },
 								"url": {
                                   "raw": "{{url}}/get/{{read_only_storage}}/{{some_key}}",
 									"host": [
@@ -241,15 +248,15 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "4ba2822c-4b75-4a5d-95b3-5526e219621b",
+                                      "id": "b3e11298-d466-4d27-a46a-a84b4137d701",
 										"type": "text/javascript",
 										"exec": [
 											"pm.test(\"Status code is 404\", function() {",
 											"  pm.response.to.have.status(404);",
 											"});",
 											"",
-											"pm.test(\"Response body is empty\", function () {",
-											"    pm.expect(pm.response.text()).to.eql(\"\");",
+                                          "pm.test(\"Body is empty\", function () {",
+                                          "    pm.response.to.have.body(\"\");",
 											"});",
 											"",
 											""
@@ -260,7 +267,10 @@
 							"request": {
 								"method": "GET",
 								"header": [],
-								"body": {},
+                              "body": {
+                                "mode": "raw",
+                                "raw": ""
+                              },
 								"url": {
                                   "raw": "{{url}}/get/{{read_only_storage}}/{{empty_key}}",
 									"host": [
@@ -291,15 +301,15 @@
 								{
 									"listen": "test",
 									"script": {
-                                      "id": "59eb38cb-c72f-4765-bc91-51e2b23c9bb5",
+                                      "id": "3881f3bb-15aa-49b2-9203-0e7f0a479a14",
 										"type": "text/javascript",
 										"exec": [
                                           "pm.test(\"Status code is 404\", function() {",
                                           "  pm.response.to.have.status(404);",
 											"});",
 											"",
-											"pm.test(\"Response body is empty\", function () {",
-											"    pm.expect(pm.response.text()).to.eql(\"\");",
+                                          "pm.test(\"Body is empty\", function () {",
+                                          "    pm.response.to.have.body(\"\");",
 											"});",
 											""
 										]
@@ -309,7 +319,10 @@
 							"request": {
 								"method": "GET",
 								"header": [],
-								"body": {},
+                              "body": {
+                                "mode": "raw",
+                                "raw": ""
+                              },
 								"url": {
 									"raw": "{{url}}/get/{{non_existent_storage}}/{{some_key}}",
 									"host": [
@@ -351,7 +364,7 @@
 				},
 				{
 					"name": "Get multiple values",
-					"description": "",
+                  "description": null,
 					"item": [
 						{
 							"name": "Get values",
@@ -414,15 +427,15 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "f585e1bf-8889-4619-b436-65f9d64d4736",
+                                      "id": "924874c6-58c0-4fc2-b28d-604c08a0a436",
 										"type": "text/javascript",
 										"exec": [
 											"pm.test(\"Status code is 400\", function () {",
 											"    pm.response.to.have.status(400);",
 											"});",
 											"",
-											"pm.test(\"Response body is empty\", function () {",
-											"    pm.expect(pm.response.text()).to.eql(\"\");",
+                                          "pm.test(\"Body is empty\", function () {",
+                                          "    pm.response.to.have.body(\"\");",
 											"});",
 											""
 										]
@@ -455,15 +468,15 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "da6eed0b-698f-4397-a98a-372d3db9a822",
+                                      "id": "f90777c6-79c7-41a0-ba3c-db8036a51b13",
 										"type": "text/javascript",
 										"exec": [
 											"pm.test(\"Status code is 400\", function () {",
 											"    pm.response.to.have.status(400);",
 											"});",
 											"",
-											"pm.test(\"Response body is empty\", function () {",
-											"    pm.expect(pm.response.text()).to.eql(\"\");",
+                                          "pm.test(\"Body is empty\", function () {",
+                                          "    pm.response.to.have.body(\"\");",
 											"});",
 											""
 										]
@@ -501,15 +514,15 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "da6eed0b-698f-4397-a98a-372d3db9a822",
+                                      "id": "2f62666e-8edb-414f-ae53-1d5c150736d6",
 										"type": "text/javascript",
 										"exec": [
 											"pm.test(\"Status code is 400\", function () {",
 											"    pm.response.to.have.status(400);",
 											"});",
 											"",
-											"pm.test(\"Response body is empty\", function () {",
-											"    pm.expect(pm.response.text()).to.eql(\"\");",
+                                          "pm.test(\"Body is empty\", function () {",
+                                          "    pm.response.to.have.body(\"\");",
 											"});",
 											""
 										]
@@ -546,7 +559,7 @@
 				},
 				{
 					"name": "Set value",
-					"description": "",
+                  "description": null,
 					"item": [
 						{
                           "name": "Set with wrong Content-Type",
@@ -554,12 +567,17 @@
 								{
 									"listen": "test",
 									"script": {
-                                      "id": "3107e8cf-4fde-481f-b508-be857a29f610",
+                                      "id": "2068fc32-9f1a-4f90-ad59-f4bb5a9e4df5",
 										"type": "text/javascript",
 										"exec": [
                                           "pm.test(\"Status code is 400\", function () {",
                                           "    pm.response.to.have.status(400);",
 											"});",
+                                          "",
+                                          "pm.test(\"Body is empty\", function () {",
+                                          "    pm.response.to.have.body(\"\");",
+                                          "});",
+                                          "",
 											"pm.sendRequest({",
                                           "        url: pm.variables.get(\"es_url\") + \"/storage-\" + pm.variables.get(\"editable_storage\") + \"/_doc/\" + pm.variables.get(\"some_key\"),",
 											"        method: 'GET'},",
@@ -674,7 +692,7 @@
 				},
 				{
 					"name": "Set multiple values",
-					"description": "",
+                  "description": null,
 					"item": [
 						{
                           "name": "Set with wrong Content-Type",
@@ -682,7 +700,7 @@
 								{
 									"listen": "test",
 									"script": {
-                                      "id": "38f6427e-1bc6-4eea-bdeb-e3ee4954ff42",
+                                      "id": "132dcfde-84d1-4394-9a80-11ad1bb253eb",
 										"type": "text/javascript",
 										"exec": [
                                           "pm.test(\"Status code is 400\", function () {",
@@ -690,7 +708,7 @@
 											"});",
 											"",
                                           "pm.test(\"Body is empty\", function () {",
-                                          "    pm.expect(pm.response.text()).to.eql(\"\");",
+                                          "    pm.response.to.have.body(\"\");",
 											"});",
 											"",
 											"const source = JSON.stringify({\"ids\": [\"key1\",\"key2\",\"key3\",\"key4\"]})",
@@ -748,7 +766,7 @@
 								{
 									"listen": "test",
 									"script": {
-                                      "id": "aca9650f-90f7-4204-97d1-1fa60a726b72",
+                                      "id": "17c08039-b4db-4b6c-83b6-ca78ed7f9a05",
 										"type": "text/javascript",
 										"exec": [
 											"pm.test(\"Status code is 400\", function () {",
@@ -756,7 +774,7 @@
 											"});",
 											"",
 											"pm.test(\"Body is empty\", function () {",
-											"    pm.expect(pm.response.text()).to.eql(\"\");",
+                                          "    pm.response.to.have.body(\"\");",
 											"});",
 											"",
 											"const source = JSON.stringify({\"ids\": [\"key1\",\"key2\",\"key3\",\"key4\"]})",
@@ -814,7 +832,7 @@
 								{
 									"listen": "test",
 									"script": {
-                                      "id": "70a877c6-5b79-4d6d-b387-54d53ec3f605",
+                                      "id": "28be351e-b32f-43d0-b73f-dc6765d888d5",
 										"type": "text/javascript",
 										"exec": [
 											"pm.test(\"Status code is 400\", function () {",
@@ -822,7 +840,7 @@
 											"});",
 											"",
 											"pm.test(\"Body is empty\", function () {",
-											"    pm.expect(pm.response.text()).to.eql(\"\");",
+                                          "    pm.response.to.have.body(\"\");",
 											"});",
 											"",
 											"const source = JSON.stringify({\"ids\": [\"key1\",\"key2\",\"key3\",\"key4\"]})",
@@ -955,7 +973,7 @@
 				},
 				{
 					"name": "Delete value",
-					"description": "",
+                  "description": null,
 					"item": [
 						{
                           "name": "Delete from non existent storage",
@@ -963,7 +981,7 @@
 								{
 									"listen": "test",
 									"script": {
-                                      "id": "6509c34e-01ea-4c26-b835-7f3d48de89d3",
+                                      "id": "5053937f-d3bd-4bc9-af0a-012e7a6f0895",
 										"type": "text/javascript",
 										"exec": [
                                           "pm.test(\"Status code is 404\", function () {",
@@ -971,7 +989,7 @@
 											"});",
 											"",
 											"pm.test(\"Body is empty\", function () {",
-											"    pm.expect(pm.response.text()).to.eql(\"\");",
+                                          "    pm.response.to.have.body(\"\");",
                                           "});"
 										]
 									}
@@ -990,7 +1008,10 @@
 							"request": {
 								"method": "DELETE",
 								"header": [],
-								"body": {},
+                              "body": {
+                                "mode": "raw",
+                                "raw": ""
+                              },
 								"url": {
                                   "raw": "{{url}}/delete/{{non_existent_storage}}/{{some_key}}",
 									"host": [
@@ -1011,7 +1032,7 @@
 								{
 									"listen": "test",
 									"script": {
-                                      "id": "543459eb-4ac5-408c-b600-54ec52431bd5",
+                                      "id": "a7192d85-75b0-4546-939f-13e7a29f8a9f",
 										"type": "text/javascript",
 										"exec": [
                                           "pm.test(\"Status code is 200\", function () {",
@@ -1019,7 +1040,7 @@
 											"});",
 											"",
 											"pm.test(\"Body is empty\", function () {",
-											"    pm.expect(pm.response.text()).to.eql(\"\");",
+                                          "    pm.response.to.have.body(\"\");",
 											"});",
                                           "",
                                           "pm.sendRequest({",
@@ -1049,7 +1070,10 @@
 							"request": {
 								"method": "DELETE",
 								"header": [],
-								"body": {},
+                              "body": {
+                                "mode": "raw",
+                                "raw": ""
+                              },
 								"url": {
                                   "raw": "{{url}}/delete/{{deletable_storage}}/{{some_key}}",
 									"host": [
@@ -1069,7 +1093,7 @@
 				},
 				{
 					"name": "Delete multiple values",
-					"description": "",
+                  "description": null,
 					"item": [
 						{
                           "name": "Delete with wrong Content-Type",
@@ -1077,14 +1101,15 @@
 								{
 									"listen": "test",
 									"script": {
-                                      "id": "1f666e79-f395-41e5-9cbe-7720255606d9",
+                                      "id": "68d0ad53-570e-4d9c-a9e4-6278fab3450c",
 										"type": "text/javascript",
 										"exec": [
                                           "pm.test(\"Status code is 400\", function () {",
                                           "    pm.response.to.have.status(400);",
 											"});",
-                                          "pm.test(\"Response body is empty\", function () {",
-                                          "    pm.expect(pm.response.text()).to.eql(\"\");",
+                                          "",
+                                          "pm.test(\"Body is empty\", function () {",
+                                          "    pm.response.to.have.body(\"\");",
 											"});",
 											"",
                                           "const source = JSON.stringify({\"ids\": [\"key1\",\"key2\",\"key3\"]})",
@@ -1134,14 +1159,15 @@
 								{
 									"listen": "test",
 									"script": {
-                                      "id": "fa23bc6b-a386-42f2-b0bd-8f792b0580b9",
+                                      "id": "78905bfb-8e50-4143-ad4f-0371232a9410",
 										"type": "text/javascript",
 										"exec": [
 											"pm.test(\"Status code is 400\", function () {",
 											"    pm.response.to.have.status(400);",
 											"});",
-											"pm.test(\"Response body is empty\", function () {",
-											"    pm.expect(pm.response.text()).to.eql(\"\");",
+                                          "",
+                                          "pm.test(\"Body is empty\", function () {",
+                                          "    pm.response.to.have.body(\"\");",
 											"});",
 											"",
 											"const source = JSON.stringify({\"ids\": [\"key1\",\"key2\",\"key3\"]})",
@@ -1191,14 +1217,15 @@
 								{
 									"listen": "test",
 									"script": {
-                                      "id": "23ec0694-2c0f-4f59-9488-a13236b7cc35",
+                                      "id": "6d80a359-1c57-4786-b31a-c2f703075927",
 										"type": "text/javascript",
 										"exec": [
 											"pm.test(\"Status code is 400\", function () {",
 											"    pm.response.to.have.status(400);",
 											"});",
-											"pm.test(\"Response body is empty\", function () {",
-											"    pm.expect(pm.response.text()).to.eql(\"\");",
+                                          "",
+                                          "pm.test(\"Body is empty\", function () {",
+                                          "    pm.response.to.have.body(\"\");",
 											"});",
 											"",
 											"const source = JSON.stringify({\"ids\": [\"key1\",\"key2\",\"key3\"]})",
@@ -1315,7 +1342,7 @@
 				},
 				{
 					"name": "Clear storage",
-					"description": "",
+                  "description": null,
 					"item": [
 						{
 							"name": "Clear storage",
@@ -1323,7 +1350,7 @@
 								{
 									"listen": "test",
 									"script": {
-                                      "id": "d6a10f21-9cc7-40d7-a9f7-0e1e19820098",
+                                      "id": "d3b81a1f-01ba-41bc-a5ab-8906653a1884",
 										"type": "text/javascript",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
@@ -1331,8 +1358,9 @@
 											"});",
 											"",
 											"pm.test(\"Body is empty\", function () {",
-											"    pm.expect(pm.response.text()).to.eql(\"\");",
+                                          "    pm.response.to.have.body(\"\");",
 											"});",
+                                          "",
                                           "var test = function() {",
                                           "    pm.sendRequest({",
                                           "        url: pm.variables.get(\"es_url\") + \"/storage-\" + pm.variables.get(\"cleanable_storage\") + \"/_doc/_search\",",
@@ -1367,7 +1395,10 @@
 							"request": {
 								"method": "POST",
 								"header": [],
-								"body": {},
+                              "body": {
+                                "mode": "raw",
+                                "raw": ""
+                              },
 								"url": {
                                   "raw": "{{url}}/clear/{{cleanable_storage}}",
 									"host": [
@@ -1410,11 +1441,11 @@
 		},
 		{
 			"name": "kv-storage-manager",
-			"description": "",
+          "description": null,
 			"item": [
 				{
 					"name": "Set temporary storage ttl",
-					"description": "",
+                  "description": null,
 					"item": [
 						{
                           "name": "Set TTL of non existent storage",
@@ -1422,7 +1453,7 @@
                             {
                               "listen": "test",
                               "script": {
-                                "id": "c62a36f1-c3bb-4a70-a026-516b4bc0b031",
+                                "id": "164d5bf7-f101-4d95-a3f8-1e410302ff90",
                                 "type": "text/javascript",
                                 "exec": [
                                   "pm.test(\"Status code is 404\", function () {",
@@ -1430,7 +1461,7 @@
                                   "})",
                                   "",
                                   "pm.test(\"Body is empty\", function () {",
-                                  "    pm.expect(pm.response.text()).to.eql(\"\");",
+                                  "    pm.response.to.have.body(\"\");",
                                   "});",
                                   ""
                                 ]
@@ -1440,7 +1471,10 @@
                           "request": {
                             "method": "PUT",
                             "header": [],
-                            "body": {},
+                            "body": {
+                              "mode": "raw",
+                              "raw": ""
+                            },
                             "url": {
                               "raw": "{{url}}/storage/{{non_existent_storage}}?ttl=565656",
                               "host": [
@@ -1466,7 +1500,7 @@
                           {
                             "listen": "test",
                             "script": {
-                              "id": "c32e3166-863f-43d2-a928-350d787e1773",
+                              "id": "588b00a6-5bcf-48fd-a01e-a03d0c2a8748",
                               "type": "text/javascript",
                               "exec": [
                                 "pm.test(\"Status code is 400\", function () {",
@@ -1474,7 +1508,7 @@
                                 "})",
                                 "",
                                 "pm.test(\"Body is empty\", function () {",
-                                "    pm.expect(pm.response.text()).to.eql(\"\");",
+                                "    pm.response.to.have.body(\"\");",
                                 "});",
                                 "",
                                 "pm.sendRequest({",
@@ -1492,7 +1526,10 @@
                         "request": {
                           "method": "PUT",
                           "header": [],
-                          "body": {},
+                          "body": {
+                            "mode": "raw",
+                            "raw": ""
+                          },
                           "url": {
                             "raw": "{{url}}/storage/{{acc_storage}}?ttl=565656",
                             "host": [
@@ -1518,7 +1555,7 @@
                           {
                             "listen": "test",
                             "script": {
-                              "id": "825b8fb2-352b-4a40-9e7f-7e7fa67eb5eb",
+                              "id": "5af7de9a-4d90-428a-af97-53330b3314c4",
                               "type": "text/javascript",
                               "exec": [
                                 "pm.test(\"Status code is 400\", function () {",
@@ -1526,7 +1563,7 @@
                                 "})",
                                 "",
                                 "pm.test(\"Body is empty\", function () {",
-                                "    pm.expect(pm.response.text()).to.eql(\"\");",
+                                "    pm.response.to.have.body(\"\");",
                                 "});",
                                 "",
                                 "pm.sendRequest({",
@@ -1544,7 +1581,10 @@
                         "request": {
                           "method": "PUT",
                           "header": [],
-                          "body": {},
+                          "body": {
+                            "mode": "raw",
+                            "raw": ""
+                          },
                           "url": {
                             "raw": "{{url}}/storage/{{temp_storage}}?ttl=10.seconds",
                             "host": [
@@ -1570,7 +1610,7 @@
                           {
                             "listen": "test",
                             "script": {
-                              "id": "d83577d7-597a-4870-a774-b4d66ae86e0b",
+                              "id": "0bbceeda-3ca6-4c4a-98ee-483930feabc9",
                               "type": "text/javascript",
                               "exec": [
                                 "pm.test(\"Status code is 400\", function () {",
@@ -1578,7 +1618,7 @@
                                 "})",
                                 "",
                                 "pm.test(\"Body is empty\", function () {",
-                                "    pm.expect(pm.response.text()).to.eql(\"\");",
+                                "    pm.response.to.have.body(\"\");",
                                 "});",
                                 "",
                                 "pm.sendRequest({",
@@ -1596,7 +1636,10 @@
                         "request": {
                           "method": "PUT",
                           "header": [],
-                          "body": {},
+                          "body": {
+                            "mode": "raw",
+                            "raw": ""
+                          },
                           "url": {
                             "raw": "{{url}}/storage/{{temp_storage}}",
                             "host": [
@@ -1616,7 +1659,7 @@
 								{
 									"listen": "test",
 									"script": {
-                                      "id": "959bbc47-5b9a-427b-a801-9a8f91ca2745",
+                                      "id": "3eb6b707-ddf9-46f9-aabf-9a9440cc5e13",
 										"type": "text/javascript",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
@@ -1624,7 +1667,7 @@
                                           "})",
                                           "",
                                           "pm.test(\"Body is empty\", function () {",
-                                          "    pm.expect(pm.response.text()).to.eql(\"\");",
+                                          "    pm.response.to.have.body(\"\");",
                                           "});",
                                           "",
                                           "pm.sendRequest({",
@@ -1642,7 +1685,10 @@
 							"request": {
 								"method": "PUT",
 								"header": [],
-								"body": {},
+                              "body": {
+                                "mode": "raw",
+                                "raw": ""
+                              },
 								"url": {
                                   "raw": "{{url}}/storage/{{temp_storage}}?ttl=565656",
 									"host": [
@@ -1667,7 +1713,7 @@
                 },
               {
                 "name": "Delete temporary storage",
-                "description": "",
+                "description": null,
                 "item": [
                   {
                     "name": "Delete persistent storage",
@@ -1703,7 +1749,10 @@
                     "request": {
                       "method": "DELETE",
                       "header": [],
-                      "body": {},
+                      "body": {
+                        "mode": "raw",
+                        "raw": ""
+                      },
                       "url": {
                         "raw": "{{url}}/storage/{{acc_storage}}",
                         "host": [
@@ -1723,7 +1772,7 @@
                       {
                         "listen": "test",
                         "script": {
-                          "id": "511103a4-5d8c-45b6-93e0-587ff20bd9b4",
+                          "id": "f098c7a9-7991-4119-9ee3-e8a8a653367a",
                           "type": "text/javascript",
                           "exec": [
                             "pm.test(\"Status code is 404\", function () {",
@@ -1731,9 +1780,8 @@
                             "});",
                             "",
                             "pm.test(\"Body is empty\", function () {",
-                            "    pm.expect(pm.response.text()).to.eql(\"\");",
-                            "});",
-                            ""
+                            "    pm.response.to.have.body(\"\");",
+                            "});"
                           ]
                         }
                       }
@@ -1741,7 +1789,10 @@
                     "request": {
                       "method": "DELETE",
                       "header": [],
-                      "body": {},
+                      "body": {
+                        "mode": "raw",
+                        "raw": ""
+                      },
                       "url": {
                         "raw": "{{url}}/storage/{{non_existent_storage}}",
                         "host": [
@@ -1761,7 +1812,7 @@
                       {
                         "listen": "test",
                         "script": {
-                          "id": "2d0b21d9-a19c-4b81-a7b4-4ce21d8cca50",
+                          "id": "9a6b606b-da10-406e-af2a-386da0fefea8",
                           "type": "text/javascript",
                           "exec": [
                             "pm.test(\"Status code is 200\", function () {",
@@ -1769,7 +1820,7 @@
                             "});",
                             "",
                             "pm.test(\"Body is empty\", function () {",
-                            "    pm.expect(pm.response.text()).to.eql(\"\");",
+                            "    pm.response.to.have.body(\"\");",
                             "});",
                             "",
                             "",
@@ -1790,7 +1841,10 @@
                     "request": {
                       "method": "DELETE",
                       "header": [],
-                      "body": {},
+                      "body": {
+                        "mode": "raw",
+                        "raw": ""
+                      },
                       "url": {
                         "raw": "{{url}}/storage/{{no_index_storage}}",
                         "host": [
@@ -1811,7 +1865,7 @@
                       {
                         "listen": "test",
                         "script": {
-                          "id": "bc1c9128-b901-4c17-8c5a-9e0854ca1fe2",
+                          "id": "c439f5e0-67f1-4138-b8ce-297afb611240",
                           "type": "text/javascript",
                           "exec": [
                             "pm.test(\"Status code is 200\", function () {",
@@ -1819,7 +1873,7 @@
                             "});",
                             "",
                             "pm.test(\"Body is empty\", function () {",
-                            "    pm.expect(pm.response.text()).to.eql(\"\");",
+                            "    pm.response.to.have.body(\"\");",
                             "});",
                             "",
                             "pm.sendRequest({",
@@ -1839,7 +1893,10 @@
                     "request": {
                       "method": "DELETE",
                       "header": [],
-                      "body": {},
+                      "body": {
+                        "mode": "raw",
+                        "raw": ""
+                      },
                       "url": {
                         "raw": "{{url}}/storage/{{not_registered_storage}}",
                         "host": [
@@ -1860,7 +1917,7 @@
                       {
                         "listen": "test",
                         "script": {
-                          "id": "75a9b830-ebd1-4805-802e-3a9cd079ae53",
+                          "id": "624bcda2-2ca2-4b7b-beb3-cc12a96e0863",
                           "type": "text/javascript",
                           "exec": [
                             "pm.test(\"Status code is 200\", function () {",
@@ -1868,7 +1925,7 @@
                             "});",
                             "",
                             "pm.test(\"Body is empty\", function () {",
-                            "    pm.expect(pm.response.text()).to.eql(\"\");",
+                            "    pm.response.to.have.body(\"\");",
                             "});",
                             "",
                             "",
@@ -1900,7 +1957,10 @@
                     "request": {
                       "method": "DELETE",
                       "header": [],
-                      "body": {},
+                      "body": {
+                        "mode": "raw",
+                        "raw": ""
+                      },
                       "url": {
                         "raw": "{{url}}/storage/{{temp_storage}}",
                         "host": [
@@ -1918,6 +1978,360 @@
 					"_postman_isSubFolder": true
 				}
 			]
+        },
+      {
+        "name": "health",
+        "description": "",
+        "item": [
+          {
+            "name": "Check health",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "id": "91566781-aaab-45c6-af73-f5b7d6cff594",
+                  "type": "text/javascript",
+                  "exec": [
+                    "pm.test(\"Status code is 200\", function () {",
+                    "    pm.response.to.have.status(200);",
+                    "});",
+                    "",
+                    "pm.test(\"Body is empty\", function () {",
+                    "    pm.response.to.have.body(\"\");",
+                    "});"
+                  ]
+                }
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "header": [],
+              "body": {},
+              "url": {
+                "raw": "{{url}}/health",
+                "host": [
+                  "{{url}}"
+                ],
+                "path": [
+                  "health"
+                ]
+              }
+            },
+            "response": []
+          },
+          {
+            "name": "Check health detailed",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "id": "1f1432ca-9a62-46dc-aa09-613e4ee8a603",
+                  "type": "text/javascript",
+                  "exec": [
+                    "pm.test(\"Status code is 200\", function () {",
+                    "    pm.response.to.have.status(200);",
+                    "});",
+                    "",
+                    "pm.test(\"Content-Type is application/json\", function () {",
+                    "    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+                    "});",
+                    "",
+                    "pm.test(\"Body contains detailed checks info\", function () {",
+                    "    var example = {",
+                    "        status: \"HEALTHY\",",
+                    "        checks: [",
+                    "            {",
+                    "                name: \"STORAGE_REGISTRY\",",
+                    "                status: \"HEALTHY\",",
+                    "                message: \"OK\"",
+                    "            },",
+                    "            {",
+                    "                name: \"STORAGE_TEMPLATE\",",
+                    "                status: \"HEALTHY\",",
+                    "                message: \"OK\"",
+                    "            },",
+                    "            {",
+                    "                name: \"HISTORY_STORAGE_TEMPLATE\",",
+                    "                status: \"HEALTHY\",",
+                    "                message: \"OK\"",
+                    "            }]",
+                    "    };",
+                    "    var jsonData = pm.response.json();",
+                    "    pm.expect(jsonData).to.eql(example);",
+                    "});"
+                  ]
+                }
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "header": [],
+              "body": {},
+              "url": {
+                "raw": "{{url}}/health?detailed=true",
+                "host": [
+                  "{{url}}"
+                ],
+                "path": [
+                  "health"
+                ],
+                "query": [
+                  {
+                    "key": "detailed",
+                    "value": "true"
+                  }
+                ]
+              }
+            },
+            "response": []
+          },
+          {
+            "name": "Unhealthy registry",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "id": "d06f7e66-04da-4867-9e25-80827a1924cf",
+                  "type": "text/javascript",
+                  "exec": [
+                    "pm.test(\"Status code is 500\", function () {",
+                    "    pm.response.to.have.status(500);",
+                    "});",
+                    "",
+                    "pm.test(\"Content-Type is application/json\", function () {",
+                    "    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+                    "});",
+                    "",
+                    "pm.test(\"Body contains detailed checks info\", function () {",
+                    "    var example = {",
+                    "        status: \"UNHEALTHY\",",
+                    "        checks: [",
+                    "            {",
+                    "                name: \"STORAGE_REGISTRY\",",
+                    "                status: \"UNHEALTHY\",",
+                    "                message: \"Not found\"",
+                    "            },",
+                    "            {",
+                    "                name: \"STORAGE_TEMPLATE\",",
+                    "                status: \"HEALTHY\",",
+                    "                message: \"OK\"",
+                    "            },",
+                    "            {",
+                    "                name: \"HISTORY_STORAGE_TEMPLATE\",",
+                    "                status: \"HEALTHY\",",
+                    "                message: \"OK\"",
+                    "            }]",
+                    "    };",
+                    "    var jsonData = pm.response.json();",
+                    "    pm.expect(jsonData).to.eql(example);",
+                    "});"
+                  ]
+                }
+              },
+              {
+                "listen": "prerequest",
+                "script": {
+                  "id": "c54850c2-147e-482f-8f2a-fcd50877925b",
+                  "type": "text/javascript",
+                  "exec": [
+                    "const es_url = pm.variables.get(\"es_url\");",
+                    "const storage_registry = pm.variables.get(\"storage_registry\");",
+                    "//remove storage registry",
+                    "pm.sendRequest({",
+                    "  url: es_url + \"/\" + storage_registry,",
+                    "  method: 'DELETE'",
+                    "});"
+                  ]
+                }
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "header": [],
+              "body": {},
+              "url": {
+                "raw": "{{url}}/health?detailed=true",
+                "host": [
+                  "{{url}}"
+                ],
+                "path": [
+                  "health"
+                ],
+                "query": [
+                  {
+                    "key": "detailed",
+                    "value": "true"
+                  }
+                ]
+              }
+            },
+            "response": []
+          },
+          {
+            "name": "Unhealthy registry and storage template",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "id": "5adb33ae-38bf-4349-804a-fc9f5d5f1e3b",
+                  "type": "text/javascript",
+                  "exec": [
+                    "pm.test(\"Status code is 500\", function () {",
+                    "    pm.response.to.have.status(500);",
+                    "});",
+                    "",
+                    "pm.test(\"Content-Type is application/json\", function () {",
+                    "    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+                    "});",
+                    "",
+                    "pm.test(\"Body contains detailed checks info\", function () {",
+                    "    var example = {",
+                    "        status: \"UNHEALTHY\",",
+                    "        checks: [",
+                    "            {",
+                    "                name: \"STORAGE_REGISTRY\",",
+                    "                status: \"UNHEALTHY\",",
+                    "                message: \"Not found\"",
+                    "            },",
+                    "            {",
+                    "                name: \"STORAGE_TEMPLATE\",",
+                    "                status: \"UNHEALTHY\",",
+                    "                message: \"Not found\"",
+                    "            },",
+                    "            {",
+                    "                name: \"HISTORY_STORAGE_TEMPLATE\",",
+                    "                status: \"HEALTHY\",",
+                    "                message: \"OK\"",
+                    "            }]",
+                    "    };",
+                    "    var jsonData = pm.response.json();",
+                    "    pm.expect(jsonData).to.eql(example);",
+                    "});"
+                  ]
+                }
+              },
+              {
+                "listen": "prerequest",
+                "script": {
+                  "id": "34dc8595-31f6-4c08-9107-13de21f8d41a",
+                  "type": "text/javascript",
+                  "exec": [
+                    "const es_url = pm.variables.get(\"es_url\");",
+                    "const storage_template = pm.variables.get(\"storage_template\");",
+                    "//remove storage registry",
+                    "pm.sendRequest({",
+                    "  url: es_url + \"/_template/\" + storage_template,",
+                    "  method: 'DELETE'",
+                    "});"
+                  ]
+                }
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "header": [],
+              "body": {},
+              "url": {
+                "raw": "{{url}}/health?detailed=true",
+                "host": [
+                  "{{url}}"
+                ],
+                "path": [
+                  "health"
+                ],
+                "query": [
+                  {
+                    "key": "detailed",
+                    "value": "true"
+                  }
+                ]
+              }
+            },
+            "response": []
+          },
+          {
+            "name": "Fully unhealthy",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "id": "2150b5ec-75c2-4a62-ae79-201c0899c114",
+                  "type": "text/javascript",
+                  "exec": [
+                    "pm.test(\"Status code is 500\", function () {",
+                    "    pm.response.to.have.status(500);",
+                    "});",
+                    "",
+                    "pm.test(\"Content-Type is application/json\", function () {",
+                    "    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+                    "});",
+                    "",
+                    "pm.test(\"Body contains detailed checks info\", function () {",
+                    "    var example = {",
+                    "        status: \"UNHEALTHY\",",
+                    "        checks: [",
+                    "            {",
+                    "                name: \"STORAGE_REGISTRY\",",
+                    "                status: \"UNHEALTHY\",",
+                    "                message: \"Not found\"",
+                    "            },",
+                    "            {",
+                    "                name: \"STORAGE_TEMPLATE\",",
+                    "                status: \"UNHEALTHY\",",
+                    "                message: \"Not found\"",
+                    "            },",
+                    "            {",
+                    "                name: \"HISTORY_STORAGE_TEMPLATE\",",
+                    "                status: \"UNHEALTHY\",",
+                    "                message: \"Not found\"",
+                    "            }]",
+                    "    };",
+                    "    var jsonData = pm.response.json();",
+                    "    pm.expect(jsonData).to.eql(example);",
+                    "});"
+                  ]
+                }
+              },
+              {
+                "listen": "prerequest",
+                "script": {
+                  "id": "89d00752-db71-4161-993e-62b4039a4f90",
+                  "type": "text/javascript",
+                  "exec": [
+                    "const es_url = pm.variables.get(\"es_url\");",
+                    "const history_storage_template = pm.variables.get(\"history_storage_template\");",
+                    "//remove storage registry",
+                    "pm.sendRequest({",
+                    "  url: es_url + \"/_template/\" + history_storage_template,",
+                    "  method: 'DELETE'",
+                    "});"
+                  ]
+                }
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "header": [],
+              "body": {},
+              "url": {
+                "raw": "{{url}}/health?detailed=true",
+                "host": [
+                  "{{url}}"
+                ],
+                "path": [
+                  "health"
+                ],
+                "query": [
+                  {
+                    "key": "detailed",
+                    "value": "true"
+                  }
+                ]
+              }
+            },
+            "response": []
+          }
+        ]
 		}
 	],
 	"event": [
@@ -1944,122 +2358,143 @@
 	],
 	"variable": [
 		{
-          "id": "f68c730b-ad7d-48ec-8c1f-fd09a1f300a8",
+          "id": "89836302-5351-42c5-9de1-3305a94ea0e0",
 			"key": "url",
           "value": "http://app:8080",
 			"type": "string"
 		},
 		{
-          "id": "79189da9-b61e-44e6-b54a-8913f6fa98bc",
+          "id": "57ed9ae8-3ff9-43c9-ad47-4d0266db6131",
 			"key": "storage_uuid",
 			"value": "b3d1b2a6-bd5b-49d5-bd9e-86538fdc180d",
 			"type": "string",
 			"description": ""
 		},
 		{
-          "id": "7dba3dc2-4982-4427-93bf-e599a2eef14e",
+          "id": "3735c9e2-c5da-4736-a019-d7b477061868",
 			"key": "es_url",
           "value": "http://elasticsearch:9200",
 			"type": "string",
 			"description": ""
 		},
 		{
-          "id": "fd43ddac-cd43-422a-9772-a41990a59e5e",
+          "id": "bdb8b348-e7af-464f-9547-a764e08d2f4d",
 			"key": "some_key",
 			"value": "key1",
 			"type": "string",
 			"description": ""
 		},
 		{
-          "id": "59435d85-c73e-4607-8325-2bf430594abc",
+          "id": "24d7606c-b81b-4289-82ae-39f839de7fd6",
 			"key": "some_value",
 			"value": "value1",
 			"type": "string",
 			"description": ""
 		},
 		{
-          "id": "aec19b91-e2d0-42f8-9566-cf32876aa67d",
+          "id": "ed189340-95f5-446e-98b8-21b87ca0e055",
 			"key": "empty_key",
 			"value": "empty_key",
 			"type": "string",
 			"description": ""
 		},
 		{
-          "id": "d2595831-9315-4a48-a894-e496d61c16c9",
+          "id": "db801bed-f089-466f-b531-7f2f379053a9",
 			"key": "non_existent_storage",
 			"value": "nonexistent",
 			"type": "string",
 			"description": ""
 		},
 		{
-          "id": "1a17064b-5a60-49b5-bf03-bd2b9295ced3",
+          "id": "e7f7da5d-ec21-44a4-823f-dc2c0ae9e93f",
           "key": "read_only_storage",
           "value": "read-only",
           "type": "string",
           "description": ""
         },
       {
-        "id": "ee48dca6-92a2-4f61-8451-665a344e585a",
+        "id": "aba7705f-bedc-4259-8251-89ebd3dc6fbd",
         "key": "editable_storage",
         "value": "editable-single",
         "type": "string",
         "description": ""
       },
       {
-        "id": "fb4bf55b-c6d4-40ef-871b-7babfef75318",
+        "id": "37aafcb7-4385-4bbe-98d7-c9349dcb9933",
         "key": "multieditable_storage",
         "value": "editable-multiple",
         "type": "string",
         "description": ""
       },
       {
-        "id": "c8bedc45-6d39-4cac-8078-097156714cde",
+        "id": "743df41b-4fcf-4343-aba6-c12e8ed45f88",
         "key": "deletable_storage",
         "value": "deletable-single",
         "type": "string",
         "description": ""
       },
       {
-        "id": "e3fbeb46-8c75-4f34-a220-0a07b3747542",
+        "id": "19712ed8-5505-4327-9e6d-db5ba1d08552",
         "key": "multideletable_storage",
         "value": "deletable-multiple",
         "type": "string",
         "description": ""
       },
       {
-        "id": "2919d9b7-e80a-4596-aabb-cccbb7104cdc",
+        "id": "d63da318-9126-498d-a70e-6327ef37d366",
         "key": "cleanable_storage",
         "value": "cleanable",
         "type": "string",
         "description": ""
       },
       {
-        "id": "29459aaf-3a81-4838-b59a-25c19af7dc77",
+        "id": "e7d71b2c-3e8b-4023-b9d1-0a8ac867b291",
 			"key": "temp_storage",
         "value": "temp",
         "type": "string",
         "description": ""
       },
       {
-        "id": "631d6dd7-4cd2-4a40-96ee-af480d1fd9d9",
+        "id": "b37cd047-7aab-46b9-abf4-0638576aeb9c",
         "key": "acc_storage",
         "value": "account",
         "type": "string",
         "description": ""
       },
       {
-        "id": "6a45fb92-6642-4d4f-8c1e-f5095a89084b",
+        "id": "5b69bc76-dc42-4e79-8ee0-993a39e29501",
         "key": "no_index_storage",
         "value": "no-index",
         "type": "string",
         "description": ""
       },
       {
-        "id": "111c436c-f6b6-4fe2-9895-a2ad826602c9",
+        "id": "3c523a30-a8e4-4867-9da2-a47b62a31395",
         "key": "not_registered_storage",
         "value": "not-registered",
 			"type": "string",
 			"description": ""
+      },
+      {
+        "id": "dfea7ee0-998a-4cc5-8a0d-9c0295ced4e7",
+        "key": "storage_registry",
+        "value": "storage-registry",
+        "type": "string",
+        "description": ""
+      },
+      {
+        "id": "e4f0ef75-0667-4f75-9c06-1a24db6eb8a9",
+        "key": "storage_template",
+        "value": "storage",
+        "type": "string",
+        "description": ""
+      },
+      {
+        "id": "a2e4e121-2580-48ca-9684-e03cfe44c220",
+        "key": "history_storage_template",
+        "value": "history-storage",
+        "type": "string",
+        "description": ""
 		}
 	]
 }
