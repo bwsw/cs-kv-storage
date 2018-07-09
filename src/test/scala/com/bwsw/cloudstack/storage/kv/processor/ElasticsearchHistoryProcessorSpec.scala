@@ -17,18 +17,20 @@
 
 package com.bwsw.cloudstack.storage.kv.processor
 
-import com.bwsw.cloudstack.storage.kv.entity.{Set, Clear, Delete, Operation, SortField, History, PageSearchResult, ScrollSearchResult, Sorting}
-import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils._
 import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
+import com.bwsw.cloudstack.storage.kv.entity.Operation.{Clear, Delete, Set}
+import com.bwsw.cloudstack.storage.kv.entity.{History, Operation, PageSearchResult, ScrollSearchResult, SortField,
+  Sorting}
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError}
 import com.bwsw.cloudstack.storage.kv.message.KvHistory
+import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils._
 import com.sksamuel.elastic4s.bulk.BulkDefinition
 import com.sksamuel.elastic4s.http.ElasticDsl.{indexInto, _}
 import com.sksamuel.elastic4s.http._
 import com.sksamuel.elastic4s.http.bulk.{BulkError, BulkResponse, BulkResponseItem, BulkResponseItems}
 import com.sksamuel.elastic4s.http.search.{SearchHit, SearchHits, SearchResponse}
-import com.sksamuel.elastic4s.searches.{SearchDefinition, SearchScrollDefinition}
 import com.sksamuel.elastic4s.searches.sort.{FieldSortDefinition, SortOrder}
+import com.sksamuel.elastic4s.searches.{SearchDefinition, SearchScrollDefinition}
 import org.scalamock.scalatest.AsyncMockFactory
 import org.scalatest.AsyncFunSpec
 

@@ -20,28 +20,32 @@ package com.bwsw.cloudstack.storage.kv.entity
 /** Operation that where used to change data existing in some storage **/
 sealed trait Operation
 
-object Set extends Operation {
-  override def toString: String = "set"
-}
-
-object Delete extends Operation {
-  override def toString: String = "delete"
-}
-
-object Clear extends Operation {
-  override def toString: String = "clear"
-}
-
 object Operation {
+
+  private val SetValue = "set"
+  private val DeleteValue = "delete"
+  private val ClearValue = "clear"
+
+  object Set extends Operation {
+    override def toString: String = SetValue
+  }
+
+  object Delete extends Operation {
+    override def toString: String = DeleteValue
+  }
+
+  object Clear extends Operation {
+    override def toString: String = ClearValue
+  }
 
   /** Returns the operation by its string representation.
     *
     * @throws IllegalArgumentException if the string ain't match any of operations
     */
   def parse(string: String): Operation = string match {
-    case "set" => Set
-    case "delete" => Delete
-    case "clear" => Clear
+    case SetValue => Set
+    case DeleteValue => Delete
+    case ClearValue => Clear
     case _ => throw new IllegalArgumentException("Invalid operation")
   }
 }

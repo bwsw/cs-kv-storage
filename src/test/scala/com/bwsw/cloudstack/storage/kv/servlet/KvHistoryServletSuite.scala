@@ -19,6 +19,7 @@ package com.bwsw.cloudstack.storage.kv.servlet
 
 import akka.actor.ActorSystem
 import akka.testkit.TestActorRef
+import com.bwsw.cloudstack.storage.kv.entity.Operation.{Clear, Delete, Set}
 import com.bwsw.cloudstack.storage.kv.entity.Sorting.Asc
 import com.bwsw.cloudstack.storage.kv.entity.{PageSearchResult, _}
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError}
@@ -33,8 +34,6 @@ import scala.collection.immutable
 import scala.concurrent.duration._
 
 class KvHistoryServletSuite extends ScalatraSuite with FunSpecLike with MockFactory {
-
-  import scala.concurrent.ExecutionContext.Implicits.global
 
   private implicit val system: ActorSystem = ActorSystem()
   private val historyRequestActor = TestActorRef(new MockActor())

@@ -20,7 +20,8 @@ package com.bwsw.cloudstack.storage.kv.actor
 import akka.actor.{ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit}
 import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
-import com.bwsw.cloudstack.storage.kv.entity.{Clear, Delete, Set, Storage}
+import com.bwsw.cloudstack.storage.kv.entity.Operation.{Clear, Delete, Set}
+import com.bwsw.cloudstack.storage.kv.entity.Storage
 import com.bwsw.cloudstack.storage.kv.message.{KvHistory, KvHistoryBulk}
 import com.bwsw.cloudstack.storage.kv.processor.HistoryProcessor
 import org.scalamock.scalatest.MockFactory
