@@ -34,12 +34,3 @@ case class ElasticsearchError(message: String = "Elasticsearch error") extends S
 case class Unexpected(message: String) extends StatusMessage {
   override def toString: String = message
 }
-
-object StatusMessage {
-  def parse(string: String): StatusMessage = string match {
-    case "OK" => Ok
-    case "Not found" => NotFound
-    case "Elasticsearch error" => ElasticsearchError()
-    case msg => Unexpected(msg)
-  }
-}

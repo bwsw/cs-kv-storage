@@ -69,7 +69,7 @@ class HealthServlet(system: ActorSystem, requestTimeout: FiniteDuration, healthA
 
   private class StatusMessageSerializer extends CustomSerializer[StatusMessage](
     format => ( {
-      case JString(s) => StatusMessage.parse(s)
+      case JString(s) => throw new UnsupportedOperationException()
     }, {
       case sm: StatusMessage => JString(sm.toString)
     }))
