@@ -2,7 +2,7 @@ Key-value storage
 =================
 
 This project provides key-value storages as an extension for Apache CloudStack.
- 
+
 Following storage types are supported:
 
 * ACCOUNT
@@ -14,15 +14,15 @@ many storages. This storage type can be configured to save a history of operatio
 
 Storages for Apache CloudStack virtual machines created and deleted automatically while creating or expunging virtual
  machines.
- 
+
 * TEMP
 
-Temporal storages with specified TTL created via Apache CloudStack API. TTL can be updated after creation. This 
-operation as well as storage deletion can be done via Apache CloudStack API and key-value storage API.  
+Temporal storages with specified TTL created via Apache CloudStack API. TTL can be updated after creation. This
+operation as well as storage deletion can be done via Apache CloudStack API and key-value storage API.
 
 * [Build & Run](#build-run)
 * [API](#api)
-* [Configuration](#configuration)  
+* [Configuration](#configuration)
 
 
 # Build & Run #
@@ -31,7 +31,7 @@ operation as well as storage deletion can be done via Apache CloudStack API and 
 ```sh
 $ cd cs-kv-storage
 $ sbt assembly
-$ java -Dconfig.file=<config.path> -jar target/scala-2.12/cs-kv-storage-<version>-jar-with-dependencies.jar 
+$ java -Dconfig.file=<config.path> -jar target/scala-2.12/cs-kv-storage-<version>-jar-with-dependencies.jar
 ```
 where `<config.path>` and `<version>` should be replaced with actual values.
 
@@ -40,7 +40,7 @@ where `<config.path>` and `<version>` should be replaced with actual values.
 ```sh
 $ cd cs-kv-storage
 $ sbt docker
-$ docker -p <port>:8080 -v <config.path>:/opt/cs-kv-storage/application.conf git.bw-sw.com:5000/cloudstack-ecosystem/cs-kv-storage:<version>  
+$ docker -p <port>:8080 -v <config.path>:/opt/cs-kv-storage/application.conf git.bw-sw.com:5000/cloudstack-ecosystem/cs-kv-storage:<version>
 ```
 where `<port>`, `<config.path>` and `<version>` should be replaced with actual values.
 
@@ -48,6 +48,7 @@ where `<port>`, `<config.path>` and `<version>` should be replaced with actual v
 
 * [Storage operations](#storage-operations)
 * [Storage management](#storage-management)
+* [Storage health](#storage-health)
 
 ## Storage operations
 
@@ -303,6 +304,49 @@ DELETE /storage/<storage UUID>
 | 404 | The storage does not exist. |
 | 500 | The request can not be processed because of an internal error. |
 
+## Storage health
+
+### Check health
+
+#### Request
+
+```
+GET /health
+```
+
+##### Parameters
+
+| Parameter |                                              Description                                                  |
+| --------- | --------------------------------------------------------------------------------------------------------- |
+| detailed  | An optional boolean parameter whether it is need to check components that it depends on. Default value - false. |
+
+#### Response
+
+##### Status code
+
+| HTTP Status Code | Description |
+| ---------------- | ----------- |
+| 200 | Healthy |
+| 500 | Unhealthy |
+
+##### Body
+
+If detailed = false then response body is empty, otherwise results are in the response body in the format specified 
+below and the content type is application/json:
+
+```json
+{
+   "status":"HEALTHY/UNHEALTHY",
+   "checks":[
+      {
+         "name":"<name>",
+         "status":"HEALTHY/UNHEALTHY",
+         "message":"<message>"
+      }
+   ]
+}
+```
+
 # Configuration
 
 The example of the configuration file can be found [here](/src/test/resources/application.conf).
@@ -311,7 +355,7 @@ The example of the configuration file can be found [here](/src/test/resources/ap
 | --------- | ----------- |
 | elasticsearch.uri | Elasticsearch addesses in the format elasticsearch://host:port,host:port, http://host:port,host:port or https://host:port,host:port. |
 | elasticsearch.auth.username | Elasticsearch username for authentication. |
-| elasticsearch.auth.password | Elasticsearch password for authentication. | 
+| elasticsearch.auth.password | Elasticsearch password for authentication. |
 | elasticsearch.search.pagesize | Batch size to retrieve all results (scroll) for key listing. |
 | elasticsearch.search.keepalive | Timeout between batch requests to retrieve all results (scroll) for key listing. |
 | elasticsearch.limit.max-value-size | Max length of the value. |

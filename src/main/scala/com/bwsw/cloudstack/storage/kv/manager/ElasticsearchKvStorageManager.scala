@@ -19,7 +19,7 @@ package com.bwsw.cloudstack.storage.kv.manager
 
 import com.bwsw.cloudstack.storage.kv.cache.StorageCache
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError, StorageError}
-import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils
+import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils._
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.{HttpClient, RequestFailure, RequestSuccess}
 
@@ -36,7 +36,7 @@ class ElasticsearchKvStorageManager(client: HttpClient, cache: StorageCache) ext
   import scala.concurrent.ExecutionContext.Implicits.global
 
   def updateTempStorageTtl(storage: String, ttl: Long): Future[Either[StorageError, Unit]] = {
-    client.execute(update(storage) in Registry / Type
+    client.execute(update(storage) in RegistryIndex / DocumentType
       script
       s"""if (ctx._source.type == "$TemporaryStorageType"){ ctx._source.ttl = $ttl } else { ctx.op="noop"}""")
       .map {
@@ -52,7 +52,7 @@ class ElasticsearchKvStorageManager(client: HttpClient, cache: StorageCache) ext
   }
 
   def deleteTempStorage(storage: String): Future[Either[StorageError, Unit]] = {
-    client.execute(update(storage) in Registry / Type
+    client.execute(update(storage) in RegistryIndex / DocumentType
       script
       s"""if (ctx._source.type == "$TemporaryStorageType"){ ctx._source.deleted = true } else { ctx.op="noop"}""")
       .map {
@@ -72,10 +72,6 @@ class ElasticsearchKvStorageManager(client: HttpClient, cache: StorageCache) ext
 
 /** ElasticsearchKvStorageManager companion object. **/
 object ElasticsearchKvStorageManager {
-  private val Registry = "storage-registry"
-  private val Type = "_doc"
-  private val TemporaryStorageType = "TEMP"
-
   private def getError(requestFailure: RequestFailure): StorageError = {
     if (requestFailure.status == 404)
       NotFoundError()

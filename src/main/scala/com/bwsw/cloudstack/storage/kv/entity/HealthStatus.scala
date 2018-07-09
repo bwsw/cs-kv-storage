@@ -15,16 +15,26 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package com.bwsw.cloudstack.storage.kv.message
+package com.bwsw.cloudstack.storage.kv.entity
 
-import com.bwsw.cloudstack.storage.kv.entity.Operation
+sealed trait HealthStatus
 
-case class KvHistory(storage: String, key: String, value: String, timestamp: Long, operation: Operation, attempt: Int = 0) {
-  /** Returns copy of this history with incremented attempts
-    *
-    * @return new KvHistory
-    */
-  def makeAttempt: KvHistory = {
-    KvHistory(storage, key, value, timestamp, operation, attempt + 1)
+object HealthStatus {
+
+  private val HealthyValue = "HEALTHY"
+  private val UnhealthyValue = "UNHEALTHY"
+
+  object Healthy extends HealthStatus {
+    override def toString: String = HealthyValue
+  }
+
+  object Unhealthy extends HealthStatus {
+    override def toString: String = UnhealthyValue
+  }
+
+  def parse(string: String): HealthStatus = string match {
+    case HealthyValue => Healthy
+    case UnhealthyValue => Unhealthy
+    case _ => throw new IllegalArgumentException
   }
 }

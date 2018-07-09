@@ -18,6 +18,7 @@
 package com.bwsw.cloudstack.storage.kv.cache
 
 import com.bwsw.cloudstack.storage.kv.entity.Storage
+import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils._
 import com.sksamuel.elastic4s.get.GetDefinition
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http._
@@ -29,8 +30,6 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class ElasticsearchStorageLoaderSpec extends AsyncFunSpec with AsyncMockFactory {
 
-  private val registry = "storage-registry"
-  private val `type` = "_doc"
   private val storageUuid = "someStorage"
   private val storage = Storage(storageUuid, "ACC", keepHistory = true)
   private val source = Map(
@@ -56,7 +55,7 @@ class ElasticsearchStorageLoaderSpec extends AsyncFunSpec with AsyncMockFactory 
     val loader = new ElasticsearchStorageLoader(fakeClient)
 
     it("should load value from Elasticsearch") {
-      val getResponse = GetResponse(storageUuid, registry, `type`, 1, found = true, Map.empty, source)
+      val getResponse = GetResponse(storageUuid, RegistryIndex, DocumentType, 1, found = true, Map.empty, source)
       expectGetRequest(fakeClient).returning(getRequestSuccessFuture(getResponse))
       loader.load(storageUuid).map {
         case Some(s) => assert(s == storage)
@@ -65,7 +64,14 @@ class ElasticsearchStorageLoaderSpec extends AsyncFunSpec with AsyncMockFactory 
     }
 
     it("should load value from Elasticsearch if no deleted field specified") {
-      val getResponse = GetResponse(storageUuid, registry, `type`, 1, found = true, Map.empty, deletedNotSetSource)
+      val getResponse = GetResponse(
+        storageUuid,
+        RegistryIndex,
+        DocumentType,
+        1,
+        found = true,
+        Map.empty,
+        deletedNotSetSource)
       expectGetRequest(fakeClient).returning(getRequestSuccessFuture(getResponse))
       loader.load(storageUuid).map {
         case Some(s) => assert(s == storage)
@@ -74,7 +80,14 @@ class ElasticsearchStorageLoaderSpec extends AsyncFunSpec with AsyncMockFactory 
     }
 
     it("should return None if no storage found in Elasticsearch") {
-      val getResponse = GetResponse(storageUuid, registry, `type`, 1, found = false, Map.empty, deletedSource)
+      val getResponse = GetResponse(
+        storageUuid,
+        RegistryIndex,
+        DocumentType,
+        1,
+        found = false,
+        Map.empty,
+        deletedSource)
       expectGetRequest(fakeClient).returning(getRequestSuccessFuture(getResponse))
       loader.load(storageUuid).map {
         case Some(s) => fail
@@ -83,7 +96,7 @@ class ElasticsearchStorageLoaderSpec extends AsyncFunSpec with AsyncMockFactory 
     }
 
     it("should return None if storage market as deleted in Elasticsearch") {
-      val getResponse = GetResponse(storageUuid, registry, `type`, 1, found = false, Map.empty, Map.empty)
+      val getResponse = GetResponse(storageUuid, RegistryIndex, DocumentType, 1, found = false, Map.empty, Map.empty)
       expectGetRequest(fakeClient).returning(getRequestSuccessFuture(getResponse))
       loader.load(storageUuid).map {
         case Some(s) => fail
@@ -99,7 +112,7 @@ class ElasticsearchStorageLoaderSpec extends AsyncFunSpec with AsyncMockFactory 
     }
 
     it("should fail with RuntimeException if no data provided in response from Elasticsearch") {
-      val getResponse = GetResponse(storageUuid, registry, `type`, 1, found = true, Map.empty, Map.empty)
+      val getResponse = GetResponse(storageUuid, RegistryIndex, DocumentType, 1, found = true, Map.empty, Map.empty)
       expectGetRequest(fakeClient).returning(getRequestSuccessFuture(getResponse))
       recoverToSucceededIf[RuntimeException] {
         loader.load(storageUuid)
@@ -120,6 +133,6 @@ class ElasticsearchStorageLoaderSpec extends AsyncFunSpec with AsyncMockFactory 
       .execute[GetDefinition, GetResponse]
         (_: GetDefinition)
         (_: HttpExecutable[GetDefinition, GetResponse], _: ExecutionContext))
-      .expects(ElasticDsl.get(storageUuid).from(registry / `type`), GetHttpExecutable, *)
+      .expects(ElasticDsl.get(storageUuid).from(RegistryIndex / DocumentType), GetHttpExecutable, *)
   }
 }
