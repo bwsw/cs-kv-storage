@@ -66,7 +66,7 @@ class BufferedHistoryKvActorSpec
     describe("(KvHistory)") {
 
       def test(flushSize: Int, verifyTimeoutFactor: Double) = {
-        (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout).anyNumberOfTimes
+        (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout)
         (appConf.getFlushHistorySize _).expects().returning(flushSize).anyNumberOfTimes
         val historyLogged = Promise[Boolean]
         expectHistoryProcessing(List(history), Future(None), historyLogged)
@@ -75,6 +75,7 @@ class BufferedHistoryKvActorSpec
         eventually(timeout(scaled(flushTimeout * verifyTimeoutFactor))) {
           historyLogged.isCompleted should be(true)
         }
+        system.stop(bufferedHistoryKvActor)
       }
 
       def testRetry(flushSize: Int) = {
@@ -95,6 +96,7 @@ class BufferedHistoryKvActorSpec
           historyAttempt.isCompleted should be(true)
           historyRetry.isCompleted should be(true)
         }
+        system.stop(bufferedHistoryKvActor)
       }
 
       it("should process just-in-time") {
@@ -118,7 +120,7 @@ class BufferedHistoryKvActorSpec
     describe("KvHistoryBulk") {
 
       def test(flushSizeFactor: Int, verifyTimeoutFactor: Double) = {
-        (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout).anyNumberOfTimes
+        (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout)
         (appConf.getFlushHistorySize _).expects().returning(historyBulk.values.size * flushSizeFactor).anyNumberOfTimes
         val historyLogged = Promise[Boolean]
         expectHistoryProcessing(historyBulk.values.toList, Future(None), historyLogged)
@@ -127,10 +129,11 @@ class BufferedHistoryKvActorSpec
         eventually(timeout(scaled(flushTimeout * verifyTimeoutFactor))) {
           historyLogged.isCompleted should be(true)
         }
+        system.stop(bufferedHistoryKvActor)
       }
 
       def testRetry(flushSizeFactor: Int) = {
-        (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout).anyNumberOfTimes
+        (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout)
         (appConf.getFlushHistorySize _).expects().returning(historyBulk.values.size * flushSizeFactor).anyNumberOfTimes
 
         val historyAttempt = Promise[Boolean]
@@ -147,6 +150,7 @@ class BufferedHistoryKvActorSpec
           historyAttempt.isCompleted should be(true)
           historyRetry.isCompleted should be(true)
         }
+        system.stop(bufferedHistoryKvActor)
       }
 
       it("should process just-in-time") {
@@ -164,16 +168,21 @@ class BufferedHistoryKvActorSpec
       it("should process with retry by timeout") {
         testRetry(2)
       }
+
       it("should process in several just-in-time flushes") {
-        (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout).anyNumberOfTimes
+        (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout)
         (appConf.getFlushHistorySize _).expects().returning(1).anyNumberOfTimes
+
         val historyLogged = historyBulk.values.map((_, Promise[Boolean])).toMap
         expectHistoryOneByOneProcessing(historyBulk.values.toList, Future(None), historyLogged)
+
         val bufferedHistoryKvActor = system.actorOf(Props(new BufferedHistoryKvActor))
         bufferedHistoryKvActor ! historyBulk
+
         eventually(timeout(scaled(flushTimeout * 0.9))) {
           historyLogged.forall(_._2.isCompleted) should be(true)
         }
+        system.stop(bufferedHistoryKvActor)
       }
     }
   }
