@@ -18,11 +18,12 @@
 package com.bwsw.cloudstack.storage.kv.app
 
 import akka.actor.ActorSystem
-import com.bwsw.cloudstack.storage.kv.actor.{HealthActor, KvActor, HistoryRequestActor}
+import com.bwsw.cloudstack.storage.kv.actor.{HealthActor, HistoryRequestActor, KvActor}
 import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
 import com.bwsw.cloudstack.storage.kv.manager.KvStorageManager
 import com.bwsw.cloudstack.storage.kv.processor.KvProcessor
-import com.bwsw.cloudstack.storage.kv.servlet.{HealthServlet, KvStorageManagerServlet, KvStorageServlet, KvHistoryServlet}
+import com.bwsw.cloudstack.storage.kv.servlet.{HealthServlet, KvHistoryServlet, KvStorageManagerServlet,
+  KvStorageServlet}
 import javax.servlet.ServletContext
 import org.scalatra._
 import scaldi.akka.AkkaInjectable._
