@@ -17,10 +17,10 @@
 
 package com.bwsw.cloudstack.storage.kv.actor
 
-import akka.actor.Status
+import akka.actor.{ActorLogging, Status}
 import akka.pattern.pipe
 import com.bwsw.cloudstack.storage.kv.cache.StorageCache
-import com.bwsw.cloudstack.storage.kv.entity.Storage
+import com.bwsw.cloudstack.storage.kv.entity.{Clear, Delete, Operation, Set, Storage}
 import com.bwsw.cloudstack.storage.kv.error.{InternalError, NotFoundError, StorageError}
 import com.bwsw.cloudstack.storage.kv.message._
 import com.bwsw.cloudstack.storage.kv.message.request._
@@ -35,7 +35,7 @@ import scala.concurrent.Future
 /** Actor handling users requests and logging history of changes **/
 class HistoricalKvActor(implicit inj: Injector)
   extends KvActor
-  with akka.actor.ActorLogging {
+  with ActorLogging {
 
   import context.dispatcher
 

@@ -15,16 +15,19 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package com.bwsw.cloudstack.storage.kv.message
+package com.bwsw.cloudstack.storage.kv.entity
 
-import com.bwsw.cloudstack.storage.kv.entity.Operation
+/** Operation that where used to change data existing in some storage **/
+sealed trait Operation
 
-case class KvHistory(storage: String, key: String, value: String, timestamp: Long, operation: Operation, attempt: Int = 0) {
-  /** Returns copy of this history with incremented attempts
-    *
-    * @return new KvHistory
-    */
-  def makeAttempt: KvHistory = {
-    KvHistory(storage, key, value, timestamp, operation, attempt + 1)
-  }
+object Set extends Operation {
+  override def toString: String = "set"
+}
+
+object Delete extends Operation {
+  override def toString: String = "delete"
+}
+
+object Clear extends Operation {
+  override def toString: String = "clear"
 }
