@@ -19,7 +19,7 @@ package com.bwsw.cloudstack.storage.kv.processor
 
 import com.bwsw.cloudstack.storage.kv.configuration.ElasticsearchConfig
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, ConflictError, InternalError, NotFoundError, StorageError}
-import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils
+import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils._
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.get.GetResponse
 import com.sksamuel.elastic4s.http.search.SearchHits
@@ -40,9 +40,9 @@ class ElasticsearchKvProcessor(client: HttpClient, conf: ElasticsearchConfig) ex
 
   def get(storage: String, key: String): Future[Either[StorageError, String]] = {
     client.execute {
-      ElasticDsl.get(key).from(ElasticsearchUtils.getStorageIndex(storage) / Type)
+      ElasticDsl.get(key).from(getStorageIndex(storage) / DocumentType)
     }.map {
-      case Left(failure) => Left(ElasticsearchUtils.getError(failure))
+      case Left(failure) => Left(getError(failure))
       case Right(success) =>
         if (success.result.found)
           getValue(success.result.source)
@@ -53,12 +53,12 @@ class ElasticsearchKvProcessor(client: HttpClient, conf: ElasticsearchConfig) ex
 
   def get(storage: String, keys: Iterable[String]): Future[Either[StorageError, Map[String, Option[String]]]] = {
     val gets = keys.map {
-      ElasticDsl.get(_).from(ElasticsearchUtils.getStorageIndex(storage) / Type)
+      ElasticDsl.get(_).from(getStorageIndex(storage) / DocumentType)
     }
     client.execute {
       multiget(gets)
     }.map {
-      case Left(failure) => Left(ElasticsearchUtils.getError(failure))
+      case Left(failure) => Left(getError(failure))
       case Right(success) => getValues(success.result.docs, keys.map(e => e -> None).toMap)
     }
   }
@@ -66,9 +66,9 @@ class ElasticsearchKvProcessor(client: HttpClient, conf: ElasticsearchConfig) ex
   def set(storage: String, key: String, value: String): Future[Either[StorageError, Unit]] = {
     if (isKvValid(key, value))
       client.execute {
-        indexInto(ElasticsearchUtils.getStorageIndex(storage) / Type) id key fields (ValueField -> value)
+        indexInto(getStorageIndex(storage) / DocumentType) id key fields (StorageValueField -> value)
       }.map {
-        case Left(failure) => Left(ElasticsearchUtils.getError(failure))
+        case Left(failure) => Left(getError(failure))
         case Right(_) => Right(Unit)
       }
     else
@@ -78,14 +78,14 @@ class ElasticsearchKvProcessor(client: HttpClient, conf: ElasticsearchConfig) ex
   def set(storage: String, kvs: Map[String, String]): Future[Either[StorageError, Map[String, Boolean]]] = {
     val splitKvs = kvs.partition { kv => isKvValid(kv._1, kv._2) }
     val sets = splitKvs._1.map { case (key, value) =>
-      indexInto(ElasticsearchUtils.getStorageIndex(storage) / Type) id key fields (ValueField -> value)
+      indexInto(getStorageIndex(storage) / DocumentType) id key fields (StorageValueField -> value)
     }
     val bad = splitKvs._2.map { case (key, _) => (key, false) }
     if (sets.nonEmpty) {
       client.execute {
         bulk(sets)
       }.map {
-        case Left(failure) => Left(ElasticsearchUtils.getError(failure))
+        case Left(failure) => Left(getError(failure))
         case Right(success) =>
           Right(success.result.items.map(bulkResponseItem =>
             (bulkResponseItem.id, bulkResponseItem.error.isEmpty)).toMap ++ bad)
@@ -96,21 +96,21 @@ class ElasticsearchKvProcessor(client: HttpClient, conf: ElasticsearchConfig) ex
 
   def delete(storage: String, key: String): Future[Either[StorageError, Unit]] = {
     client.execute {
-      deleteById(ElasticsearchUtils.getStorageIndex(storage), Type, key)
+      deleteById(getStorageIndex(storage), DocumentType, key)
     }.map {
-      case Left(failure) => Left(ElasticsearchUtils.getError(failure))
+      case Left(failure) => Left(getError(failure))
       case Right(_) => Right(Unit)
     }
   }
 
   def delete(storage: String, keys: Iterable[String]): Future[Either[StorageError, Map[String, Boolean]]] = {
     val deletes = keys.map {
-      deleteById(ElasticsearchUtils.getStorageIndex(storage), Type, _)
+      deleteById(getStorageIndex(storage), DocumentType, _)
     }
     client.execute {
       bulk(deletes)
     }.map {
-      case Left(failure) => Left(ElasticsearchUtils.getError(failure))
+      case Left(failure) => Left(getError(failure))
       case Right(success) =>
         Right(success.result.items.map(bulkResponseItem =>
           (bulkResponseItem.id, bulkResponseItem.error.isEmpty)).toMap)
@@ -120,10 +120,10 @@ class ElasticsearchKvProcessor(client: HttpClient, conf: ElasticsearchConfig) ex
   def list(storage: String): Future[Either[StorageError, List[String]]] = {
     val keepAlive = conf.getScrollKeepAlive
     client.execute {
-      search(ElasticsearchUtils.getStorageIndex(storage)).size(conf.getScrollPageSize)
+      search(getStorageIndex(storage)).size(conf.getScrollPageSize)
         .scroll(keepAlive)
     }.flatMap {
-      case Left(failure) => Future(Left(ElasticsearchUtils.getError(failure)))
+      case Left(failure) => Future(Left(getError(failure)))
       case Right(success) =>
         if (success.result.scrollId.nonEmpty) {
           scrollAll(success.result.scrollId.get, getIds(success.result.hits), keepAlive)
@@ -135,11 +135,11 @@ class ElasticsearchKvProcessor(client: HttpClient, conf: ElasticsearchConfig) ex
 
   def clear(storage: String): Future[Either[StorageError, Unit]] = {
     client.execute {
-      deleteByQuery(ElasticsearchUtils.getStorageIndex(storage), Type, matchAllQuery)
+      deleteByQuery(getStorageIndex(storage), DocumentType, matchAllQuery)
         .proceedOnConflicts(true)
     }
       .map {
-        case Left(failure) => Left(ElasticsearchUtils.getError(failure))
+        case Left(failure) => Left(getError(failure))
         case Right(success) =>
           if (success.result.versionConflicts > 0)
             Left(ConflictError())
@@ -148,10 +148,13 @@ class ElasticsearchKvProcessor(client: HttpClient, conf: ElasticsearchConfig) ex
       }
   }
 
-  private def scrollAll(scrollId: String, results: List[String], keepAlive: String): Future[Either[StorageError, List[String]]] = {
+  private def scrollAll(
+      scrollId: String,
+      results: List[String],
+      keepAlive: String): Future[Either[StorageError, List[String]]] = {
     client.execute(searchScroll(scrollId).keepAlive(keepAlive))
       .flatMap {
-        case Left(failure) => Future(Left(ElasticsearchUtils.getError(failure)))
+        case Left(failure) => Future(Left(getError(failure)))
         case Right(success) =>
           if (success.result.hits.hits.length == 0) {
             client.execute {
@@ -177,18 +180,17 @@ class ElasticsearchKvProcessor(client: HttpClient, conf: ElasticsearchConfig) ex
 
 /** ElasticsearchKvProcessor companion object. **/
 object ElasticsearchKvProcessor {
-  private val Type = "_doc"
-  private val ValueField = "value"
-
   private def getValue(fields: Map[String, Any]): Either[StorageError, String] = {
-    fields.get(ValueField) match {
+    fields.get(StorageValueField) match {
       case Some(null) => Right(null)
       case Some(s: String) => Right(s)
       case _ => Left(InternalError("Invalid result"))
     }
   }
 
-  private def getValues(responses: Iterable[GetResponse], results: Map[String, Option[String]]): Either[StorageError, Map[String, Option[String]]] = {
+  private def getValues(
+      responses: Iterable[GetResponse],
+      results: Map[String, Option[String]]): Either[StorageError, Map[String, Option[String]]] = {
     responses match {
       case Nil => Right(results)
       case r :: tail =>
