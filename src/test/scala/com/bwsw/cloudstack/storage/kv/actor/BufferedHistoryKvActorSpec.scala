@@ -65,7 +65,7 @@ class BufferedHistoryKvActorSpec
 
     describe("(KvHistory)") {
 
-      def test(flushSize: Int, verifyTimeoutFactor: Double): Unit = {
+      def test(flushSize: Int, verifyTimeoutFactor: Double) = {
         (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout)
         (appConf.getFlushHistorySize _).expects().returning(flushSize).anyNumberOfTimes
         val historyLogged = Promise[Boolean]
@@ -78,7 +78,7 @@ class BufferedHistoryKvActorSpec
         system.stop(bufferedHistoryKvActor)
       }
 
-      def testRetry(flushSize: Int): Unit = {
+      def testRetry(flushSize: Int) = {
         (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout)
         (appConf.getFlushHistorySize _).expects().returning(flushSize).anyNumberOfTimes
         (appConf.getHistoryRetryLimit _).expects().returning(1)
@@ -119,7 +119,7 @@ class BufferedHistoryKvActorSpec
 
     describe("KvHistoryBulk") {
 
-      def test(flushSizeFactor: Int, verifyTimeoutFactor: Double): Unit = {
+      def test(flushSizeFactor: Int, verifyTimeoutFactor: Double) = {
         (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout)
         (appConf.getFlushHistorySize _).expects().returning(historyBulk.values.size * flushSizeFactor).anyNumberOfTimes
         val historyLogged = Promise[Boolean]
@@ -132,7 +132,7 @@ class BufferedHistoryKvActorSpec
         system.stop(bufferedHistoryKvActor)
       }
 
-      def testRetry(flushSizeFactor: Int): Unit = {
+      def testRetry(flushSizeFactor: Int) = {
         (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout)
         (appConf.getFlushHistorySize _).expects().returning(historyBulk.values.size * flushSizeFactor).anyNumberOfTimes
 

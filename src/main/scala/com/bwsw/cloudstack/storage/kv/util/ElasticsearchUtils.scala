@@ -26,15 +26,15 @@ object ElasticsearchUtils {
   val RegistryIndex = "storage-registry"
   val DocumentType = "_doc"
 
-  val HistoryStorageTemplate = "history-storage"
-  val StorageTemplate = "storage"
+  val HistoryStorageTemplate = "storage-history"
+  val StorageTemplate = "storage-data"
 
   val TemporaryStorageType = "TEMP"
   val StorageValueField = "value"
 
-  def getStorageIndex(storageUuid: String): String = s"storage-$storageUuid"
+  def getStorageIndex(storageUuid: String): String = s"storage-data-$storageUuid"
 
-  def getHistoricalStorageIndex(storageUuid: String): String = s"history-storage-$storageUuid"
+  def getHistoricalStorageIndex(storageUuid: String): String = s"storage-history-$storageUuid"
 
   def getError(requestFailure: RequestFailure): InternalError = {
     if (requestFailure.error == null)

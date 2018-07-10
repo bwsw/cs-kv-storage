@@ -84,7 +84,7 @@ class BufferedHistoryKvActor(implicit inj: Injector)
       }
   }
 
-  private def flush(flushBuffer: ListBuffer[KvHistory]): Unit = {
+  private def flush(flushBuffer: ListBuffer[KvHistory]) = {
     val flushSize = configuration.getFlushHistorySize
     flushBuffer.grouped(flushSize).foreach(batch => self ! KvHistoryFlush(batch.result()))
     flushBuffer.clear()

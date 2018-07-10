@@ -42,8 +42,8 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
   private val key = "someKey"
   private val value = "someValue"
   private val keyValues = Map("key1" -> "value1", "key2" -> "value2", "key3" -> "value3")
-  private val index = "storage-someStorage"
   private val storage = "someStorage"
+  private val index = getStorageIndex(storage)
   private val scrollSize = 1000
   private val exception = new RuntimeException("Test message")
   private val keepAlive = "1m"
@@ -246,18 +246,8 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
         val bulkResponse = BulkResponse(1, errors = false,
           keyValues.toList.map(kv => BulkResponseItems(
             Some(BulkResponseItem(
-              0,
-              kv._1,
-              index,
-              DocumentType,
-              1,
-              forcedRefresh = false,
-              found = false,
-              created = false,
-              "created",
-              200,
-              None,
-              None)),
+              0, kv._1, index, DocumentType, 1, forcedRefresh = false, found = false, created =
+                false, "created", 200, None, None)),
             None,
             None,
             None)))
@@ -298,18 +288,8 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
         val bulkResponse = BulkResponse(1, errors = false,
           keyValues.toList.map(kv => BulkResponseItems(
             Some(BulkResponseItem(
-              0,
-              kv._1,
-              index,
-              DocumentType,
-              1,
-              forcedRefresh = false,
-              found = false,
-              created = false,
-              "created",
-              200,
-              None,
-              None)),
+              0, kv._1, index, DocumentType, 1, forcedRefresh = false, found = false, created =
+                false, "created", 200, None, None)),
             None,
             None,
             None)))
@@ -396,18 +376,8 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
           keyValues.toList.map(kv => BulkResponseItems(
             None,
             Some(BulkResponseItem(
-              1,
-              kv._1,
-              index,
-              DocumentType,
-              1,
-              forcedRefresh = false,
-              found = false,
-              created = false,
-              "deleted",
-              200,
-              None,
-              None)),
+              1, kv._1, index, DocumentType, 1, forcedRefresh = false, found = false, created =
+                false, "deleted", 200, None, None)),
             None,
             None)))
         expectsBulkDeleteRequest(fakeClient).returning(getRequestSuccessFuture(bulkResponse))

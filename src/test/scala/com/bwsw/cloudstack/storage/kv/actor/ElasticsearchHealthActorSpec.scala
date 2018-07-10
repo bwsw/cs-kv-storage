@@ -25,7 +25,8 @@ import com.bwsw.cloudstack.storage.kv.entity.HealthStatus.{Healthy, Unhealthy}
 import com.bwsw.cloudstack.storage.kv.entity.{Check, _}
 import com.bwsw.cloudstack.storage.kv.message.request.{HealthCheckRequest, TemplateCheckRequest}
 import com.bwsw.cloudstack.storage.kv.message.response.{
-  DetailedHealthCheckResponse, HealthCheckResponse, StatusHealthCheckResponse
+  DetailedHealthCheckResponse, HealthCheckResponse,
+  StatusHealthCheckResponse
 }
 import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils
 import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils._
