@@ -35,6 +35,6 @@ class AppConfig {
   }
 
   def getDefaultPageSize: Int = {
-    conf.getInt("history.default-page-size")
+    conf.getInt("default-page-size")
   }
 }

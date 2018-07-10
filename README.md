@@ -463,7 +463,7 @@ The example of the configuration file can be found [here](/src/test/resources/ap
 | app.history.flush-size | Size of batch requests to save a history of the storage operations. |
 | app.history.flush-timeout | Timeout between batch/retry requests to save a history of the storage operations. |
 | app.history.retry-limit | Amount of attempts to try to log the storage operation. |
-| app.history.default-page-size | A default number of results returned in the page for search requests. |
+| app.default-page-size | A default number of results returned in the page for search requests. |
 | app.request-timeout | Maximum time to process the request. |
 
 
