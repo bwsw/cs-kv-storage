@@ -38,12 +38,10 @@ class KvHistoryServletSuite extends ScalatraSuite with FunSpecLike with MockFact
   private implicit val system: ActorSystem = ActorSystem()
   private val historyRequestActor = TestActorRef(new MockActor())
 
-  private val storage = Storage("someStorage", "ACC", keepHistory = true)
+  private val storageUuid = "id"
   private val someKey = "someKey"
   private val someValue = "someValue"
   private val timestamp = System.currentTimeMillis()
-  private val total = 10
-  private val pagesize = 3
   private val page = 2
   private val scroll = 1000
   private val scrollId = "DXF1ZXJ5QW5kRmV0Y2gBAAAAAAAAAAcWVDBqc3Vkb3lUeDZOYXk4bWczTHowUQ=="
@@ -51,10 +49,9 @@ class KvHistoryServletSuite extends ScalatraSuite with FunSpecLike with MockFact
     History(someKey, someValue, timestamp, Set),
     History(someKey, null, timestamp, Delete),
     History(null, null, timestamp, Clear))
-  private val pagedBody = PageSearchResult(total, pagesize, page, historyList)
-  private val scrolledBody = ScrollSearchResult(total, pagesize, scrollId, historyList)
-  private val scrollRequestBody: Array[Byte] = s"""{\"scroll\":\"$scrollId\",\"timeout\":$scroll}"""
-  private val scrollRequestBodyWrong: Array[Byte] = s"""[{\"scroll\":\"$scrollId\"},{\"timeout\":$scroll}]"""
+  private val pageResult = PageSearchResult(15, 3, page, historyList)
+  private val scrollResult = ScrollSearchResult(20, 5, scrollId, historyList)
+  private val scrollRequestBody: Array[Byte] = s"""{\"scrollId\":\"$scrollId\",\"timeout\":$scroll}"""
   private val jsonContentType = Seq(("Content-Type", "application/json"))
   private val textContentType = Seq(("Content-Type", "plain/text"))
 
@@ -62,193 +59,200 @@ class KvHistoryServletSuite extends ScalatraSuite with FunSpecLike with MockFact
     addServlet(new KvHistoryServlet(system, 1.second, historyRequestActor), "/history/*")
 
     describe("(search)") {
-      val pathBase = "/history/" + storage.uUID
-      it("should return body with simple paging") {
-        historyRequestActor.underlyingActor
-          .clearAndExpect(ResponsiveExpectation(
-            getRequest(size = Some(pagesize), page = Some(page)),
-            () => Right(pagedBody)))
-        get(pathBase, Seq(("page", page.toString), ("size", pagesize.toString))) {
+
+      val path = s"""/history/$storageUuid"""
+
+      it("should return results for requests with page parameter") {
+        historyRequestActor.underlyingActor.clearAndExpect(ResponsiveExpectation(
+          getRequest(page = Some(page)),
+          () => Right(pageResult)))
+        get(path, Seq(("page", page.toString))) {
           status should equal(200)
           response.getContentType should include("application/json")
-          body should equal(getPagedJson)
+          body should equal(getJson(pageResult))
         }
       }
 
-      it("should return body with scroll") {
+      it("should return results for requests with scroll parameter") {
         historyRequestActor.underlyingActor
-          .clearAndExpect(ResponsiveExpectation(
-            getRequest(size = Some(pagesize), scroll = Some(scroll)),
-            () => Right(scrolledBody)))
-        get(pathBase, Seq(("size", pagesize.toString), ("scroll", scroll.toString))) {
+          .clearAndExpect(ResponsiveExpectation(getRequest(scroll = Some(scroll)), () => Right(scrollResult)))
+        get(path, Seq(("scroll", scroll.toString))) {
           status should equal(200)
           response.getContentType should include("application/json")
-          body should equal(getScrolledJson)
+          body should equal(getJson(scrollResult))
         }
       }
 
-      it("should return 400 Bad Request on request with bad operations") {
-        get(pathBase, Seq(("operations", "set,clear,euthanasia"))) {
-          status should equal(400)
-          body should equal("")
-        }
-      }
-
-      it("should return 400 Bad Request on request with bad start") {
-        get(pathBase, Seq(("start", "today"))) {
-          status should equal(400)
-          body should equal("")
-        }
-      }
-
-      it("should return 400 Bad Request on request with negative start") {
-        get(pathBase, Seq(("start", "-1000"))) {
-          status should equal(400)
-          body should equal("")
-        }
-      }
-
-      it("should return 400 Bad Request on request with bad end") {
-        get(pathBase, Seq(("end", "today"))) {
-          status should equal(400)
-          body should equal("")
-        }
-      }
-
-      it("should return 400 Bad Request on request with negative end") {
-        get(pathBase, Seq(("end", "-1000"))) {
-          status should equal(400)
-          body should equal("")
-        }
-      }
-
-      it("should return 400 Bad Request on request with start > end") {
-        get(pathBase, Seq(("start", "1000"), ("end", "500"))) {
-          status should equal(400)
-          body should equal("")
-        }
-      }
-
-      it("should return 400 Bad Request on request with bad size") {
-        get(pathBase, Seq(("size", "large"))) {
-          status should equal(400)
-          body should equal("")
-        }
-      }
-
-      it("should return 400 Bad Request on request with negative size") {
-        get(pathBase, Seq(("size", "-1000"))) {
-          status should equal(400)
-          body should equal("")
-        }
-      }
-
-      it("should return 400 Bad Request on request with bad page") {
-        get(pathBase, Seq(("page", "first"))) {
-          status should equal(400)
-          body should equal("")
-        }
-      }
-
-      it("should return 400 Bad Request on request with negative page") {
-        get(pathBase, Seq(("page", "-1000"))) {
-          status should equal(400)
-          body should equal("")
-        }
-      }
-
-      it("should return 400 Bad Request on request with bad scroll") {
-        get(pathBase, Seq(("scroll", "1.day"))) {
-          status should equal(400)
-          body should equal("")
-        }
-      }
-
-      it("should return 400 Bad Request on request with negative scroll") {
-        get(pathBase, Seq(("scroll", "-1000"))) {
-          status should equal(400)
-          body should equal("")
-        }
-      }
-
-      it("should return 400 Bad Request on request with bad sort") {
-        get(pathBase, Seq(("sort", "bubble"))) {
-          status should equal(400)
-          body should equal("")
-        }
-      }
-
-      it("should return 400 Bad Request on request with opposite sort") {
-        get(pathBase, Seq(("sort", "timestamp,key,-timestamp"))) {
-          status should equal(400)
-          body should equal("")
-        }
-      }
-
-      it("should successfully skip duplicating operations") {
+      it("should return results for scroll request if both page and scroll parameters are specified") {
         historyRequestActor.underlyingActor
-          .clearAndExpect(ResponsiveExpectation(
-            getRequest(size = Some(pagesize), scroll = Some(scroll), operations = immutable.Set(Set)),
-            () => Right(scrolledBody)))
-        get(pathBase, Seq(("size", pagesize.toString), ("scroll", scroll.toString), ("operations", "set,set"))) {
+          .clearAndExpect(ResponsiveExpectation(getRequest(scroll = Some(scroll)), () => Right(scrollResult)))
+        get(path, Seq(("page", page.toString), ("scroll", scroll.toString))) {
           status should equal(200)
           response.getContentType should include("application/json")
-          body should equal(getScrolledJson)
+          body should equal(getJson(scrollResult))
         }
       }
 
-      it("should successfully skip duplicating keys") {
-        historyRequestActor.underlyingActor
-          .clearAndExpect(ResponsiveExpectation(
-            getRequest(size = Some(pagesize), scroll = Some(scroll), keys = immutable.Set("key1")),
-            () => Right(scrolledBody)))
-        get(pathBase, Seq(("size", pagesize.toString), ("scroll", scroll.toString), ("keys", "key1,key1"))) {
+      it("should return 400 Bad Request for requests with invalid operations") {
+        get(path, Seq(("operations", "set,clear,invalid"))) {
+          status should equal(400)
+          body should equal("")
+        }
+      }
+
+      it("should return 400 Bad Request for requests with invalid start") {
+        get(path, Seq(("start", "today"))) {
+          status should equal(400)
+          body should equal("")
+        }
+      }
+
+      it("should return 400 Bad Request for requests with negative start") {
+        get(path, Seq(("start", "-1000"))) {
+          status should equal(400)
+          body should equal("")
+        }
+      }
+
+      it("should return 400 Bad Request for requests with invalid end") {
+        get(path, Seq(("end", "today"))) {
+          status should equal(400)
+          body should equal("")
+        }
+      }
+
+      it("should return 400 Bad Request for requests with negative end") {
+        get(path, Seq(("end", "-1000"))) {
+          status should equal(400)
+          body should equal("")
+        }
+      }
+
+      it("should return 400 Bad Request for requests with start > end") {
+        get(path, Seq(("start", "1000"), ("end", "500"))) {
+          status should equal(400)
+          body should equal("")
+        }
+      }
+
+      it("should return 400 Bad Request for requests with invalid size") {
+        get(path, Seq(("size", "large"))) {
+          status should equal(400)
+          body should equal("")
+        }
+      }
+
+      it("should return 400 Bad Request for requests with negative size") {
+        get(path, Seq(("size", "-1000"))) {
+          status should equal(400)
+          body should equal("")
+        }
+      }
+
+      it("should return 400 Bad Request for requests with invalid page") {
+        get(path, Seq(("page", "first"))) {
+          status should equal(400)
+          body should equal("")
+        }
+      }
+
+      it("should return 400 Bad Request for requests with negative page") {
+        get(path, Seq(("page", "-1000"))) {
+          status should equal(400)
+          body should equal("")
+        }
+      }
+
+      it("should return 400 Bad Request for requests with invalid scroll") {
+        get(path, Seq(("scroll", "1.day"))) {
+          status should equal(400)
+          body should equal("")
+        }
+      }
+
+      it("should return 400 Bad Request for requests with negative scroll") {
+        get(path, Seq(("scroll", "-1000"))) {
+          status should equal(400)
+          body should equal("")
+        }
+      }
+
+      it("should return 400 Bad Request for requests with invalid sort") {
+        get(path, Seq(("sort", "bubble"))) {
+          status should equal(400)
+          body should equal("")
+        }
+      }
+
+      it("should return 400 Bad Request for requests with opposite sort") {
+        get(path, Seq(("sort", "timestamp,key,-timestamp"))) {
+          status should equal(400)
+          body should equal("")
+        }
+      }
+
+      it("should skip duplicating operations") {
+        val operation = Set
+        historyRequestActor.underlyingActor.clearAndExpect(ResponsiveExpectation(
+          getRequest(
+            scroll = Some(scroll),
+            operations = immutable.Set(operation)), () => Right(scrollResult)))
+        get(path, Seq(("scroll", scroll.toString), ("operations", s"""$operation,$operation"""))) {
           status should equal(200)
           response.getContentType should include("application/json")
-          body should equal(getScrolledJson)
+          body should equal(getJson(scrollResult))
+        }
+      }
+
+      it("should skip duplicating keys") {
+        val key = "key1"
+        historyRequestActor.underlyingActor.clearAndExpect(ResponsiveExpectation(
+          getRequest(scroll = Some(scroll), keys = immutable.Set(key)),
+          () => Right(scrollResult)))
+        get(path, Seq(("scroll", scroll.toString), ("keys", s"""$key,$key"""))) {
+          status should equal(200)
+          response.getContentType should include("application/json")
+          body should equal(getJson(scrollResult))
         }
       }
 
       it("should successfully skip duplicating sorts") {
+        val key = "key"
         historyRequestActor.underlyingActor
           .clearAndExpect(ResponsiveExpectation(
-            getRequest(size = Some(pagesize), scroll = Some(scroll), sort = immutable.Set(SortField("key", Asc))),
-            () => Right(scrolledBody)))
-        get(pathBase, Seq(("size", pagesize.toString), ("scroll", scroll.toString), ("sort", "key,key"))) {
+            getRequest(scroll = Some(scroll), sort = immutable.Set(SortField(key, Asc))),
+            () => Right(scrollResult)))
+        get(path, Seq(("scroll", scroll.toString), ("sort", s"""$key,$key"""))) {
           status should equal(200)
           response.getContentType should include("application/json")
-          body should equal(getScrolledJson)
+          body should equal(getJson(scrollResult))
         }
       }
 
-      it("should transfer BadRequestError from HistoryRequestActor") {
+      it("should return 400 Bad Request if HistoryRequestActor returns BadRequestError") {
         historyRequestActor.underlyingActor
-          .clearAndExpect(ResponsiveExpectation(
-            getRequest(size = Some(pagesize), scroll = Some(scroll)),
-            () => Left(BadRequestError())))
-        get(pathBase, Seq(("size", pagesize.toString), ("scroll", scroll.toString))) {
+          .clearAndExpect(ResponsiveExpectation(getRequest(scroll = Some(scroll)), () => Left(BadRequestError())))
+        get(path, Seq(("scroll", scroll.toString))) {
           status should equal(400)
           body should equal("")
         }
       }
 
-      it("should transfer InternalError from HistoryRequestActor") {
+      it("should return 500 Internal Error if HistoryRequestActor returns InternalError") {
         historyRequestActor.underlyingActor
           .clearAndExpect(ResponsiveExpectation(
-            getRequest(size = Some(pagesize), scroll = Some(scroll)),
+            getRequest(scroll = Some(scroll)),
             () => Left(InternalError("Error"))))
-        get(pathBase, Seq(("size", pagesize.toString), ("scroll", scroll.toString))) {
+        get(path, Seq(("scroll", scroll.toString))) {
           status should equal(500)
           body should equal("")
         }
       }
 
-      it("should transfer NotFoundError from HistoryRequestActor") {
+      it("should return 404 Not Found if HistoryRequestActor returns NotFoundError") {
         historyRequestActor.underlyingActor
-          .clearAndExpect(ResponsiveExpectation(
-            getRequest(size = Some(pagesize), scroll = Some(scroll)),
-            () => Left(NotFoundError())))
-        get(pathBase, Seq(("size", pagesize.toString), ("scroll", scroll.toString))) {
+          .clearAndExpect(ResponsiveExpectation(getRequest(scroll = Some(scroll)), () => Left(NotFoundError())))
+        get(path, Seq(("scroll", scroll.toString))) {
           status should equal(404)
           body should equal("")
         }
@@ -256,55 +260,55 @@ class KvHistoryServletSuite extends ScalatraSuite with FunSpecLike with MockFact
     }
 
     describe("(scroll)") {
-      val pathBase = "/history/"
-      it("should get next scroll") {
+
+      val path = "/history/"
+
+      it("should get results for a subsequent request") {
         historyRequestActor.underlyingActor
-          .clearAndExpect(ResponsiveExpectation(KvHistoryScrollRequest(scrollId, scroll), () => Right(scrolledBody)))
-        post(pathBase, scrollRequestBody, jsonContentType) {
+          .clearAndExpect(ResponsiveExpectation(KvHistoryScrollRequest(scrollId, scroll), () => Right(scrollResult)))
+        post(path, scrollRequestBody, jsonContentType) {
           status should equal(200)
           response.getContentType should include("application/json")
-          body should equal(getScrolledJson)
+          body should equal(getJson(scrollResult))
         }
       }
 
-      it("should return 400 Bad Request if Content Type is not application/json") {
-        post(pathBase, scrollRequestBody, textContentType) {
+      it("should return 400 Bad Request if Content-Type is not application/json") {
+        post(path, scrollRequestBody, textContentType) {
           status should equal(400)
           body should equal("")
         }
       }
 
-      it("should return 400 Bad Request if body contains bad json") {
-        post(pathBase, "{[}", jsonContentType) {
+      it("should return 400 Bad Request if the body is invalid JSON") {
+        post(path, "{[}", jsonContentType) {
           status should equal(400)
           body should equal("")
         }
       }
 
-      it("should return 400 Bad Request if body contains wrong format") {
-        post(pathBase, scrollRequestBodyWrong, jsonContentType) {
+      it("should return 400 Bad Request if the body is invalid") {
+        post(path, "{\"id\":\"value\"}", jsonContentType) {
           status should equal(400)
           body should equal("")
         }
       }
 
-      it("should transfer BadRequestError from HistoryRequestActor") {
-        historyRequestActor.underlyingActor
-          .clearAndExpect(ResponsiveExpectation(
-            KvHistoryScrollRequest(scrollId, scroll),
-            () => Left(BadRequestError())))
-        post(pathBase, scrollRequestBody, jsonContentType) {
+      it("should return 400 Bad Request if HistoryRequestActor returns BadRequestError") {
+        historyRequestActor.underlyingActor.clearAndExpect(ResponsiveExpectation(
+          KvHistoryScrollRequest(scrollId, scroll),
+          () => Left(BadRequestError())))
+        post(path, scrollRequestBody, jsonContentType) {
           status should equal(400)
           body should equal("")
         }
       }
 
-      it("should transfer InternalError from HistoryRequestActor") {
-        historyRequestActor.underlyingActor
-          .clearAndExpect(ResponsiveExpectation(
-            KvHistoryScrollRequest(scrollId, scroll),
-            () => Left(InternalError("Error"))))
-        post(pathBase, scrollRequestBody, jsonContentType) {
+      it("should return 500 Internal Error if HistoryRequestActor returns InternalError") {
+        historyRequestActor.underlyingActor.clearAndExpect(ResponsiveExpectation(
+          KvHistoryScrollRequest(scrollId, scroll),
+          () => Left(InternalError("Error"))))
+        post(path, scrollRequestBody, jsonContentType) {
           status should equal(500)
           body should equal("")
         }
@@ -321,7 +325,7 @@ class KvHistoryServletSuite extends ScalatraSuite with FunSpecLike with MockFact
       page: Option[Int] = None,
       size: Option[Int] = None,
       scroll: Option[Long] = None) = KvHistoryGetRequest(
-    storage.uUID,
+    storageUuid,
     keys,
     operations,
     start,
@@ -331,17 +335,18 @@ class KvHistoryServletSuite extends ScalatraSuite with FunSpecLike with MockFact
     size,
     scroll)
 
-  private def getPagedJson: String =
-    s"""{\"total\":$total,\"size\":$pagesize,\"page\":$page,\"items\":[""" +
-      s"""{\"key\":\"$someKey\",\"value\":\"$someValue\",\"timestamp\":$timestamp,\"operation\":\"set\"},""" +
-      s"""{\"key\":\"$someKey\",\"value\":null,\"timestamp\":$timestamp,\"operation\":\"delete\"},""" +
-      s"""{\"key\":null,\"value\":null,\"timestamp\":$timestamp,\"operation\":\"clear\"}""" +
-      "]}"
+  private def getJson(result: PageSearchResult[History]): String =
+    s"""{\"total\":${result.total},\"size\":${result.size},\"page\":${result.page},\"items\":[""" + result.items
+      .map(h => getJson(h)).mkString(",") + "]}"
 
-  private def getScrolledJson: String =
-    s"""{\"total\":$total,\"size\":$pagesize,\"scrollId\":\"$scrollId\",\"items\":[""" +
-      s"""{\"key\":\"$someKey\",\"value\":\"$someValue\",\"timestamp\":$timestamp,\"operation\":\"set\"},""" +
-      s"""{\"key\":\"$someKey\",\"value\":null,\"timestamp\":$timestamp,\"operation\":\"delete\"},""" +
-      s"""{\"key\":null,\"value\":null,\"timestamp\":$timestamp,\"operation\":\"clear\"}""" +
-      "]}"
+  private def getJson(result: ScrollSearchResult[History]): String =
+    s"""{\"total\":${result.total},\"size\":${result.size},\"scrollId\":\"${result.scrollId}\",\"items\":[""" + result
+      .items.map(h => getJson(h)).mkString(",") + "]}"
+
+  private def getJson(history: History): String = {
+    val key = if (history.key == null) "null" else s"""\"${history.key}\""""
+    val value = if (history.value == null) "null" else s"""\"${history.value}\""""
+    s"""{\"key\":$key,\"value\":$value,\"timestamp\":${history.timestamp},\"operation\":\"${history.operation}\"}"""
+  }
+
 }

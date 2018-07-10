@@ -201,9 +201,8 @@ class HistoricalKvActorSpec
         expectHistoryEnabledStorage
         val answer = Right(keyValues.map(kv => kv._1 -> true))
         (kvProcessor.set(_: String, _: Map[String, String])).expects(storageUuid, keyValues).returning(Future(answer))
-        test(
-          answer, Some(KvHistoryBulk(keyValues
-            .map { case (key, value) => KvHistory(storageUuid, key, value, timestamp, Set) })))
+        test(answer, Some(KvHistoryBulk(keyValues
+          .map { case (key, value) => KvHistory(storageUuid, key, value, timestamp, Set) })))
       }
 
       it("should process a request and skip history logging") {
@@ -289,9 +288,8 @@ class HistoricalKvActorSpec
         val answer = Right(keyValues.map(kv => kv._1 -> true))
         (kvProcessor.delete(_: String, _: Iterable[String])).expects(storageUuid, keyValues.keys)
           .returning(Future(answer))
-        test(
-          answer, Some(KvHistoryBulk(keyValues
-            .map { case (key, _) => KvHistory(storageUuid, key, null, timestamp, Delete) })))
+        test(answer, Some(KvHistoryBulk(keyValues
+          .map { case (key, _) => KvHistory(storageUuid, key, null, timestamp, Delete) })))
       }
 
       it("should process a request and skip history logging") {

@@ -20,8 +20,7 @@ package com.bwsw.cloudstack.storage.kv.actor
 import akka.actor.{ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit}
 import com.bwsw.cloudstack.storage.kv.cache.StorageCache
-import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
-import com.bwsw.cloudstack.storage.kv.entity.Operation.{Clear, Delete, Set}
+import com.bwsw.cloudstack.storage.kv.entity.Operation.Set
 import com.bwsw.cloudstack.storage.kv.entity._
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError, StorageError}
 import com.bwsw.cloudstack.storage.kv.message.request.{KvHistoryGetRequest, KvHistoryScrollRequest}
@@ -42,99 +41,88 @@ class DefaultHistoryRequestActorSpec
   import scala.concurrent.ExecutionContext.Implicits.global
 
   private val historyProcessor = mock[HistoryProcessor]
-  private val appConf = mock[AppConfig]
   private val storageCache = mock[StorageCache]
 
-  private val storage = Storage("someStorage", "ACC", keepHistory = true)
-  private val someKey = "someKey"
-  private val someValue = "someValue"
-  private val timestamp = System.currentTimeMillis()
-  private val someKeys = immutable.Set.empty[String]
-  private val someOperations = immutable.Set.empty[Operation]
-  private val someSort = immutable.Set.empty[SortField]
-  private val someStart = Some(0.asInstanceOf[Long])
-  private val someEnd = Some(0.asInstanceOf[Long])
-  private val someSize = Some(50)
-  private val somePage = Some(1)
-  private val someScroll = Some(1000.asInstanceOf[Long])
-  private val someScrollId = "DXF1ZXJ5QW5kRmV0Y2gBAAAAAAAAAAcWVDBqc3Vkb3lUeDZOYXk4bWczTHowUQ=="
-  private val historyList = List(
-    History(someKey, someValue, timestamp, Set),
-    History(someKey, null, timestamp, Delete),
-    History(null, null, timestamp, Clear))
+  private val scrollTimeout = Some(1000.asInstanceOf[Long])
+  private val scrollId = "DXF1ZXJ5QW5kRmV0Y2gBAAAAAAAAAAcWVDBqc3Vkb3lUeDZOYXk4bWczTHowUQ=="
   private val getHistoryRequest =
     KvHistoryGetRequest(
-      storage.uUID,
-      someKeys,
-      someOperations,
-      someStart,
-      someEnd,
-      someSort,
-      someSize,
-      somePage,
-      someScroll)
-  private val body = ScrollSearchResult(3, 3, someScrollId, historyList)
-  private val error = "ElasticsearchError"
+      "id",
+      immutable.Set.empty[String],
+      immutable.Set.empty[Operation],
+      Some(System.currentTimeMillis()),
+      Some(System.currentTimeMillis()),
+      immutable.Set.empty[SortField],
+      Some(50),
+      Some(1),
+      scrollTimeout)
+  private val historyList = List(History("key", "value", System.currentTimeMillis(), Set))
+  private val scrollResult = ScrollSearchResult(3, 3, scrollId, historyList)
+  private val error = InternalError("ElasticsearchError")
 
-  describe("a PagedHistoryRequestActor") {
+  describe("a DefaultHistoryRequestActor") {
+
     implicit val testModule: Injector = new Module {
       bind[HistoryProcessor] to historyProcessor
-      bind[AppConfig] toNonLazy appConf
       bind[StorageCache] to storageCache
     }
+    val defaultHistoryRequestActor = system.actorOf(Props(new DefaultHistoryRequestActor()))
 
-    describe("GetHistoryRequest") {
-      val pagedHistoryRequestActor = system.actorOf(Props(new DefaultHistoryRequestActor()))
+    describe("(KvHistoryGetRequest)") {
 
       def test(isHistoryEnabled: Option[Boolean], expect: Either[StorageError, SearchResult[History]]) = {
-        (storageCache.isHistoryEnabled _).expects(storage.uUID).returning(Future(isHistoryEnabled))
-        if (expect.isRight)
-          expectGetHistories()
-        pagedHistoryRequestActor ! getHistoryRequest
+        (storageCache.isHistoryEnabled _).expects(getHistoryRequest.storageUuid).returning(Future(isHistoryEnabled))
+        if (isHistoryEnabled.getOrElse(false))
+          (historyProcessor.get _).expects(
+            getHistoryRequest.storageUuid,
+            getHistoryRequest.keys,
+            getHistoryRequest.operations,
+            getHistoryRequest.start,
+            getHistoryRequest.end,
+            getHistoryRequest.sort,
+            getHistoryRequest.page,
+            getHistoryRequest.size,
+            getHistoryRequest.scroll).returning(Future(expect))
+        defaultHistoryRequestActor ! getHistoryRequest
         expectMsg(expect)
       }
 
-      it("should transfer response body from processor if storage exists and support history") {
-        test(Some(true), Right(body))
+      it("should process a request if the storage exists and supports history") {
+        test(Some(true), Right(scrollResult))
       }
 
-      it("should return BadRequestError if storage does not support history") {
+      it("should return BadRequestError if the storage does not support history") {
         test(Some(false), Left(BadRequestError()))
       }
 
-      it("should return NotFoundError if storage does not exist") {
+      it("should return NotFoundError if the storage does not exist") {
         test(None, Left(NotFoundError()))
+      }
+
+      it("should return InternalError if the processor returns InternalError") {
+        test(Some(true), Left(error))
       }
     }
 
-    describe("ScrollHistoryRequest") {
-      val pagedHistoryRequestActor = system.actorOf(Props(new DefaultHistoryRequestActor))
+    describe("(KvHistoryScrollRequest)") {
 
       def test(scrollResult: Either[StorageError, ScrollSearchResult[History]]) = {
-        expectScrollHistories().returning(Future(scrollResult))
-        pagedHistoryRequestActor ! KvHistoryScrollRequest(someScrollId, someScroll.get)
+        (historyProcessor.scroll _).expects(scrollId, scrollTimeout.get).returning(Future(scrollResult))
+        defaultHistoryRequestActor ! KvHistoryScrollRequest(scrollId, scrollTimeout.get)
         expectMsg(scrollResult)
       }
 
-      it("should be able to transfer next scroll from processor") {
-        test(Right(body))
+      it("should process a request") {
+        test(Right(scrollResult))
       }
 
-      it("should be able to transfer BadRequestError from processor") {
+      it("should return BadRequestError if the processor returns BadRequestError") {
         test(Left(BadRequestError()))
       }
 
-      it("should be able to transfer InternalError from processor") {
-        test(Left(InternalError(error)))
+      it("should return InternalError if the processor returns InternalError") {
+        test(Left(error))
       }
     }
   }
-
-  private def expectScrollHistories() =
-    (historyProcessor.scroll _).expects(someScrollId, someScroll.get)
-
-  private def expectGetHistories() =
-    (historyProcessor.get _)
-      .expects(storage.uUID, someKeys, someOperations, someStart, someEnd, someSort, someSize, somePage, someScroll)
-      .returning(Future(Right(body)))
 }
