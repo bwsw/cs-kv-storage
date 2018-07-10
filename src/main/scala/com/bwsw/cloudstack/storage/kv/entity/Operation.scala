@@ -17,7 +17,7 @@
 
 package com.bwsw.cloudstack.storage.kv.entity
 
-/** Operation that where used to change data existing in some storage **/
+/** Operation used to change data in a storage **/
 sealed trait Operation
 
 object Operation {
