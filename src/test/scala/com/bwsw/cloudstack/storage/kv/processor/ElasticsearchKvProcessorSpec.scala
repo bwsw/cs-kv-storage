@@ -245,19 +245,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
       def testSuccess(keyValues: Map[String, String], maxKeyLength: Int, maxValueLength: Int) = {
         val bulkResponse = BulkResponse(1, errors = false,
           keyValues.toList.map(kv => BulkResponseItems(
-            Some(BulkResponseItem(
-              0,
-              kv._1,
-              index,
-              DocumentType,
-              1,
-              forcedRefresh = false,
-              found = false,
-              created = false,
-              "created",
-              200,
-              None,
-              None)),
+            Some(BulkResponseItem(0, kv._1, index, DocumentType, 1, forcedRefresh = false, found = false, created = false, "created", 200, None, None)),
             None,
             None,
             None)))
@@ -297,19 +285,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
       it("should not set too long values by keys") {
         val bulkResponse = BulkResponse(1, errors = false,
           keyValues.toList.map(kv => BulkResponseItems(
-            Some(BulkResponseItem(
-              0,
-              kv._1,
-              index,
-              DocumentType,
-              1,
-              forcedRefresh = false,
-              found = false,
-              created = false,
-              "created",
-              200,
-              None,
-              None)),
+            Some(BulkResponseItem(0, kv._1, index, DocumentType, 1, forcedRefresh = false, found = false, created = false, "created", 200, None, None)),
             None,
             None,
             None)))
@@ -395,19 +371,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
         val bulkResponse = BulkResponse(1, errors = false,
           keyValues.toList.map(kv => BulkResponseItems(
             None,
-            Some(BulkResponseItem(
-              1,
-              kv._1,
-              index,
-              DocumentType,
-              1,
-              forcedRefresh = false,
-              found = false,
-              created = false,
-              "deleted",
-              200,
-              None,
-              None)),
+            Some(BulkResponseItem(1, kv._1, index, DocumentType, 1, forcedRefresh = false, found = false, created = false, "deleted", 200, None, None)),
             None,
             None)))
         expectsBulkDeleteRequest(fakeClient).returning(getRequestSuccessFuture(bulkResponse))
