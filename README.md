@@ -274,32 +274,35 @@ POST /clear/<storage UUID>
 ```
 GET /history/<storage UUID>
 ```
+
 ##### Parameters
 
-All parameters are optional. If both page and scroll parameters specified, scroll has higher priority
+All parameters are optional. If both page and scroll parameters specified scroll is used.
 
 | Parameter  | Description |
 | ----- | ----------- |
-| keys  | Comma separated list of keys. |
-| operations | Comma separated list of operations.(set, delete or clear) |
+| keys  | Comma separated list of keys |
+| operations | Comma separated list of operations. Possible values are set, delete or clear. |
 | start | The start date/time as Unix timestamp |
-| end | The end  date/time as Unix timestamp |
-| sort | Comma separated list of fields, optionally prefixed with - (minus) for descending order |
-| page | A page number of results(1 by default) |
-| size | A number of results returned in the page(default value set in configuration file) |
-| scroll | A timeout for Scroll API in ms |
+| end | The end date/time as Unix timestamp |
+| sort | Comma separated list of response fields optionally prefixed with - (minus) for descending order. |
+| page | A page number of results (1 by default) |
+| size | A number of results returned in the page/batch (default value is specified in the configuration file) |
+| scroll | A timeout in ms for subsequent [list requests](#list-history-records) |
 
 #### Response
 
 | HTTP Status code | Description |
 | ---------------- | ----------- |
-| 200 | The storage exists and supports history. Results in the format specified below. The content type is application/json.|
-| 400 | The storage does not support history, or request contains bad parameters. |
+| 200 | The request is processed successfully. Results are in the body in the format specified below. The content type is application/json.|
+| 400 | The storage does not support history or the request is invalid. |
 | 404 | The storage does not exist. |
 | 500 | The request can not be processed because of an internal error. |
 
 ##### Response body examples
-For requests with page parameter specified
+
+For requests with page parameter
+
 ```json
 {
    "total":1000,
@@ -316,12 +319,13 @@ For requests with page parameter specified
 }
 ```
 
-For requests with scroll parameter specified
+For requests with scroll parameter
+
 ```json
 {
    "total":1000,
    "size":10,
-   "scroll":"scroll id",
+   "scrollId":"scroll id",
    "items":[
       {
          "key":"key",
@@ -332,6 +336,7 @@ For requests with scroll parameter specified
    ]
 }
 ```
+
 ### List history records
 
 #### Request
@@ -345,31 +350,14 @@ Content-Type: application/json
    "timeout": 60000
 }
 ```
+
 #### Response
 
 | HTTP Status code | Body |
 | ---------------- | ---- |
-| 200 | Scroll request is successful. Result has format specified above for requests with scroll. The content type is application/json. |
-| 400 | Invalid/expired scroll id |
+| 200 | The request is processed successfully. Results are in the body in the format for [search requests with scroll](#search-and-list-history-records). The content type is application/json. |
+| 400 | The scroll id is invalid/expired. |
 | 500 | The request can not be processed because of an internal error. |
-
-##### Response body example
-
-```json
-{
-   "total":1000,
-   "size":10,
-   "scroll":"scroll id",
-   "items":[
-      {
-         "key":"key",
-         "value":"value",
-         "operation":"set/delete/clear",
-         "timestamp":1528442057000
-      }
-   ]
-}
-```
 
 ## Storage management
 
@@ -475,7 +463,7 @@ The example of the configuration file can be found [here](/src/test/resources/ap
 | app.history.flush-size | Size of batch requests to save a history of the storage operations. |
 | app.history.flush-timeout | Timeout between batch/retry requests to save a history of the storage operations. |
 | app.history.retry-limit | Amount of attempts to try to log the storage operation. |
-| app.history.default-page-size | Default value for 'size' parameter of GET /history/<storage_uuid> request |
+| app.history.default-page-size | A default number of results returned in the page for search requests. |
 | app.request-timeout | Maximum time to process the request. |
 
 
