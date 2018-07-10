@@ -25,5 +25,5 @@ object Sorting {
 
   case object Asc extends Sorting
 
-  def descPrefix = "-"
+  val DescPrefix = "-"
 }

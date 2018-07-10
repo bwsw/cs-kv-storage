@@ -98,8 +98,8 @@ class KvHistoryServlet(
       val start = params.getAs[Long]("start")
       val end = params.getAs[Long]("end")
       val sort = params.getOrElse("sort", "").split(",").filter(_.nonEmpty).map { s =>
-        if (s.startsWith(Sorting.descPrefix))
-          SortField(s.substring(Sorting.descPrefix.length), Sorting.Desc)
+        if (s.startsWith(Sorting.DescPrefix))
+          SortField(s.substring(Sorting.DescPrefix.length), Sorting.Desc)
         else SortField(s, Sorting.Asc)
       }.toSet
       val page = params.getAs[Int]("page")
