@@ -31,6 +31,7 @@ import scala.concurrent.Future
   * @param client the client to send requests to Elasticsearch
   */
 class ElasticsearchHistoryProcessor(client: HttpClient) extends HistoryProcessor {
+
   import ElasticsearchHistoryProcessor._
 
   private val logger = LoggerFactory.getLogger(getClass)
