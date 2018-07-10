@@ -34,13 +34,13 @@ class ElasticsearchStorageLoaderSpec extends AsyncFunSpec with AsyncMockFactory 
   private val storage = Storage(storageUuid, "ACC", keepHistory = true)
   private val source = Map(
     "type" -> storage.storageType,
-    "is_history_enabled" -> storage.keepHistory,
+    "history_enabled" -> storage.keepHistory,
     "deleted" -> false
   ).asInstanceOf[Map[String, AnyRef]]
 
   private val deletedNotSetSource = Map(
     "type" -> storage.storageType,
-    "is_history_enabled" -> storage.keepHistory
+    "history_enabled" -> storage.keepHistory
   ).asInstanceOf[Map[String, AnyRef]]
 
   private val deletedSource = Map(

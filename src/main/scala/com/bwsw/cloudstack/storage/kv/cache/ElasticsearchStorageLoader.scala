@@ -35,7 +35,7 @@ class ElasticsearchStorageLoader(client: HttpClient) extends StorageLoader {
         case Right(success) =>
           if (success.result.found && isExistent(success.result.source)) {
             Some(Storage(success.result.id, getValue(success.result.source, "type").toString,
-              getValue(success.result.source, "is_history_enabled").asInstanceOf[Boolean]))
+              getValue(success.result.source, "history_enabled").asInstanceOf[Boolean]))
           }
           else None
       }
