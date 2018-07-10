@@ -73,8 +73,8 @@ class ElasticsearchTemplateCheckActorSpec
       wireMockServer.stubFor(
         head(urlPathEqualTo(templatePath))
           .willReturn(aResponse()
-            .withHeader("Content-Type", "application/json; charset=UTF-8")
-            .withStatus(status)))
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withStatus(status)))
       elasticsearchCheckActor ! TemplateCheckRequest(name, checkName)
       expectMsg(timeout, msg)
     }

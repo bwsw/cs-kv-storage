@@ -199,7 +199,6 @@ class ElasticsearchKvProcessor(client: HttpClient, conf: ElasticsearchConfig) ex
 
 /** ElasticsearchKvProcessor companion object. **/
 object ElasticsearchKvProcessor {
-  private val ValueField = "value"
   private val logger = LoggerFactory.getLogger(getClass)
 
   private def getValue(fields: Map[String, Any]): Either[StorageError, String] = {
@@ -220,7 +219,7 @@ object ElasticsearchKvProcessor {
           val result = getValue(r.source)
           result match {
             case Left(error) =>
-              logger.error(s"""Field $ValueField is not specified in response: $r""")
+              logger.error(s"""Field $StorageValueField is not specified in response: $r""")
               Left(error)
             case Right(value) => getValues(tail, results + (r.id -> Some(value)))
           }
