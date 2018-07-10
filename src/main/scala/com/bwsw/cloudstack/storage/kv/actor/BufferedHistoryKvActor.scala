@@ -44,8 +44,8 @@ class BufferedHistoryKvActor(implicit inj: Injector)
 
   override def receive: Receive = {
     case HistoryTimeout =>
-      self ! flush(buffer)
-      self ! flush(retryBuffer)
+      flush(buffer)
+      flush(retryBuffer)
     case KvHistoryFlush(histories) => histories match {
       case List() => //do nothing
       case list =>
@@ -60,20 +60,17 @@ class BufferedHistoryKvActor(implicit inj: Injector)
     case history: KvHistory =>
       buffer += history
       if (buffer.length >= configuration.getFlushHistorySize) {
-        self ! flush(buffer)
+        flush(buffer)
       }
     case bulk: KvHistoryBulk =>
       buffer.appendAll(bulk.values)
       if (buffer.length >= configuration.getFlushHistorySize) {
-        self ! flush(buffer)
+        flush(buffer)
       }
   }
 
   private def retry(histories: Iterable[KvHistory]): Unit = {
     retryBuffer.appendAll(histories.filter(filterWithErrorLogging).map(history => history.makeAttempt))
-    if (retryBuffer.length >= configuration.getFlushHistorySize) {
-      self ! flush(retryBuffer)
-    }
   }
 
   private def filterWithErrorLogging = {
@@ -87,10 +84,10 @@ class BufferedHistoryKvActor(implicit inj: Injector)
       }
   }
 
-  private def flush(aBuffer: ListBuffer[KvHistory]): KvHistoryFlush = {
-    val values = aBuffer.toList
-    aBuffer.clear()
-    KvHistoryFlush(values)
+  private def flush(flushBuffer: ListBuffer[KvHistory]) = {
+    val flushSize = configuration.getFlushHistorySize
+    flushBuffer.grouped(flushSize).foreach(batch => self ! KvHistoryFlush(batch.result()))
+    flushBuffer.clear()
   }
 }
 

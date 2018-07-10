@@ -37,7 +37,7 @@ class ElasticsearchStorageLoader(client: HttpClient) extends StorageLoader {
             Some(Storage(
               success.result.id,
               getValue(success.result.source, "type"),
-              getValue(success.result.source, "is_history_enabled")))
+              getValue(success.result.source, "history_enabled")))
           }
           else None
       }
