@@ -210,11 +210,14 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
   }
 
   private def expectUpdateRequest(client: HttpClient) = {
-    (client.execute[UpdateDefinition, UpdateResponse](_: UpdateDefinition)(_: HttpExecutable[UpdateDefinition, UpdateResponse], _: ExecutionContext))
-      .expects(update(storage) in RegistryIndex / DocumentType
-        script
-        s"""if (ctx._source.type == "$TemporaryStorageType")""" +
-          s"""{ ctx._source.expiration_timestamp = ctx._source.expiration_timestamp - ctx._source.ttl + $ttl; ctx._source.ttl = $ttl } else { ctx.op="noop"}""",
+    (client.execute[UpdateDefinition, UpdateResponse](_: UpdateDefinition)(
+      _: HttpExecutable[UpdateDefinition, UpdateResponse],
+      _: ExecutionContext))
+      .expects(
+        update(storage) in RegistryIndex / DocumentType script
+          s"if (ctx._source.type == '$TemporaryStorageType')" +
+            s"{ ctx._source.expiration_timestamp = ctx._source.expiration_timestamp - ctx._source.ttl + " +
+            s"$ttl; ctx._source.ttl = $ttl } else { ctx.op='noop'}",
         UpdateHttpExecutable,
         *)
   }
