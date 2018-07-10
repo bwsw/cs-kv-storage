@@ -36,9 +36,10 @@ class ElasticsearchKvStorageManager(client: HttpClient, cache: StorageCache) ext
   import scala.concurrent.ExecutionContext.Implicits.global
 
   def updateTempStorageTtl(storage: String, ttl: Long): Future[Either[StorageError, Unit]] = {
-    client.execute(update(storage) in RegistryIndex / DocumentType
-      script
-      s"""if (ctx._source.type == "$TemporaryStorageType"){ ctx._source.ttl = $ttl } else { ctx.op="noop"}""")
+    client.execute(update(storage) in RegistryIndex / DocumentType script
+                     s"if (ctx._source.type == '$TemporaryStorageType')" +
+                       s"{ ctx._source.expiration_timestamp = ctx._source.expiration_timestamp - ctx._source.ttl + " +
+                       s"$ttl; ctx._source.ttl = $ttl } else { ctx.op='noop'}")
       .map {
         case Left(failure) => failure.status match {
           case 404 => Left(NotFoundError())
@@ -54,7 +55,7 @@ class ElasticsearchKvStorageManager(client: HttpClient, cache: StorageCache) ext
   def deleteTempStorage(storage: String): Future[Either[StorageError, Unit]] = {
     client.execute(update(storage) in RegistryIndex / DocumentType
       script
-      s"""if (ctx._source.type == "$TemporaryStorageType"){ ctx._source.deleted = true } else { ctx.op="noop"}""")
+      s"""if (ctx._source.type == '$TemporaryStorageType'){ ctx._source.deleted = true } else { ctx.op='noop'}""")
       .map {
         case Left(failure) => failure.status match {
           case 404 => Left(NotFoundError())
