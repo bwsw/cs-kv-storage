@@ -65,7 +65,7 @@ curl -X POST "$1/storage-data-cleanable/_doc/_bulk" -H 'Content-Type: applicatio
 curl -X PUT "$1/storage-data-temp"
 
 curl -X PUT "$1/storage-registry/_doc/temp" -H 'Content-Type: application/json' --data-raw \
-  '{"type": "TEMP", "history_enabled": false, "ttl": 10000, "expiration_timestamp": 1530602449565}'
+  '{"type": "TEMP", "history_enabled": false, "ttl": 10000, "expiration_timestamp": 1010000}'
 
 curl -X PUT "$1/storage-data-account"
 

@@ -1659,7 +1659,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "3eb6b707-ddf9-46f9-aabf-9a9440cc5e13",
+										"id": "29760974-f725-40bb-b399-367d69190275",
 										"type": "text/javascript",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
@@ -1674,8 +1674,9 @@
 											"        url: pm.variables.get(\"es_url\") + \"/storage-registry/_doc/\" + pm.variables.get(\"temp_storage\"),",
 											"        method: 'GET'},",
 											"    function (err, res) {",
-											"        pm.test(\"TTL actually changed\", function () {",
+											"        pm.test(\"TTL and expiration timestamp actually changed\", function () {",
 											"            pm.expect(res.json()._source.ttl).to.eql(565656);",
+											"            pm.expect(res.json()._source.expiration_timestamp).to.eql(1565656);",
 											"    });",
 											"});"
 										]
@@ -2373,139 +2374,139 @@
 	],
 	"variable": [
 		{
-			"id": "23b1d4e3-ffe1-401b-ad8e-aa76782e52d5",
+			"id": "3bea8ae0-17f5-4a4d-a39f-bbdab8060915",
 			"key": "url",
 			"value": "http://app:8080",
 			"type": "string"
 		},
 		{
-			"id": "66e70ebb-84cd-4ffe-b9b8-85de74492abe",
+			"id": "ac0332e7-5477-4f0a-896f-9ed761656ddd",
 			"key": "storage_uuid",
 			"value": "b3d1b2a6-bd5b-49d5-bd9e-86538fdc180d",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "24c159a7-9e44-452d-8e7c-935c70a436bb",
+			"id": "643f2a49-0e08-478b-a863-bb3824c69baa",
 			"key": "es_url",
 			"value": "http://elasticsearch:9200",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "ce79983b-a9df-43a8-bea2-d317324d7911",
+			"id": "a4cd8315-400d-40ca-8b57-09201da6c7b3",
 			"key": "some_key",
 			"value": "key1",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "92ec114b-642d-4828-a1ea-bbf8bb96f6f2",
+			"id": "13d3fcb7-c0a7-414d-b84d-b5a93ae00d42",
 			"key": "some_value",
 			"value": "value1",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "3fded08b-439f-4e3e-85ef-6537e9a0dce1",
+			"id": "f95eeba2-9ed6-4eea-a0da-72d10868ebc1",
 			"key": "empty_key",
 			"value": "empty_key",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "9ef4d0d5-8c16-440a-9d79-4d15cf8d0c8d",
+			"id": "3a83361d-9d25-4118-997c-7c368f1041e2",
 			"key": "non_existent_storage",
 			"value": "nonexistent",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "97e78289-8628-40d1-b145-327a3ef8a313",
+			"id": "33e43e68-701e-4fd1-b436-a0b25174b5dd",
 			"key": "read_only_storage",
 			"value": "read-only",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "84e8c80b-2f1f-40bd-9439-6499279f253d",
+			"id": "4b3248bc-f156-4f8a-b3c8-d4871edbf968",
 			"key": "editable_storage",
 			"value": "editable-single",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "c27fcd4b-27e7-4149-b024-ef876ee4569e",
+			"id": "8063f8f8-2706-466e-8e7e-f109743a6c7c",
 			"key": "multieditable_storage",
 			"value": "editable-multiple",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "d3145a90-fe58-4237-ac36-56a1fbb59199",
+			"id": "9e36fdcb-1adc-47b8-a0b9-1563fe361129",
 			"key": "deletable_storage",
 			"value": "deletable-single",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "275345f6-d243-4240-824b-9f3e8aa0f6f7",
+			"id": "f570cfd6-fa11-4275-8319-1e612577237e",
 			"key": "multideletable_storage",
 			"value": "deletable-multiple",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "5afb4e3f-9400-402c-aabb-e55fa8a0c7b4",
+			"id": "83b268cd-3fd6-4934-a2de-353bd0d0121b",
 			"key": "cleanable_storage",
 			"value": "cleanable",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "11491f7e-37c2-4be0-965e-d9904f813840",
+			"id": "e4ef1934-164b-4cbc-aab3-672a67b8e0c5",
 			"key": "temp_storage",
 			"value": "temp",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "989be250-fd57-4ada-a47c-6b2c2de060be",
+			"id": "f98dc712-da71-492a-b198-56d360d8ded4",
 			"key": "acc_storage",
 			"value": "account",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "9509b8fa-cacc-4890-931e-c736602a1a65",
+			"id": "5f35e7c2-47d6-40e0-adc5-b96e2f091eed",
 			"key": "no_index_storage",
 			"value": "no-index",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "95ccdc16-9ae8-4d5e-8f58-612c57894004",
+			"id": "ad8f47f3-399d-4303-b529-cf54d22fb362",
 			"key": "not_registered_storage",
 			"value": "not-registered",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "60557a33-78c7-40e8-aa19-6590d455461c",
+			"id": "1adc3636-5edf-4509-9153-dd8ef3ab5f99",
 			"key": "storage_registry",
 			"value": "storage-registry",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "e855790d-a712-4cff-b087-41a804347d3a",
+			"id": "5e816b49-5f39-4460-a02c-14d36dbf2ecb",
 			"key": "storage_data_template",
 			"value": "storage-data",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "e73f37c5-4a27-4c0b-853d-fcf1ed451d35",
+			"id": "8aaa7282-e276-4a56-8cd4-3c13e7015f58",
 			"key": "storage_history_template",
 			"value": "storage-history",
 			"type": "string",
