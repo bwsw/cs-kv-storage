@@ -22,8 +22,8 @@ sealed trait CheckName
 object CheckName {
 
   private val StorageRegistryValue = "STORAGE_REGISTRY"
-  private val StorageTemplateValue = "STORAGE_TEMPLATE"
-  private val HistoryStorageTemplateValue = "HISTORY_STORAGE_TEMPLATE"
+  private val StorageTemplateValue = "STORAGE_DATA_TEMPLATE"
+  private val HistoryStorageTemplateValue = "STORAGE_HISTORY_TEMPLATE"
 
   object StorageRegistry extends CheckName {
     override def toString: String = StorageRegistryValue

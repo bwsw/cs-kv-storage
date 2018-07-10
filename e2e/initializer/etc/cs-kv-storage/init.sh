@@ -4,7 +4,7 @@ curl -X PUT "$1/storage-registry" -H 'Content-Type: application/json' --data-bin
   "@/etc/cs-kv-storage/storage-registry.json"
 
 curl -X PUT "$1/_template/storage" -H 'Content-Type: application/json' --data-binary \
-  "@/etc/cs-kv-storage/storage-template.json"
+  "@/etc/cs-kv-storage/storage-data-template.json"
 
 curl -X PUT "$1/_template/history-storage" -H 'Content-Type: application/json' --data-binary \
   "@/etc/cs-kv-storage/storage-history-template.json"
