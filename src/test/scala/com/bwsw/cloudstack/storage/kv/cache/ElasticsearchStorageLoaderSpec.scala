@@ -34,7 +34,7 @@ class ElasticsearchStorageLoaderSpec extends AsyncFunSpec with AsyncMockFactory 
   private val storage = Storage(storageUuid, "ACC", keepHistory = true)
   private val source = Map(
     "type" -> storage.storageType,
-    "is_history_enabled" -> storage.keepHistory
+    "history_enabled" -> storage.keepHistory
   ).asInstanceOf[Map[String, AnyRef]]
 
   describe("An ElasticsearchStorageLoader") {

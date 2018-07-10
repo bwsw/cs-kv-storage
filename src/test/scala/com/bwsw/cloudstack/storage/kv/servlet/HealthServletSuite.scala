@@ -39,15 +39,15 @@ class HealthServletSuite
 
   private implicit val system: ActorSystem = ActorSystem()
   private val healthActor = TestActorRef(new MockActor())
-  private val jsonError = "{\"status\":\"UNHEALTHY\",\"checks\":[" +
-    s"""{\"name\":\"STORAGE_REGISTRY\",\"status\":\"UNHEALTHY\",\"message\":\"$NotFound\"},""" +
-    s"""{\"name\":\"STORAGE_TEMPLATE\",\"status\":\"HEALTHY\",\"message\":\"$Ok\"},""" +
-    s"""{\"name\":\"HISTORY_STORAGE_TEMPLATE\",\"status\":\"UNHEALTHY\",\"message\":\"${ElasticsearchError()}\"}""" +
+  private val jsonError = s"""{\"status\":\"$Unhealthy\",\"checks\":[""" +
+    s"""{\"name\":\"$StorageRegistry\",\"status\":\"$Unhealthy\",\"message\":\"$NotFound\"},""" +
+    s"""{\"name\":\"$StorageTemplate\",\"status\":\"$Healthy\",\"message\":\"$Ok\"},""" +
+    s"""{\"name\":\"$HistoryStorageTemplate\",\"status\":\"$Unhealthy\",\"message\":\"${ElasticsearchError()}\"}""" +
     "]}"
-  private val jsonOk = "{\"status\":\"HEALTHY\",\"checks\":[" +
-    s"""{\"name\":\"STORAGE_REGISTRY\",\"status\":\"HEALTHY\",\"message\":\"$Ok\"},""" +
-    s"""{\"name\":\"STORAGE_TEMPLATE\",\"status\":\"HEALTHY\",\"message\":\"$Ok\"},""" +
-    s"""{\"name\":\"HISTORY_STORAGE_TEMPLATE\",\"status\":\"HEALTHY\",\"message\":\"$Ok\"}""" +
+  private val jsonOk = s"""{\"status\":\"$Healthy\",\"checks\":[""" +
+    s"""{\"name\":\"$StorageRegistry\",\"status\":\"$Healthy\",\"message\":\"$Ok\"},""" +
+    s"""{\"name\":\"$StorageTemplate\",\"status\":\"$Healthy\",\"message\":\"$Ok\"},""" +
+    s"""{\"name\":\"$HistoryStorageTemplate\",\"status\":\"$Healthy\",\"message\":\"$Ok\"}""" +
     "]}"
 
   describe("a HealthServlet") {
