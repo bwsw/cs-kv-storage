@@ -15,6 +15,10 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package com.bwsw.cloudstack.storage.kv.message.request
+package com.bwsw.cloudstack.storage.kv.entity
 
-case class KvMultiDeleteRequest(storage: String, keys: Iterable[String]) extends KvRequest
+sealed trait SearchResult[T]
+
+case class ScrollSearchResult[T](total: Long, size: Long, scrollId: String, items: List[T]) extends SearchResult[T]
+
+case class PageSearchResult[T](total: Long, size: Long, page: Int, items: List[T]) extends SearchResult[T]

@@ -33,4 +33,8 @@ class AppConfig {
   def getRequestTimeout: FiniteDuration = {
     FiniteDuration(conf.getDuration("request-timeout").toMillis, TimeUnit.MILLISECONDS)
   }
+
+  def getDefaultPageSize: Int = {
+    conf.getInt("default-page-size")
+  }
 }

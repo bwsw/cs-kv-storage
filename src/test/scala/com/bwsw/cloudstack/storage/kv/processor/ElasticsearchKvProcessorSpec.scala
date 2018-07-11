@@ -243,10 +243,23 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
 
     describe("(set key/value pairs)") {
       def testSuccess(keyValues: Map[String, String], maxKeyLength: Int, maxValueLength: Int) = {
-        val bulkResponse = BulkResponse(1, errors = false,
+        val bulkResponse = BulkResponse(
+          1,
+          errors = false,
           keyValues.toList.map(kv => BulkResponseItems(
-            Some(BulkResponseItem(0, kv._1, index, DocumentType, 1, forcedRefresh = false, found = false, created =
-              false, "created", 200, None, None)),
+            Some(BulkResponseItem(
+              0,
+              kv._1,
+              index,
+              DocumentType,
+              1,
+              forcedRefresh = false,
+              found = false,
+              created = false,
+              "created",
+              200,
+              None,
+              None)),
             None,
             None,
             None)))
@@ -284,10 +297,23 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
       }
 
       it("should not set too long values by keys") {
-        val bulkResponse = BulkResponse(1, errors = false,
+        val bulkResponse = BulkResponse(
+          1,
+          errors = false,
           keyValues.toList.map(kv => BulkResponseItems(
-            Some(BulkResponseItem(0, kv._1, index, DocumentType, 1, forcedRefresh = false, found = false, created =
-              false, "created", 200, None, None)),
+            Some(BulkResponseItem(
+              0,
+              kv._1,
+              index,
+              DocumentType,
+              1,
+              forcedRefresh = false,
+              found = false,
+              created = false,
+              "created",
+              200,
+              None,
+              None)),
             None,
             None,
             None)))
@@ -370,11 +396,24 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
 
     describe("(delete by keys)") {
       it("should delete values by keys") {
-        val bulkResponse = BulkResponse(1, errors = false,
+        val bulkResponse = BulkResponse(
+          1,
+          errors = false,
           keyValues.toList.map(kv => BulkResponseItems(
             None,
-            Some(BulkResponseItem(1, kv._1, index, DocumentType, 1, forcedRefresh = false, found = false, created =
-              false, "deleted", 200, None, None)),
+            Some(BulkResponseItem(
+              1,
+              kv._1,
+              index,
+              DocumentType,
+              1,
+              forcedRefresh = false,
+              found = false,
+              created = false,
+              "deleted",
+              200,
+              None,
+              None)),
             None,
             None)))
         expectsBulkDeleteRequest(fakeClient).returning(getRequestSuccessFuture(bulkResponse))
@@ -424,11 +463,28 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
         null,
         null,
         null)).toArray
-      val searchResponse = SearchResponse(1, isTimedOut = false, isTerminatedEarly = false, Map.empty, Shards(1, 0, 1), Some(scrollId1), Map.empty, SearchHits(hits.length, 1,
-        hits.slice(0, hits.length - 1)))
+      val searchResponse = SearchResponse(
+        1,
+        isTimedOut = false,
+        isTerminatedEarly = false,
+        Map.empty,
+        Shards(1, 0, 1),
+        Some(scrollId1),
+        Map.empty,
+        SearchHits(
+          hits.length, 1,
+          hits.slice(0, hits.length - 1)))
 
       it("should return existing keys") {
-        val searchResponse = SearchResponse(1, isTimedOut = false, isTerminatedEarly = false, Map.empty, Shards(1, 0, 1), None, Map.empty, SearchHits(hits.length, 1, hits))
+        val searchResponse = SearchResponse(
+          1,
+          isTimedOut = false,
+          isTerminatedEarly = false,
+          Map.empty,
+          Shards(1, 0, 1),
+          None,
+          Map.empty,
+          SearchHits(hits.length, 1, hits))
         expectsSearchRequest(fakeClient, fakeEsConf, scrollSize).returning(getRequestSuccessFuture(searchResponse))
         elasticsearchKvProcessor.list(storage).map {
           case Right(values) => assert(keyValues.keys.toList == values)
@@ -437,16 +493,33 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
       }
 
       it("should return all existing keys if scrolling is required") {
-        val searchScrollResponse1 = SearchResponse(1, isTimedOut = false, isTerminatedEarly = false, Map.empty, Shards(1, 0, 1),
-          Some(scrollId2), Map.empty, SearchHits(hits.length, 1, hits.slice(hits.length - 1, hits.length)))
+        val searchScrollResponse1 = SearchResponse(
+          1,
+          isTimedOut = false,
+          isTerminatedEarly = false,
+          Map.empty,
+          Shards(1, 0, 1),
+          Some(scrollId2),
+          Map.empty,
+          SearchHits(hits.length, 1, hits.slice(hits.length - 1, hits.length)))
 
-        val searchScrollResponse2 = SearchResponse(1, isTimedOut = false, isTerminatedEarly = false, Map.empty, Shards(1, 0, 1),
-          Some(scrollId3), Map.empty, SearchHits(hits.length, 1, Array()))
+        val searchScrollResponse2 = SearchResponse(
+          1,
+          isTimedOut = false,
+          isTerminatedEarly = false,
+          Map.empty,
+          Shards(1, 0, 1),
+          Some(scrollId3),
+          Map.empty,
+          SearchHits(hits.length, 1, Array()))
 
         expectsSearchRequest(fakeClient, fakeEsConf, scrollSize).returning(getRequestSuccessFuture(searchResponse))
-        expectsSearchScrollRequest(fakeClient, fakeConf, scrollId1).returning(getRequestSuccessFuture(searchScrollResponse1))
-        expectsSearchScrollRequest(fakeClient, fakeConf, scrollId2).returning(getRequestSuccessFuture(searchScrollResponse2))
-        expectsClearScrollRequest(fakeClient, scrollId3).returning(getRequestSuccessFuture(ClearScrollResponse(succeeded = true, 1)))
+        expectsSearchScrollRequest(fakeClient, fakeConf, scrollId1)
+          .returning(getRequestSuccessFuture(searchScrollResponse1))
+        expectsSearchScrollRequest(fakeClient, fakeConf, scrollId2)
+          .returning(getRequestSuccessFuture(searchScrollResponse2))
+        expectsClearScrollRequest(fakeClient, scrollId3)
+          .returning(getRequestSuccessFuture(ClearScrollResponse(succeeded = true, 1)))
         elasticsearchKvProcessor.list(storage).map {
           case Right(values) => assert(keyValues.keys.toList == values)
           case _ => fail
@@ -528,62 +601,84 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
   }
 
   private def expectGetRequest(client: HttpClient) = {
-    (client.execute[GetDefinition, GetResponse](_: GetDefinition)(_: HttpExecutable[GetDefinition, GetResponse], _: ExecutionContext))
+    (client.execute[GetDefinition, GetResponse](_: GetDefinition)(
+      _: HttpExecutable[GetDefinition, GetResponse],
+      _: ExecutionContext))
       .expects(ElasticDsl.get(key).from(index / DocumentType), GetHttpExecutable, *)
   }
 
   private def expectsMultiGetRequest(client: HttpClient) = {
     val gets = keyValues.toList.map(kv => ElasticDsl.get(kv._1).from(index, DocumentType))
-    (client.execute[MultiGetDefinition, MultiGetResponse](_: MultiGetDefinition)(_: HttpExecutable[MultiGetDefinition, MultiGetResponse], _: ExecutionContext))
+    (client.execute[MultiGetDefinition, MultiGetResponse](_: MultiGetDefinition)(
+      _: HttpExecutable[MultiGetDefinition, MultiGetResponse],
+      _: ExecutionContext))
       .expects(multiget(gets), MultiGetHttpExecutable, *)
   }
 
   private def expectsIndexRequest(client: HttpClient) = {
-    (client.execute[IndexDefinition, IndexResponse](_: IndexDefinition)(_: HttpExecutable[IndexDefinition, IndexResponse], _: ExecutionContext))
+    (client.execute[IndexDefinition, IndexResponse](_: IndexDefinition)(
+      _: HttpExecutable[IndexDefinition, IndexResponse],
+      _: ExecutionContext))
       .expects(indexInto(index / DocumentType) id key fields (StorageValueField -> value), IndexHttpExecutable, *)
   }
 
   private def expectsIndexRequest(client: HttpClient, key: String, value: String) = {
-    (client.execute[IndexDefinition, IndexResponse](_: IndexDefinition)(_: HttpExecutable[IndexDefinition, IndexResponse], _: ExecutionContext))
+    (client.execute[IndexDefinition, IndexResponse](_: IndexDefinition)(
+      _: HttpExecutable[IndexDefinition, IndexResponse],
+      _: ExecutionContext))
       .expects(indexInto(index / DocumentType) id key fields (StorageValueField -> value), IndexHttpExecutable, *)
   }
 
   private def expectsBulkIndexRequest(client: HttpClient, kvs: Map[String, String]) = {
     val sets = kvs.toList.map(kv => indexInto(index / DocumentType) id kv._1 fields (StorageValueField -> kv._2))
-    (client.execute[BulkDefinition, BulkResponse](_: BulkDefinition)(_: HttpExecutable[BulkDefinition, BulkResponse], _: ExecutionContext))
+    (client.execute[BulkDefinition, BulkResponse](_: BulkDefinition)(
+      _: HttpExecutable[BulkDefinition, BulkResponse],
+      _: ExecutionContext))
       .expects(ElasticDsl.bulk(sets), BulkExecutable, *)
   }
 
   private def expectsDeleteRequest(client: HttpClient) = {
-    (client.execute[DeleteByIdDefinition, DeleteResponse](_: DeleteByIdDefinition)(_: HttpExecutable[DeleteByIdDefinition, DeleteResponse], _: ExecutionContext))
+    (client.execute[DeleteByIdDefinition, DeleteResponse](_: DeleteByIdDefinition)(
+      _: HttpExecutable[DeleteByIdDefinition, DeleteResponse],
+      _: ExecutionContext))
       .expects(deleteById(index, DocumentType, key), DeleteByIdExecutable, *)
   }
 
   private def expectsBulkDeleteRequest(client: HttpClient) = {
     val deletes = keyValues.keySet.map(k => deleteById(index, DocumentType, k))
-    (client.execute[BulkDefinition, BulkResponse](_: BulkDefinition)(_: HttpExecutable[BulkDefinition, BulkResponse], _: ExecutionContext))
+    (client.execute[BulkDefinition, BulkResponse](_: BulkDefinition)(
+      _: HttpExecutable[BulkDefinition, BulkResponse],
+      _: ExecutionContext))
       .expects(ElasticDsl.bulk(deletes), BulkExecutable, *)
   }
 
   private def expectsSearchRequest(client: HttpClient, conf: ElasticsearchConfig, size: Int) = {
     (conf.getScrollPageSize _).expects().returning(size)
     (conf.getScrollKeepAlive _).expects().returning(keepAlive)
-    (client.execute[SearchDefinition, SearchResponse](_: SearchDefinition)(_: HttpExecutable[SearchDefinition, SearchResponse], _: ExecutionContext))
+    (client.execute[SearchDefinition, SearchResponse](_: SearchDefinition)(
+      _: HttpExecutable[SearchDefinition, SearchResponse],
+      _: ExecutionContext))
       .expects(ElasticDsl.search(index).size(size).keepAlive(keepAlive), SearchHttpExecutable, *)
   }
 
   private def expectsSearchScrollRequest(client: HttpClient, conf: AppConfig, scrollId: String) = {
-    (client.execute[SearchScrollDefinition, SearchResponse](_: SearchScrollDefinition)(_: HttpExecutable[SearchScrollDefinition, SearchResponse], _: ExecutionContext))
+    (client.execute[SearchScrollDefinition, SearchResponse](_: SearchScrollDefinition)(
+      _: HttpExecutable[SearchScrollDefinition, SearchResponse],
+      _: ExecutionContext))
       .expects(searchScroll(scrollId).keepAlive(keepAlive), SearchScrollHttpExecutable, *)
   }
 
   private def expectsDeleteByQueryRequest(client: HttpClient) = {
-    (client.execute[DeleteByQueryDefinition, DeleteByQueryResponse](_: DeleteByQueryDefinition)(_: HttpExecutable[DeleteByQueryDefinition, DeleteByQueryResponse], _: ExecutionContext))
+    (client.execute[DeleteByQueryDefinition, DeleteByQueryResponse](_: DeleteByQueryDefinition)(
+      _: HttpExecutable[DeleteByQueryDefinition, DeleteByQueryResponse],
+      _: ExecutionContext))
       .expects(deleteByQuery(index, DocumentType, matchAllQuery).proceedOnConflicts(true), DeleteByQueryExecutable, *)
   }
 
   private def expectsClearScrollRequest(client: HttpClient, scrollId: String) = {
-    (client.execute[ClearScrollDefinition, ClearScrollResponse](_: ClearScrollDefinition)(_: HttpExecutable[ClearScrollDefinition, ClearScrollResponse], _: ExecutionContext))
+    (client.execute[ClearScrollDefinition, ClearScrollResponse](_: ClearScrollDefinition)(
+      _: HttpExecutable[ClearScrollDefinition, ClearScrollResponse],
+      _: ExecutionContext))
       .expects(clearScroll(scrollId), ClearScrollHttpExec, *)
   }
 
