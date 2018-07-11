@@ -19,13 +19,10 @@ package com.bwsw.cloudstack.storage.kv.manager
 
 import com.bwsw.cloudstack.storage.kv.cache.StorageCache
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, NotFoundError, StorageError}
-import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils.{
-  DocumentType, RegistryIndex, TemporaryStorageType,
-  getError
-}
+import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils.{DocumentType, RegistryIndex, TemporaryStorageType,
+  getError}
 import com.sksamuel.elastic4s.http.ElasticDsl._
-import com.sksamuel.elastic4s.http.update.UpdateResponse
-import com.sksamuel.elastic4s.http.{HttpClient, RequestFailure, RequestSuccess}
+import com.sksamuel.elastic4s.http.{HttpClient, RequestSuccess}
 
 import scala.concurrent.Future
 
@@ -38,32 +35,33 @@ class ElasticsearchKvStorageManager(client: HttpClient, cache: StorageCache) ext
   import scala.concurrent.ExecutionContext.Implicits.global
 
   def updateTempStorageTtl(storage: String, ttl: Long): Future[Either[StorageError, Unit]] = {
-    process(storage)(client.execute(update(storage) in RegistryIndex / DocumentType script
-                                      s"if (ctx._source.type == '$TemporaryStorageType')" +
-                                        s"{ ctx._source.expiration_timestamp = ctx._source.expiration_timestamp - ctx" +
-                                        s"._source.ttl + " +
-                                        s"$ttl; ctx._source.ttl = $ttl } else { ctx.op='noop'}"))
+    process(
+      storage,
+      s"if (ctx._source.type == '$TemporaryStorageType') { ctx._source.expiration_timestamp = ctx._source" +
+        s".expiration_timestamp - ctx._source.ttl + $ttl; ctx._source.ttl = $ttl } else { ctx.op='noop' }",
+      delete = false)
   }
 
   def deleteTempStorage(storage: String): Future[Either[StorageError, Unit]] = {
-    process(storage, delete = true)(client.execute(update(storage) in RegistryIndex / DocumentType script
-                                                     s"""if (ctx._source.type == '$TemporaryStorageType')""" +
-                                                       s"""{ ctx._source.deleted = true } else { ctx.op='noop'}"""))
+    process(
+      storage,
+      s"if (ctx._source.type == '$TemporaryStorageType') { ctx._source.deleted = true } else { ctx.op='noop' }",
+      delete = true)
   }
 
-  private def process(storage: String, delete: Boolean = false)
-                     (result: Future[Either[RequestFailure, RequestSuccess[UpdateResponse]]]) = result.map {
-
-    case Left(failure) => failure.status match {
-      case 404 => Left(NotFoundError())
-      case _ => Left(getError(failure))
-    }
-    case Right(RequestSuccess(_, _, _, updateRequest)) => updateRequest.result match {
-      case "updated" =>
-        if (delete)
-          cache.delete(storage)
-        Right(())
-      case "noop" => Left(BadRequestError())
+  private def process(storage: String, scriptCode: String, delete: Boolean) = {
+    client.execute(update(storage) in RegistryIndex / DocumentType script scriptCode).map {
+      case Left(failure) => failure.status match {
+        case 404 => Left(NotFoundError())
+        case _ => Left(getError(failure))
+      }
+      case Right(RequestSuccess(_, _, _, updateRequest)) => updateRequest.result match {
+        case "updated" =>
+          if (delete)
+            cache.delete(storage)
+          Right(())
+        case "noop" => Left(BadRequestError())
+      }
     }
   }
 }

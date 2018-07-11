@@ -33,7 +33,7 @@ class ElasticsearchStorageLoader(client: HttpClient) extends StorageLoader {
       client.execute(get(RegistryIndex, DocumentType, id)).map {
         case Left(_) => throw new RuntimeException("Storage info loading failed")
         case Right(success) =>
-          if (success.result.found && isExistent(success.result.source)) {
+          if (success.result.found && !getValue[Boolean](success.result.source, "deleted")) {
             Some(Storage(
               success.result.id,
               getValue(success.result.source, "type"),
@@ -46,11 +46,5 @@ class ElasticsearchStorageLoader(client: HttpClient) extends StorageLoader {
   private def getValue[T](source: Map[String, Any], key: String): T = source.get(key) match {
     case Some(s) => s.asInstanceOf[T]
     case None => throw new RuntimeException("Invalid result")
-  }
-
-  private def isExistent(source: Map[String, Any]) = source.get("deleted") match {
-    case Some(b: Boolean) => !b
-    case None => true
-    case _ => throw new RuntimeException("Invalid result")
   }
 }
