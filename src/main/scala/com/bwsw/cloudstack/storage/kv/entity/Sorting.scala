@@ -15,6 +15,15 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package com.bwsw.cloudstack.storage.kv.message.request
+package com.bwsw.cloudstack.storage.kv.entity
 
-case class KvMultiDeleteRequest(storage: String, keys: Iterable[String]) extends KvRequest
+sealed trait Sorting
+
+object Sorting {
+
+  case object Desc extends Sorting
+
+  case object Asc extends Sorting
+
+  val DescPrefix = "-"
+}

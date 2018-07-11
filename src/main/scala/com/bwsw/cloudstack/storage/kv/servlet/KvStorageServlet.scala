@@ -34,8 +34,8 @@ import com.bwsw.cloudstack.storage.kv.message.request._
 
 class KvStorageServlet(system: ActorSystem, requestTimeout: FiniteDuration, kvProcessor: KvProcessor, kvActor: ActorRef)
   extends ScalatraServlet
-    with FutureSupport
-    with JacksonJsonSupport {
+  with FutureSupport
+  with JacksonJsonSupport {
 
   protected implicit lazy val jsonFormats: Formats = DefaultFormats.preservingEmptyValues
   protected implicit val akkaTimeout: Timeout = requestTimeout
