@@ -15,6 +15,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package com.bwsw.cloudstack.storage.kv.message.request
+package com.bwsw.cloudstack.storage.kv.actor
 
-case class KvMultiDeleteRequest(storage: String, keys: Iterable[String]) extends KvRequest
+import akka.actor.Actor
+
+/** Actor responsible for history retrieval **/
+trait HistoryRequestActor extends Actor

@@ -24,7 +24,8 @@ import org.scalatra._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class KvStorageManagerServlet(system: ActorSystem, manager: KvStorageManager) extends ScalatraServlet
+class KvStorageManagerServlet(system: ActorSystem, manager: KvStorageManager)
+  extends ScalatraServlet
   with FutureSupport {
 
   protected implicit def executor: ExecutionContext = system.dispatcher

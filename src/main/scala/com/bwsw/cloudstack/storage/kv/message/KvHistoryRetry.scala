@@ -15,6 +15,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package com.bwsw.cloudstack.storage.kv.message.request
+package com.bwsw.cloudstack.storage.kv.message
 
-case class KvMultiDeleteRequest(storage: String, keys: Iterable[String]) extends KvRequest
+case class KvHistoryRetry(values: List[KvHistory])

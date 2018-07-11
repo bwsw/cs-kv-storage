@@ -20,12 +20,13 @@ package com.bwsw.cloudstack.storage.kv.actor
 import akka.actor.{ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit}
 import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
-import com.bwsw.cloudstack.storage.kv.entity.{Clear, Delete, Set, Storage}
+import com.bwsw.cloudstack.storage.kv.entity.Operation.{Clear, Delete, Set}
+import com.bwsw.cloudstack.storage.kv.entity.Storage
 import com.bwsw.cloudstack.storage.kv.message.{KvHistory, KvHistoryBulk}
 import com.bwsw.cloudstack.storage.kv.processor.HistoryProcessor
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.Eventually
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FunSpecLike, Matchers}
+import org.scalatest.{FunSpecLike, Matchers}
 import scaldi.{Injector, Module}
 
 import scala.concurrent.duration._
@@ -37,9 +38,7 @@ class BufferedHistoryKvActorSpec
   with Eventually
   with FunSpecLike
   with MockFactory
-  with ImplicitSender
-  with BeforeAndAfterAll
-  with BeforeAndAfterEach {
+  with ImplicitSender {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -117,7 +116,7 @@ class BufferedHistoryKvActorSpec
       }
     }
 
-    describe("KvHistoryBulk") {
+    describe("(KvHistoryBulk)") {
 
       def test(flushSizeFactor: Int, verifyTimeoutFactor: Double) = {
         (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout)
