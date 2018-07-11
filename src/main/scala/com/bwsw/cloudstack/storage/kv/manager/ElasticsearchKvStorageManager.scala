@@ -23,6 +23,7 @@ import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils.{DocumentType, Reg
   getError}
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.{HttpClient, RequestSuccess}
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
 
@@ -31,6 +32,8 @@ import scala.concurrent.Future
   * @param client the client to send requests to Elasticsearch
   */
 class ElasticsearchKvStorageManager(client: HttpClient, cache: StorageCache) extends KvStorageManager {
+
+  import ElasticsearchKvStorageManager._
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -53,7 +56,9 @@ class ElasticsearchKvStorageManager(client: HttpClient, cache: StorageCache) ext
     client.execute(update(storage) in RegistryIndex / DocumentType script scriptCode).map {
       case Left(failure) => failure.status match {
         case 404 => Left(NotFoundError())
-        case _ => Left(getError(failure))
+        case _ =>
+          logger.error("Elasticsearch update request failure: {}", failure.error)
+          Left(getError(failure))
       }
       case Right(RequestSuccess(_, _, _, updateRequest)) => updateRequest.result match {
         case "updated" =>
@@ -64,4 +69,9 @@ class ElasticsearchKvStorageManager(client: HttpClient, cache: StorageCache) ext
       }
     }
   }
+}
+
+/** ElasticsearchKvStorageManager companion object. **/
+object ElasticsearchKvStorageManager {
+  private val logger = LoggerFactory.getLogger(getClass)
 }
