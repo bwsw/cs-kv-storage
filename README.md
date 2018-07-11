@@ -277,7 +277,7 @@ GET /history/<storage UUID>
 
 ##### Parameters
 
-All parameters are optional. If both page and scroll parameters specified scroll is used.
+All parameters are optional. If both page and scroll parameters are specified scroll is used.
 
 | Parameter  | Description |
 | ----- | ----------- |
@@ -299,7 +299,7 @@ All parameters are optional. If both page and scroll parameters specified scroll
 | 404 | The storage does not exist. |
 | 500 | The request can not be processed because of an internal error. |
 
-##### Response body examples
+##### Body example
 
 For requests with page parameter
 
@@ -356,7 +356,7 @@ Content-Type: application/json
 | HTTP Status code | Body |
 | ---------------- | ---- |
 | 200 | The request is processed successfully. Results are in the body in the format for [search requests with scroll](#search-and-list-history-records). The content type is application/json. |
-| 400 | The scroll id is invalid/expired. |
+| 400 | The scroll id is invalid/expired or the request is invalid. |
 | 500 | The request can not be processed because of an internal error. |
 
 ## Storage management
