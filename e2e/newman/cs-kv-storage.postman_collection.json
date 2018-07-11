@@ -1981,6 +1981,1510 @@
 			]
 		},
 		{
+			"name": "kv-history",
+			"description": "",
+			"item": [
+				{
+					"name": "Search and list history",
+					"description": "",
+					"item": [
+						{
+							"name": "validation",
+							"description": "",
+							"item": [
+								{
+									"name": "Search with invalid operations",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "5cc2445c-74cb-4e4c-95a6-db85ef32a08e",
+												"type": "text/javascript",
+												"exec": [
+													"pm.test(\"Status code is 400\", function() {",
+													"  pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Body is empty\", function () {",
+													"    pm.response.to.have.body(\"\");",
+													"});",
+													"",
+													""
+												]
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {},
+										"url": {
+											"raw": "{{url}}/history/{{read_only_storage}}?operations=set,clear,invalid",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"history",
+												"{{read_only_storage}}"
+											],
+											"query": [
+												{
+													"key": "operations",
+													"value": "set,clear,invalid"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Search with invalid start",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "5cc2445c-74cb-4e4c-95a6-db85ef32a08e",
+												"type": "text/javascript",
+												"exec": [
+													"pm.test(\"Status code is 400\", function() {",
+													"  pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Body is empty\", function () {",
+													"    pm.response.to.have.body(\"\");",
+													"});",
+													"",
+													""
+												]
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {},
+										"url": {
+											"raw": "{{url}}/history/{{read_only_storage}}?start=today",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"history",
+												"{{read_only_storage}}"
+											],
+											"query": [
+												{
+													"key": "start",
+													"value": "today"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Search with negative start",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "5cc2445c-74cb-4e4c-95a6-db85ef32a08e",
+												"type": "text/javascript",
+												"exec": [
+													"pm.test(\"Status code is 400\", function() {",
+													"  pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Body is empty\", function () {",
+													"    pm.response.to.have.body(\"\");",
+													"});",
+													"",
+													""
+												]
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {},
+										"url": {
+											"raw": "{{url}}/history/{{read_only_storage}}?start=-1000",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"history",
+												"{{read_only_storage}}"
+											],
+											"query": [
+												{
+													"key": "start",
+													"value": "-1000"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Search with invalid end",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "5cc2445c-74cb-4e4c-95a6-db85ef32a08e",
+												"type": "text/javascript",
+												"exec": [
+													"pm.test(\"Status code is 400\", function() {",
+													"  pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Body is empty\", function () {",
+													"    pm.response.to.have.body(\"\");",
+													"});",
+													"",
+													""
+												]
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {},
+										"url": {
+											"raw": "{{url}}/history/{{read_only_storage}}?end=today",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"history",
+												"{{read_only_storage}}"
+											],
+											"query": [
+												{
+													"key": "end",
+													"value": "today"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Search with negative end",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "5cc2445c-74cb-4e4c-95a6-db85ef32a08e",
+												"type": "text/javascript",
+												"exec": [
+													"pm.test(\"Status code is 400\", function() {",
+													"  pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Body is empty\", function () {",
+													"    pm.response.to.have.body(\"\");",
+													"});",
+													"",
+													""
+												]
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {},
+										"url": {
+											"raw": "{{url}}/history/{{read_only_storage}}?end=-1000",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"history",
+												"{{read_only_storage}}"
+											],
+											"query": [
+												{
+													"key": "end",
+													"value": "-1000"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Search with start > end",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "5cc2445c-74cb-4e4c-95a6-db85ef32a08e",
+												"type": "text/javascript",
+												"exec": [
+													"pm.test(\"Status code is 400\", function() {",
+													"  pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Body is empty\", function () {",
+													"    pm.response.to.have.body(\"\");",
+													"});",
+													"",
+													""
+												]
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {},
+										"url": {
+											"raw": "{{url}}/history/{{read_only_storage}}?start=1000&end=500",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"history",
+												"{{read_only_storage}}"
+											],
+											"query": [
+												{
+													"key": "start",
+													"value": "1000"
+												},
+												{
+													"key": "end",
+													"value": "500"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Search with invalid size",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "5cc2445c-74cb-4e4c-95a6-db85ef32a08e",
+												"type": "text/javascript",
+												"exec": [
+													"pm.test(\"Status code is 400\", function() {",
+													"  pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Body is empty\", function () {",
+													"    pm.response.to.have.body(\"\");",
+													"});",
+													"",
+													""
+												]
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {},
+										"url": {
+											"raw": "{{url}}/history/{{read_only_storage}}?size=large",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"history",
+												"{{read_only_storage}}"
+											],
+											"query": [
+												{
+													"key": "size",
+													"value": "large"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Search with negative size",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "5cc2445c-74cb-4e4c-95a6-db85ef32a08e",
+												"type": "text/javascript",
+												"exec": [
+													"pm.test(\"Status code is 400\", function() {",
+													"  pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Body is empty\", function () {",
+													"    pm.response.to.have.body(\"\");",
+													"});",
+													"",
+													""
+												]
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {},
+										"url": {
+											"raw": "{{url}}/history/{{read_only_storage}}?size=-1000",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"history",
+												"{{read_only_storage}}"
+											],
+											"query": [
+												{
+													"key": "size",
+													"value": "-1000"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Search with invalid page",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "5cc2445c-74cb-4e4c-95a6-db85ef32a08e",
+												"type": "text/javascript",
+												"exec": [
+													"pm.test(\"Status code is 400\", function() {",
+													"  pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Body is empty\", function () {",
+													"    pm.response.to.have.body(\"\");",
+													"});",
+													"",
+													""
+												]
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {},
+										"url": {
+											"raw": "{{url}}/history/{{read_only_storage}}?page=first",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"history",
+												"{{read_only_storage}}"
+											],
+											"query": [
+												{
+													"key": "page",
+													"value": "first"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Search with negative page",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "5cc2445c-74cb-4e4c-95a6-db85ef32a08e",
+												"type": "text/javascript",
+												"exec": [
+													"pm.test(\"Status code is 400\", function() {",
+													"  pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Body is empty\", function () {",
+													"    pm.response.to.have.body(\"\");",
+													"});",
+													"",
+													""
+												]
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {},
+										"url": {
+											"raw": "{{url}}/history/{{read_only_storage}}?page=-1000",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"history",
+												"{{read_only_storage}}"
+											],
+											"query": [
+												{
+													"key": "page",
+													"value": "-1000"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Search with invalid scroll",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "5cc2445c-74cb-4e4c-95a6-db85ef32a08e",
+												"type": "text/javascript",
+												"exec": [
+													"pm.test(\"Status code is 400\", function() {",
+													"  pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Body is empty\", function () {",
+													"    pm.response.to.have.body(\"\");",
+													"});",
+													"",
+													""
+												]
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {},
+										"url": {
+											"raw": "{{url}}/history/{{read_only_storage}}?scroll=1.day",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"history",
+												"{{read_only_storage}}"
+											],
+											"query": [
+												{
+													"key": "scroll",
+													"value": "1.day"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Search with negative scroll",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "5cc2445c-74cb-4e4c-95a6-db85ef32a08e",
+												"type": "text/javascript",
+												"exec": [
+													"pm.test(\"Status code is 400\", function() {",
+													"  pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Body is empty\", function () {",
+													"    pm.response.to.have.body(\"\");",
+													"});",
+													"",
+													""
+												]
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {},
+										"url": {
+											"raw": "{{url}}/history/{{read_only_storage}}?scroll=-1000",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"history",
+												"{{read_only_storage}}"
+											],
+											"query": [
+												{
+													"key": "scroll",
+													"value": "-1000"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Search with invalid sort",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "5cc2445c-74cb-4e4c-95a6-db85ef32a08e",
+												"type": "text/javascript",
+												"exec": [
+													"pm.test(\"Status code is 400\", function() {",
+													"  pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Body is empty\", function () {",
+													"    pm.response.to.have.body(\"\");",
+													"});",
+													"",
+													""
+												]
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {},
+										"url": {
+											"raw": "{{url}}/history/{{read_only_storage}}?sort=bubble",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"history",
+												"{{read_only_storage}}"
+											],
+											"query": [
+												{
+													"key": "sort",
+													"value": "bubble"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Search with opposite sort options",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "5cc2445c-74cb-4e4c-95a6-db85ef32a08e",
+												"type": "text/javascript",
+												"exec": [
+													"pm.test(\"Status code is 400\", function() {",
+													"  pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Body is empty\", function () {",
+													"    pm.response.to.have.body(\"\");",
+													"});",
+													"",
+													""
+												]
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {},
+										"url": {
+											"raw": "{{url}}/history/{{read_only_storage}}?sort=timestamp,key,-timestamp",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"history",
+												"{{read_only_storage}}"
+											],
+											"query": [
+												{
+													"key": "sort",
+													"value": "timestamp,key,-timestamp"
+												}
+											]
+										}
+									},
+									"response": []
+								}
+							],
+							"_postman_isSubFolder": true
+						},
+						{
+							"name": "Search with duplicated keys",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "9ec20685-eb73-481e-aa69-9e0372333741",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function() {",
+											"  pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Content-Type is application/json\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+											"});",
+											"",
+											"pm.test(\"Response body is valid\", function () {",
+											"    var example = {",
+											"        \"total\": 2,",
+											"        \"size\": 2,",
+											"        \"page\": 1,",
+											"        \"items\": [",
+											"            {\"key\": \"key1\", \"value\": \"value\", \"timestamp\": 1010, \"operation\": \"set\"},",
+											"            {\"key\": \"key1\", \"value\": \"value1\", \"timestamp\": 1011, \"operation\": \"set\"}",
+											"        ]",
+											"    };",
+											"    pm.expect(pm.response.json()).to.eql(example);",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {},
+								"url": {
+									"raw": "{{url}}/history/{{read_only_storage}}?keys=key1,key1&sort=timestamp",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"history",
+										"{{read_only_storage}}"
+									],
+									"query": [
+										{
+											"key": "keys",
+											"value": "key1,key1"
+										},
+										{
+											"key": "sort",
+											"value": "timestamp"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search with duplicated operations",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "cbb3b0f1-276d-44d3-add1-e19ef99aea5c",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function() {",
+											"  pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Content-Type is application/json\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+											"});",
+											"",
+											"pm.test(\"Response body is valid\", function () {",
+											"    var example = {",
+											"        \"total\": 1,",
+											"        \"size\": 1,",
+											"        \"page\": 1,",
+											"        \"items\": [",
+											"            {\"key\": \"key6\", \"value\": null, \"timestamp\": 1011, \"operation\": \"delete\"}",
+											"        ]",
+											"    };",
+											"    pm.expect(pm.response.json()).to.eql(example);",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {},
+								"url": {
+									"raw": "{{url}}/history/{{read_only_storage}}?operations=delete,delete",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"history",
+										"{{read_only_storage}}"
+									],
+									"query": [
+										{
+											"key": "operations",
+											"value": "delete,delete"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search with duplicated sorts",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "f9c2dd82-5557-4507-b2c0-3700276ec1c1",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function() {",
+											"  pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Content-Type is application/json\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+											"});",
+											"",
+											"pm.test(\"Response body is valid\", function () {",
+											"    var example = {",
+											"        \"total\": 8,",
+											"        \"size\": 8,",
+											"        \"page\": 1,",
+											"        \"items\": [",
+											"            {\"key\": \"key1\", \"value\": \"value\", \"timestamp\": 1010, \"operation\": \"set\"},",
+											"            {\"key\": \"key1\", \"value\": \"value1\", \"timestamp\": 1011, \"operation\": \"set\"},",
+											"            {\"key\": \"key2\", \"value\": \"value2\", \"timestamp\": 1010, \"operation\": \"set\"},",
+											"            {\"key\": \"key3\", \"value\": \"value3\", \"timestamp\": 1010, \"operation\": \"set\"},",
+											"            {\"key\": \"key4\", \"value\": \"value4\", \"timestamp\": 1010, \"operation\": \"set\"},",
+											"            {\"key\": \"key5\", \"value\": \"value5\", \"timestamp\": 1010, \"operation\": \"set\"},",
+											"            {\"key\": \"key6\", \"value\": \"value6\", \"timestamp\": 1010, \"operation\": \"set\"},",
+											"            {\"key\": \"key6\", \"value\": null, \"timestamp\": 1011, \"operation\": \"delete\"}",
+											"        ]",
+											"    };",
+											"    pm.expect(pm.response.json()).to.eql(example);",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {},
+								"url": {
+									"raw": "{{url}}/history/{{read_only_storage}}?sort=key,timestamp,key",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"history",
+										"{{read_only_storage}}"
+									],
+									"query": [
+										{
+											"key": "sort",
+											"value": "key,timestamp,key"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search with page and size specified",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "828f7dfc-6ba1-4ec9-a6d2-bd56328e953e",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function() {",
+											"  pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Content-Type is application/json\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+											"});",
+											"",
+											"pm.test(\"Response body is valid\", function () {",
+											"    var example = {",
+											"        \"total\": 8,",
+											"        \"size\": 2,",
+											"        \"page\": 3,",
+											"        \"items\": [",
+											"            {\"key\": \"key4\", \"value\": \"value4\", \"timestamp\": 1010, \"operation\": \"set\"},",
+											"            {\"key\": \"key5\", \"value\": \"value5\", \"timestamp\": 1010, \"operation\": \"set\"}",
+											"        ]",
+											"    };",
+											"    pm.expect(pm.response.json()).to.eql(example);",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {},
+								"url": {
+									"raw": "{{url}}/history/{{read_only_storage}}?size=2&page=3&sort=key",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"history",
+										"{{read_only_storage}}"
+									],
+									"query": [
+										{
+											"key": "size",
+											"value": "2"
+										},
+										{
+											"key": "page",
+											"value": "3"
+										},
+										{
+											"key": "sort",
+											"value": "key"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search with scroll and size specified",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "e2f68fd9-e554-41ce-be42-649f5727cf4e",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function() {",
+											"  pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Content-Type is application/json\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+											"});",
+											"",
+											"pm.test(\"Response body is valid\", function () {",
+											"    var json = pm.response.json()",
+											"    var items = [",
+											"        {\"key\": \"key1\", \"value\": \"value1\", \"timestamp\": 1011, \"operation\": \"set\"},",
+											"        {\"key\": \"key1\", \"value\": \"value\", \"timestamp\": 1010, \"operation\": \"set\"},",
+											"        {\"key\": \"key2\", \"value\": \"value2\", \"timestamp\": 1010, \"operation\": \"set\"}",
+											"    ];",
+											"    pm.expect(json.total).to.eql(8);",
+											"    pm.expect(json.size).to.eql(3);",
+											"    pm.expect(json.scrollId).to.not.eql(\"\");",
+											"    pm.expect(json.items).to.eql(items);",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {},
+								"url": {
+									"raw": "{{url}}/history/{{read_only_storage}}?scroll=30000&size=3&sort=key,-timestamp",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"history",
+										"{{read_only_storage}}"
+									],
+									"query": [
+										{
+											"key": "scroll",
+											"value": "30000"
+										},
+										{
+											"key": "size",
+											"value": "3"
+										},
+										{
+											"key": "sort",
+											"value": "key,-timestamp"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search with page and scroll specified",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "9ba1e6d1-9dc5-4dbc-bdae-aaf099d141fa",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function() {",
+											"  pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Content-Type is application/json\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+											"});",
+											"",
+											"pm.test(\"Response body is valid\", function () {",
+											"    var json = pm.response.json()",
+											"    var items = [",
+											"        {\"key\": \"key1\", \"value\": \"value1\", \"timestamp\": 1011, \"operation\": \"set\"},",
+											"        {\"key\": \"key1\", \"value\": \"value\", \"timestamp\": 1010, \"operation\": \"set\"},",
+											"        {\"key\": \"key2\", \"value\": \"value2\", \"timestamp\": 1010, \"operation\": \"set\"}",
+											"    ];",
+											"    pm.expect(json.total).to.eql(8);",
+											"    pm.expect(json.size).to.eql(3);",
+											"    pm.expect(json.scrollId).to.not.eql(\"\");",
+											"    pm.expect(json.items).to.eql(items);",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {},
+								"url": {
+									"raw": "{{url}}/history/{{read_only_storage}}?page=2&scroll=30000&size=3&sort=key,-timestamp",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"history",
+										"{{read_only_storage}}"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "2"
+										},
+										{
+											"key": "scroll",
+											"value": "30000"
+										},
+										{
+											"key": "size",
+											"value": "3"
+										},
+										{
+											"key": "sort",
+											"value": "key,-timestamp"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search in storage that do not support history",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "9a6af6c9-eac7-4768-bfe9-c03323a22d59",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 400\", function() {",
+											"  pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {},
+								"url": {
+									"raw": "{{url}}/history/{{no_history_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"history",
+										"{{no_history_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search in storage that do not have history storage",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "0caf0a9d-2644-4ecc-a80e-1109bc5fa65d",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 500\", function() {",
+											"  pm.response.to.have.status(500);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {},
+								"url": {
+									"raw": "{{url}}/history/{{acc_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"history",
+										"{{acc_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search in non existent storage",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "ce25fae6-c354-472b-8b64-7c200883b6e6",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 404\", function() {",
+											"  pm.response.to.have.status(404);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {},
+								"url": {
+									"raw": "{{url}}/history/{{non_existent_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"history",
+										"{{non_existent_storage}}"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "List history",
+					"description": "",
+					"item": [
+						{
+							"name": "List history for subsequent request",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "dc97e805-f917-463e-8eef-15be36d9da72",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function() {",
+											"  pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Content-Type is application/json\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+											"});",
+											"",
+											"pm.test(\"Response body is valid\", function () {",
+											"    var json = pm.response.json()",
+											"    var items = [",
+											"        {\"key\": \"key3\", \"value\": \"value3\", \"timestamp\": 1010, \"operation\": \"set\"},",
+											"        {\"key\": \"key4\", \"value\": \"value4\", \"timestamp\": 1010, \"operation\": \"set\"},",
+											"        {\"key\": \"key5\", \"value\": \"value5\", \"timestamp\": 1010, \"operation\": \"set\"}",
+											"    ];",
+											"    pm.expect(json.total).to.eql(8);",
+											"    pm.expect(json.size).to.eql(3);",
+											"    pm.expect(json.scrollId).to.not.eql(\"\");",
+											"    pm.expect(json.items).to.eql(items);",
+											"});",
+											"",
+											""
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "b6634035-57df-4cce-b603-b9d975442a53",
+										"type": "text/javascript",
+										"exec": [
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"url\") + \"/history/\" + pm.variables.get(\"read_only_storage\") + \"?scroll=30000&size=3&sort=key\",",
+											"        method: 'GET'",
+											"},",
+											"    function (err, res) {",
+											"        pm.environment.set(\"scrollId\", res.json().scrollId);",
+											"    }",
+											");"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"scrollId\": \"{{scrollId}}\",\n\t\"timeout\": 30000\n}"
+								},
+								"url": {
+									"raw": "{{url}}/history",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"history"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "List history with wrong Content-Type",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "f7485668-0fec-4cfc-9bf6-ee3b00828a5c",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 400\", function() {",
+											"  pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});"
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "b6634035-57df-4cce-b603-b9d975442a53",
+										"type": "text/javascript",
+										"exec": [
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"url\") + \"/history/\" + pm.variables.get(\"read_only_storage\") + \"?scroll=30000&size=3&sort=key\",",
+											"        method: 'GET'",
+											"},",
+											"    function (err, res) {",
+											"        pm.environment.set(\"scrollId\", res.json().scrollId);",
+											"    }",
+											");"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "text/plain"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"scrollId\": \"{{scrollId}}\",\n\t\"timeout\": 30000\n}"
+								},
+								"url": {
+									"raw": "{{url}}/history",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"history"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "List history with invalid json",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "f7485668-0fec-4cfc-9bf6-ee3b00828a5c",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 400\", function() {",
+											"  pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});"
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "e95e4be4-f69d-46a5-9a16-1392f1b1f37d",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"scrollId\": \"scrollId\"\n\t\"timeout\": 30000\n}"
+								},
+								"url": {
+									"raw": "{{url}}/history",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"history"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "List history with invalid body",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "f7485668-0fec-4cfc-9bf6-ee3b00828a5c",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 400\", function() {",
+											"  pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});"
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "9c232a1b-fc31-43cd-871a-2c65cc4611d0",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"scrollId\": \"scrollId\",\n\t\"timeout\": \"30sec\"\n}"
+								},
+								"url": {
+									"raw": "{{url}}/history",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"history"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "List history with invalid scroll id",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "f7485668-0fec-4cfc-9bf6-ee3b00828a5c",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 400\", function() {",
+											"  pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});"
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "7c39ca55-2f19-4a81-b1c0-5ce8e2b03c1d",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"scrollId\": \"Scroll ID\",\n\t\"timeout\": 30000\n}"
+								},
+								"url": {
+									"raw": "{{url}}/history",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"history"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "List history with expired/non existent scroll id",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "f7485668-0fec-4cfc-9bf6-ee3b00828a5c",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 400\", function() {",
+											"  pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});"
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "ae17ccf4-cc49-46e3-a1c6-ee38807fab69",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\u0001\n\t\"scrollId\": \"DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAAAzFjJuVGlDMnQ2U2FXNFItMERyTGo2M1EAAAAAAAAANBYyblRpQzJ0NlNhVzRSLTBEckxqNjNRAAAAAAAAADUWMm5UaUMydDZTYVc0Ui0wRHJMajYzUQAAAAAAAAA2FjJuVGlDMnQ2U2FXNFItMERyTGo2M1EAAAAAAAAANxYyblRpQzJ0NlNhVzRSLTBEckxqNjNR\",\n\t\"timeout\": 30000\n}"
+								},
+								"url": {
+									"raw": "{{url}}/history",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"history"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"_postman_isSubFolder": true
+				}
+			]
+		},
+		{
 			"name": "health",
 			"description": null,
 			"item": [
@@ -2374,141 +3878,148 @@
 	],
 	"variable": [
 		{
-			"id": "3bea8ae0-17f5-4a4d-a39f-bbdab8060915",
+			"id": "da6dd540-7f95-4306-88c6-d33b57fa6a4b",
 			"key": "url",
 			"value": "http://app:8080",
 			"type": "string"
 		},
 		{
-			"id": "ac0332e7-5477-4f0a-896f-9ed761656ddd",
+			"id": "5332bc22-159e-48fa-b269-6873b5f87eb7",
 			"key": "storage_uuid",
 			"value": "b3d1b2a6-bd5b-49d5-bd9e-86538fdc180d",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "643f2a49-0e08-478b-a863-bb3824c69baa",
+			"id": "31670846-1a02-47f2-a182-0013af755bae",
 			"key": "es_url",
 			"value": "http://elasticsearch:9200",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "a4cd8315-400d-40ca-8b57-09201da6c7b3",
+			"id": "29551212-f4a8-4875-ad90-579237f7607e",
 			"key": "some_key",
 			"value": "key1",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "13d3fcb7-c0a7-414d-b84d-b5a93ae00d42",
+			"id": "0412a306-b822-41c4-ab2c-bf1ed2fccef8",
 			"key": "some_value",
 			"value": "value1",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "f95eeba2-9ed6-4eea-a0da-72d10868ebc1",
+			"id": "9acfadc0-e0f1-44e2-be2e-170b0c74e3e2",
 			"key": "empty_key",
 			"value": "empty_key",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "3a83361d-9d25-4118-997c-7c368f1041e2",
+			"id": "6e2e9bc4-5191-4317-965d-395e8b224bcf",
 			"key": "non_existent_storage",
 			"value": "nonexistent",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "33e43e68-701e-4fd1-b436-a0b25174b5dd",
+			"id": "c612bbbe-86dc-4446-a954-ce042316186a",
 			"key": "read_only_storage",
 			"value": "read-only",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "4b3248bc-f156-4f8a-b3c8-d4871edbf968",
+			"id": "f91e82c9-355d-447c-82f3-d88da54753af",
 			"key": "editable_storage",
 			"value": "editable-single",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "8063f8f8-2706-466e-8e7e-f109743a6c7c",
+			"id": "4a96d955-2558-4b63-a7d0-1a88926aab7f",
 			"key": "multieditable_storage",
 			"value": "editable-multiple",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "9e36fdcb-1adc-47b8-a0b9-1563fe361129",
+			"id": "ee26f829-9518-4306-b567-177115ad854b",
 			"key": "deletable_storage",
 			"value": "deletable-single",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "f570cfd6-fa11-4275-8319-1e612577237e",
+			"id": "bf5d5f82-1705-40b4-a470-f6c01a004a62",
 			"key": "multideletable_storage",
 			"value": "deletable-multiple",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "83b268cd-3fd6-4934-a2de-353bd0d0121b",
+			"id": "86856615-aaac-4d71-ad1a-df17be2d94ca",
 			"key": "cleanable_storage",
 			"value": "cleanable",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "e4ef1934-164b-4cbc-aab3-672a67b8e0c5",
+			"id": "11ff4e21-9479-4d8c-8465-c7ff6a8d8cd2",
 			"key": "temp_storage",
 			"value": "temp",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "f98dc712-da71-492a-b198-56d360d8ded4",
+			"id": "20672d2a-a816-4df6-b664-06c843bd1147",
 			"key": "acc_storage",
 			"value": "account",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "5f35e7c2-47d6-40e0-adc5-b96e2f091eed",
+			"id": "7b54600c-8620-4fc5-ac6e-a738cac981c0",
 			"key": "no_index_storage",
 			"value": "no-index",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "ad8f47f3-399d-4303-b529-cf54d22fb362",
+			"id": "c3f7f928-6564-430d-aa5d-e44ad1fcf5f5",
 			"key": "not_registered_storage",
 			"value": "not-registered",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "1adc3636-5edf-4509-9153-dd8ef3ab5f99",
+			"id": "01b656d5-7b5a-4a4c-8a73-db4080f847cb",
 			"key": "storage_registry",
 			"value": "storage-registry",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "5e816b49-5f39-4460-a02c-14d36dbf2ecb",
+			"id": "e24754e6-1fe6-425e-b68f-e20ee09a1d36",
 			"key": "storage_data_template",
 			"value": "storage-data",
 			"type": "string",
 			"description": ""
 		},
 		{
-			"id": "8aaa7282-e276-4a56-8cd4-3c13e7015f58",
+			"id": "d3376450-405e-4557-802c-a1295f907c46",
 			"key": "storage_history_template",
 			"value": "storage-history",
+			"type": "string",
+			"description": ""
+		},
+		{
+			"id": "304c4297-30df-4c14-b19f-d827bca13973",
+			"key": "no_history_storage",
+			"value": "no-history",
 			"type": "string",
 			"description": ""
 		}

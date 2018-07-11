@@ -17,6 +17,9 @@ curl -X PUT "$1/storage-registry/_doc/read-only" -H 'Content-Type: application/j
 curl -X POST "$1/storage-data-read-only/_doc/_bulk" -H 'Content-Type: application/json' --data-binary \
   "@/etc/cs-kv-storage/init/storage-test-data.ndjson"
 
+curl -X POST "$1/storage-history-read-only/_doc/_bulk" -H 'Content-Type: application/json' --data-binary \
+  "@/etc/cs-kv-storage/init/storage-test-history.ndjson"
+
 curl -X PUT "$1/storage-data-empty"
 
 curl -X PUT "$1/storage-registry/_doc/empty" -H 'Content-Type: application/json' --data-raw \
@@ -75,4 +78,7 @@ curl -X PUT "$1/storage-registry/_doc/account" -H 'Content-Type: application/jso
 curl -X PUT "$1/storage-data-no-index"
 
 curl -X PUT "$1/storage-registry/_doc/not-registered" -H 'Content-Type: application/json' --data-raw \
+  '{"type": "TEMP", "history_enabled": false, "ttl": 10000, "expiration_timestamp": 1530602449565}'
+
+curl -X PUT "$1/storage-registry/_doc/no-history" -H 'Content-Type: application/json' --data-raw \
   '{"type": "TEMP", "history_enabled": false, "ttl": 10000, "expiration_timestamp": 1530602449565}'
