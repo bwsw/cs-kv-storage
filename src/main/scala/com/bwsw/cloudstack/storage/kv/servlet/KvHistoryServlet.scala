@@ -75,13 +75,16 @@ class KvHistoryServlet(
             case json: JObject =>
               try {
                 val scrollRequest = json.extract[KvHistoryScrollRequest]
-                (historyRequestActor ? scrollRequest).map {
-                  case Right(value) =>
-                    contentType = formats("json")
-                    value
-                  case Left(_: BadRequestError) => BadRequest("")
-                  case _ => InternalServerError("")
-                }
+                if (scrollRequest.timeout <= 0)
+                  Future(BadRequest(""))
+                else
+                  (historyRequestActor ? scrollRequest).map {
+                    case Right(value) =>
+                      contentType = formats("json")
+                      value
+                    case Left(_: BadRequestError) => BadRequest("")
+                    case _ => InternalServerError("")
+                  }
               } catch {
                 case e: MappingException => Future(BadRequest(""))
               }
