@@ -17,4 +17,15 @@
 
 package com.bwsw.cloudstack.storage.kv.message.request
 
-case class KvMultiDeleteRequest(storage: String, keys: Iterable[String]) extends KvRequest
+import com.bwsw.cloudstack.storage.kv.entity.{Operation, SortField}
+
+case class KvHistoryGetRequest(
+    storageUuid: String,
+    keys: Set[String],
+    operations: Set[Operation],
+    start: Option[Long],
+    end: Option[Long],
+    sort: Set[SortField],
+    page: Option[Int],
+    size: Option[Int],
+    scroll: Option[Long])

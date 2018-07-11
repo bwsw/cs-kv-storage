@@ -131,8 +131,8 @@ class ElasticsearchStorageLoaderSpec extends AsyncFunSpec with AsyncMockFactory 
   private def expectGetRequest(client: HttpClient) = {
     (client
       .execute[GetDefinition, GetResponse]
-        (_: GetDefinition)
-        (_: HttpExecutable[GetDefinition, GetResponse], _: ExecutionContext))
+      (_: GetDefinition)
+      (_: HttpExecutable[GetDefinition, GetResponse], _: ExecutionContext))
       .expects(ElasticDsl.get(storageUuid).from(RegistryIndex / DocumentType), GetHttpExecutable, *)
   }
 }

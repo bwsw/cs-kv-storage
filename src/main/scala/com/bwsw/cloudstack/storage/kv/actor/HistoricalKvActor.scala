@@ -20,7 +20,8 @@ package com.bwsw.cloudstack.storage.kv.actor
 import akka.actor.{ActorLogging, Status}
 import akka.pattern.pipe
 import com.bwsw.cloudstack.storage.kv.cache.StorageCache
-import com.bwsw.cloudstack.storage.kv.entity.{Clear, Delete, Operation, Set, Storage}
+import com.bwsw.cloudstack.storage.kv.entity.Operation.{Clear, Delete, Set}
+import com.bwsw.cloudstack.storage.kv.entity.{Operation, Storage}
 import com.bwsw.cloudstack.storage.kv.error.{InternalError, NotFoundError, StorageError}
 import com.bwsw.cloudstack.storage.kv.message._
 import com.bwsw.cloudstack.storage.kv.message.request._
