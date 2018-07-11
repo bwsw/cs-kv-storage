@@ -34,7 +34,14 @@ class ElasticsearchStorageLoaderSpec extends AsyncFunSpec with AsyncMockFactory 
   private val storage = Storage(storageUuid, "ACC", keepHistory = true)
   private val source = Map(
     "type" -> storage.storageType,
-    "history_enabled" -> storage.keepHistory
+    "history_enabled" -> storage.keepHistory,
+    "deleted" -> false
+  ).asInstanceOf[Map[String, AnyRef]]
+
+  private val deletedSource = Map(
+    "type" -> storage.storageType,
+    "is_history_enabled" -> storage.keepHistory,
+    "deleted" -> true
   ).asInstanceOf[Map[String, AnyRef]]
 
   describe("An ElasticsearchStorageLoader") {
@@ -48,6 +55,22 @@ class ElasticsearchStorageLoaderSpec extends AsyncFunSpec with AsyncMockFactory 
       loader.load(storageUuid).map {
         case Some(s) => assert(s == storage)
         case None => fail
+      }
+    }
+
+    it("should return None if the storage is marked as deleted") {
+      val getResponse = GetResponse(
+        storageUuid,
+        RegistryIndex,
+        DocumentType,
+        1,
+        found = true,
+        Map.empty,
+        deletedSource)
+      expectGetRequest(fakeClient).returning(getRequestSuccessFuture(getResponse))
+      loader.load(storageUuid).map {
+        case Some(s) => fail
+        case None => succeed
       }
     }
 
