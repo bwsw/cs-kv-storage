@@ -26,4 +26,6 @@ trait StorageCache {
   def isHistoryEnabled(storageUuid: String): Future[Option[Boolean]]
 
   def get(storageUuid: String): Future[Option[Storage]]
+
+  def delete(storageUuid: String): Unit
 }
