@@ -55,7 +55,7 @@ class KvStorageManagerServletSuite
       }
 
       it("should update the value of ttl field in storage registry") {
-        (manager.updateTempStorageTtl(_: String, _: Long)).expects(storage, ttl).returning(Future(Right())).once
+        (manager.updateTempStorageTtl(_: String, _: Long)).expects(storage, ttl).returning(Future(Right(()))).once
         put(path, ttlParams) {
           status should equal(200)
         }
@@ -99,7 +99,7 @@ class KvStorageManagerServletSuite
     }
 
     it("should delete the storage") {
-      (manager.deleteTempStorage(_: String)).expects(storage).returning(Future(Right())).once
+      (manager.deleteTempStorage(_: String)).expects(storage).returning(Future(Right(()))).once
       delete(path) {
         status should equal(200)
       }

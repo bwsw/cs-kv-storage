@@ -20,7 +20,8 @@ package com.bwsw.cloudstack.storage.kv.actor
 import akka.actor.{ActorLogging, Status}
 import akka.pattern.pipe
 import com.bwsw.cloudstack.storage.kv.cache.StorageCache
-import com.bwsw.cloudstack.storage.kv.entity.{Clear, Delete, Operation, Set, Storage}
+import com.bwsw.cloudstack.storage.kv.entity.Operation.{Clear, Delete, Set}
+import com.bwsw.cloudstack.storage.kv.entity.{Operation, Storage}
 import com.bwsw.cloudstack.storage.kv.error.{InternalError, NotFoundError, StorageError}
 import com.bwsw.cloudstack.storage.kv.message._
 import com.bwsw.cloudstack.storage.kv.message.request._
@@ -107,6 +108,7 @@ class HistoricalKvActor(implicit inj: Injector)
     case KvErrorResponse(error) =>
       sender() ! Left(error)
     case failure: Status.Failure =>
+      log.error(failure.cause, getClass.getName)
       sender() ! Left(InternalError(failure.cause.getMessage))
   }
 
@@ -146,9 +148,5 @@ class HistoricalKvActor(implicit inj: Injector)
           })
         case Left(_) => // do nothing
       }
-  }
-
-  protected def logError(storage: String): Unit = {
-    log.error(s"Error while updating storage $storage information.")
   }
 }

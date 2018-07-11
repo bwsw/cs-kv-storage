@@ -37,11 +37,9 @@ Once it is deployed next step is to create necessary indexes and templates. To a
 After setting up ElasticSearch its URI should be specified in configuration file along with other parameters in format
 cited below.
 
-
 # Configuration
 
 The example of the configuration file can be found [here](/src/test/resources/application.conf).
-
 
 | Property | Description |
 | --------- | ----------- |
@@ -57,9 +55,8 @@ The example of the configuration file can be found [here](/src/test/resources/ap
 | app.history.flush-size | Size of batch requests to save a history of the storage operations. |
 | app.history.flush-timeout | Timeout between batch/retry requests to save a history of the storage operations. |
 | app.history.retry-limit | Amount of attempts to try to log the storage operation. |
+| app.default-page-size | A default number of results returned in the page for search requests. |
 | app.request-timeout | Maximum time to process the request. |
-
-
 
 # Build & Run #
 
@@ -83,6 +80,7 @@ where `<port>`, `<config.path>` and `<version>` should be replaced with actual v
 # API
 
 * [Storage operations](#storage-operations)
+* [Storage history](#storage-history)
 * [Storage management](#storage-management)
 * [Storage health](#storage-health)
 
@@ -141,7 +139,7 @@ Content-Type: application/json
 
 In the following example the mapping for the second key does not exist.
 
-```
+```json
 {
     "key1": "value1",
     "key2": null,
@@ -196,7 +194,7 @@ Content-Type: application/json
 ##### Body example
 
 In the following example values for the first and third keys are set successfully.
-```
+```json
 {
     "key1": true,
     "key2": false,
@@ -247,7 +245,7 @@ Content-Type: application/json
 ##### Body example
 
 In the following example mappings for the first and third keys are deleted successfully.
-```
+```json
 {
     "key1": true,
     "key2": false,
@@ -273,7 +271,7 @@ GET /list/<storage UUID>
 
 ##### Body example
 
-```
+```json
 [
     "key1",
     "key2":
@@ -295,6 +293,103 @@ POST /clear/<storage UUID>
 | ---------------- | ----------- |
 | 200 | The request is processed successfully.  |
 | 409 | Conflicts occurred during executing the operation, the storage may have been cleared partially. |
+| 500 | The request can not be processed because of an internal error. |
+
+## Storage history
+
+* [Search and list history records](#search-and-list-history-records)
+* [List history records](#list-history-records)
+
+### Search and list history records
+
+#### Request
+
+```
+GET /history/<storage UUID>
+```
+
+##### Parameters
+
+All parameters are optional. If both page and scroll parameters are specified scroll is used.
+
+| Parameter  | Description |
+| ----- | ----------- |
+| keys  | Comma separated list of keys |
+| operations | Comma separated list of operations. Possible values are set, delete or clear. |
+| start | The start date/time as Unix timestamp |
+| end | The end date/time as Unix timestamp |
+| sort | Comma separated list of response fields optionally prefixed with - (minus) for descending order. |
+| page | A page number of results (1 by default) |
+| size | A number of results returned in the page/batch (default value is specified in the configuration file) |
+| scroll | A timeout in ms for subsequent [list requests](#list-history-records) |
+
+#### Response
+
+| HTTP Status code | Description |
+| ---------------- | ----------- |
+| 200 | The request is processed successfully. Results are in the body in the format specified below. The content type is application/json.|
+| 400 | The storage does not support history or the request is invalid. |
+| 404 | The storage does not exist. |
+| 500 | The request can not be processed because of an internal error. |
+
+##### Body example
+
+For requests with page parameter
+
+```json
+{
+   "total":1000,
+   "size":10,
+   "page":1,
+   "items":[
+      {
+         "key":"key",
+         "value":"value",
+         "operation":"set/delete/clear",
+         "timestamp":1528442057000
+      }
+   ]
+}
+```
+
+For requests with scroll parameter
+
+```json
+{
+   "total":1000,
+   "size":10,
+   "scrollId":"scroll id",
+   "items":[
+      {
+         "key":"key",
+         "value":"value",
+         "operation":"set/delete/clear",
+         "timestamp":1528442057000
+      }
+   ]
+}
+```
+
+### List history records
+
+#### Request
+
+```
+POST /history
+Content-Type: application/json
+
+{
+   "scrollId":"scroll id",
+   "timeout": 60000
+}
+```
+
+#### Response
+
+| HTTP Status code | Body |
+| ---------------- | ---- |
+| 200 | The request is processed successfully. Results are in the body in the format for [search requests with scroll](#search-and-list-history-records). The content type is application/json. |
+| 400 | The scroll id is invalid/expired or the request is invalid. |
 | 500 | The request can not be processed because of an internal error. |
 
 ## Storage management
@@ -367,7 +462,7 @@ GET /health
 
 ##### Body
 
-If detailed = false then response body is empty, otherwise results are in the response body in the format specified 
+If detailed = false then response body is empty, otherwise results are in the response body in the format specified
 below and the content type is application/json:
 
 ```json
@@ -382,5 +477,4 @@ below and the content type is application/json:
    ]
 }
 ```
-
 

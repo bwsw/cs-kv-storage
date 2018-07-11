@@ -33,18 +33,18 @@ class ElasticsearchStorageLoader(client: HttpClient) extends StorageLoader {
       client.execute(get(RegistryIndex, DocumentType, id)).map {
         case Left(_) => throw new RuntimeException("Storage info loading failed")
         case Right(success) =>
-          if (success.result.found) {
-            Some(Storage(success.result.id, getValue(success.result.source, "type").toString,
-              getValue(success.result.source, "history_enabled").asInstanceOf[Boolean]))
+          if (success.result.found && !getValue[Boolean](success.result.source, "deleted")) {
+            Some(Storage(
+              success.result.id,
+              getValue(success.result.source, "type"),
+              getValue(success.result.source, "history_enabled")))
           }
           else None
       }
   }
 
-  private def getValue(source: Map[String, Any], key: String) = {
-    source.get(key) match {
-      case Some(s) => s
-      case None => throw new RuntimeException("Invalid result")
-    }
+  private def getValue[T](source: Map[String, Any], key: String): T = source.get(key) match {
+    case Some(s) => s.asInstanceOf[T]
+    case None => throw new RuntimeException("Invalid result")
   }
 }

@@ -18,11 +18,12 @@
 package com.bwsw.cloudstack.storage.kv.app
 
 import akka.actor.ActorSystem
-import com.bwsw.cloudstack.storage.kv.actor.{HealthActor, KvActor}
+import com.bwsw.cloudstack.storage.kv.actor.{HealthActor, HistoryRequestActor, KvActor}
 import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
 import com.bwsw.cloudstack.storage.kv.manager.KvStorageManager
 import com.bwsw.cloudstack.storage.kv.processor.KvProcessor
-import com.bwsw.cloudstack.storage.kv.servlet.{HealthServlet, KvStorageManagerServlet, KvStorageServlet}
+import com.bwsw.cloudstack.storage.kv.servlet.{HealthServlet, KvHistoryServlet, KvStorageManagerServlet,
+  KvStorageServlet}
 import javax.servlet.ServletContext
 import org.scalatra._
 import scaldi.akka.AkkaInjectable._
@@ -37,10 +38,12 @@ class ScalatraBootstrap extends LifeCycle {
   private val healthActor = injectActorRef[HealthActor]
   private val kvActor = injectActorRef[KvActor]
   private val appConfig = inject[AppConfig]
+  private val historyRequestActor = injectActorRef[HistoryRequestActor]
 
   override def init(context: ServletContext) {
     context.mount(new KvStorageManagerServlet(system, kvManager), "/storage/*")
     context.mount(new KvStorageServlet(system, appConfig.getRequestTimeout, kvProcessor, kvActor), "/*")
+    context.mount(new KvHistoryServlet(system, appConfig.getRequestTimeout, historyRequestActor), "/history/*")
     context.mount(new HealthServlet(system, appConfig.getRequestTimeout, healthActor), "/health/*")
   }
 
