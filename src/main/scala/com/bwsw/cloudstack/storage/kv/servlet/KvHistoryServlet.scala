@@ -24,7 +24,7 @@ import com.bwsw.cloudstack.storage.kv.entity.{Operation, SortField, Sorting}
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, NotFoundError}
 import com.bwsw.cloudstack.storage.kv.message.request.{KvHistoryGetRequest, KvHistoryScrollRequest}
 import org.json4s.JsonAST._
-import org.json4s.{CustomSerializer, DefaultFormats, Formats}
+import org.json4s.{CustomSerializer, DefaultFormats, Formats, MappingException}
 import org.scalatra._
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.util.conversion.TypeConverter
@@ -72,14 +72,18 @@ class KvHistoryServlet(
       val is: Future[_] =
         if (request.getHeader("Content-Type") == formats("json")) {
           parsedBody match {
-            case JObject(List(("scrollId", scrollId: JString), ("timeout", timeout: JInt))) =>
-              val scrollRequest = KvHistoryScrollRequest(scrollId.values, timeout.values.toLong)
-              (historyRequestActor ? scrollRequest).map {
-                case Right(value) =>
-                  contentType = formats("json")
-                  value
-                case Left(_: BadRequestError) => BadRequest("")
-                case _ => InternalServerError("")
+            case json: JObject =>
+              try {
+                val scrollRequest = json.extract[KvHistoryScrollRequest]
+                (historyRequestActor ? scrollRequest).map {
+                  case Right(value) =>
+                    contentType = formats("json")
+                    value
+                  case Left(_: BadRequestError) => BadRequest("")
+                  case _ => InternalServerError("")
+                }
+              } catch {
+                case e: MappingException => Future(BadRequest(""))
               }
             case _ => Future(BadRequest(""))
           }
