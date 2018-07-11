@@ -28,14 +28,18 @@ operation as well as storage deletion can be done via Apache CloudStack API and 
 
 # Deployment #
 
-In order for application to work ElasticSearch 6.2 component should be deployed.
+Following components should be deployed:
+
+* Elasticsearch 6.2
+
 The official documentation can be found at https://www.elastic.co/guide/en/elasticsearch/reference/6.2/index.html
 
 Once it is deployed next step is to create necessary indexes and templates. To achieve this [startup script]
-(/elasticsearch/start.sh) should be ran.
+(/elasticsearch/start.sh) should be executed.
 
-After setting up ElasticSearch its URI should be specified in configuration file along with other parameters in format
-cited below.
+* cs-kv-storage
+
+See [configuration](#configuration) and [build & run](#build-run) sections.
 
 # Configuration
 
