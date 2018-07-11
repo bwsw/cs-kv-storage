@@ -149,8 +149,4 @@ class HistoricalKvActor(implicit inj: Injector)
         case Left(_) => // do nothing
       }
   }
-
-  protected def logError(storage: String): Unit = {
-    log.error(s"Error while updating storage $storage information.")
-  }
 }
