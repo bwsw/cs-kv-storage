@@ -19,8 +19,10 @@ package com.bwsw.cloudstack.storage.kv.manager
 
 import com.bwsw.cloudstack.storage.kv.cache.StorageCache
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, NotFoundError, StorageError}
-import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils.{DocumentType, RegistryIndex, TemporaryStorageType,
-  getError}
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch.{RegistryIndex, DocumentType, getError}
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch.StorageType.Temporary
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch.ScriptOperations._
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch.RegistryFields._
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.{HttpClient, RequestSuccess}
 import org.slf4j.LoggerFactory
@@ -40,15 +42,17 @@ class ElasticsearchKvStorageManager(client: HttpClient, cache: StorageCache) ext
   def updateTempStorageTtl(storage: String, ttl: Long): Future[Either[StorageError, Unit]] = {
     process(
       storage,
-      s"if (ctx._source.type == '$TemporaryStorageType') { ctx._source.expiration_timestamp = ctx._source" +
-        s".expiration_timestamp - ctx._source.ttl + $ttl; ctx._source.ttl = $ttl } else { ctx.op='noop' }",
+      s"if (ctx._source.$Type == '$Temporary') { ctx._source.$ExpirationTimestamp = ctx._source" +
+        s".$ExpirationTimestamp - ctx._source.$Ttl + $ttl; ctx._source.$Ttl = $ttl } else" +
+        s" { ctx" +
+        s".op='$NoOp' }",
       delete = false)
   }
 
   def deleteTempStorage(storage: String): Future[Either[StorageError, Unit]] = {
     process(
       storage,
-      s"if (ctx._source.type == '$TemporaryStorageType') { ctx._source.deleted = true } else { ctx.op='noop' }",
+      s"if (ctx._source.$Type == '$Temporary') { ctx._source.$Deleted = true } else { ctx.op='$NoOp' }",
       delete = true)
   }
 
@@ -61,11 +65,11 @@ class ElasticsearchKvStorageManager(client: HttpClient, cache: StorageCache) ext
           Left(getError(failure))
       }
       case Right(RequestSuccess(_, _, _, updateRequest)) => updateRequest.result match {
-        case "updated" =>
+        case Updated =>
           if (delete)
             cache.delete(storage)
           Right(())
-        case "noop" => Left(BadRequestError())
+        case NoOp => Left(BadRequestError())
       }
     }
   }

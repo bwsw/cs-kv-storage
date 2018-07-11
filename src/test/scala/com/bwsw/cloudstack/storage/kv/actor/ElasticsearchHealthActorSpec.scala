@@ -26,8 +26,7 @@ import com.bwsw.cloudstack.storage.kv.entity.{Check, _}
 import com.bwsw.cloudstack.storage.kv.message.request.{HealthCheckRequest, TemplateCheckRequest}
 import com.bwsw.cloudstack.storage.kv.message.response.{DetailedHealthCheckResponse, HealthCheckResponse,
   StatusHealthCheckResponse}
-import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils
-import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils._
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch.{DataStorageTemplateName, HistoryStorageTemplateName, RegistryIndex}
 import com.sksamuel.elastic4s.admin.IndicesExists
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http._
@@ -102,10 +101,10 @@ class ElasticsearchHealthActorSpec
           Check(HistoryStorageTemplate, Unhealthy, NotFound)
 
       elasticsearchHealthActor ! HealthCheckRequest(true)
-      checkTestProbe.expectMsg(timeout, TemplateCheckRequest(ElasticsearchUtils.StorageTemplate, StorageTemplate))
+      checkTestProbe.expectMsg(timeout, TemplateCheckRequest(DataStorageTemplateName, StorageTemplate))
       checkTestProbe.reply(storageCheck)
       checkTestProbe
-        .expectMsg(timeout, TemplateCheckRequest(ElasticsearchUtils.HistoryStorageTemplate, HistoryStorageTemplate))
+        .expectMsg(timeout, TemplateCheckRequest(HistoryStorageTemplateName, HistoryStorageTemplate))
       checkTestProbe.reply(historyStorageCheck)
 
       expectMsg(

@@ -26,6 +26,7 @@ import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, Not
 import com.bwsw.cloudstack.storage.kv.message.request.{KvHistoryGetRequest, KvHistoryScrollRequest}
 import com.bwsw.cloudstack.storage.kv.mock.MockActor
 import com.bwsw.cloudstack.storage.kv.mock.MockActor.ResponsiveExpectation
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch.HistoryFields
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.FunSpecLike
 import org.scalatra.test.scalatest.ScalatraSuite
@@ -94,7 +95,7 @@ class KvHistoryServletSuite extends ScalatraSuite with FunSpecLike with MockFact
       }
 
       it("should return 400 Bad Request for requests with invalid operations") {
-        get(path, Seq(("operations", "set,clear,invalid"))) {
+        get(path, Seq(("operations", s"$Set,$Clear,invalid"))) {
           status should equal(400)
           body should equal("")
         }
@@ -185,7 +186,7 @@ class KvHistoryServletSuite extends ScalatraSuite with FunSpecLike with MockFact
       }
 
       it("should return 400 Bad Request for requests with opposite sort") {
-        get(path, Seq(("sort", "timestamp,key,-timestamp"))) {
+        get(path, Seq(("sort", s"${HistoryFields.Timestamp},${HistoryFields.Key},-${HistoryFields.Timestamp}"))) {
           status should equal(400)
           body should equal("")
         }
@@ -205,7 +206,7 @@ class KvHistoryServletSuite extends ScalatraSuite with FunSpecLike with MockFact
       }
 
       it("should skip duplicating keys") {
-        val key = "key1"
+        val key = someKey
         historyRequestActor.underlyingActor.clearAndExpect(ResponsiveExpectation(
           getRequest(scroll = Some(scroll), keys = immutable.Set(key)),
           () => Right(scrollResult)))
@@ -217,7 +218,7 @@ class KvHistoryServletSuite extends ScalatraSuite with FunSpecLike with MockFact
       }
 
       it("should successfully skip duplicating sorts") {
-        val key = "key"
+        val key = HistoryFields.Key
         historyRequestActor.underlyingActor
           .clearAndExpect(ResponsiveExpectation(
             getRequest(scroll = Some(scroll), sort = immutable.Set(SortField(key, Asc))),
@@ -346,7 +347,8 @@ class KvHistoryServletSuite extends ScalatraSuite with FunSpecLike with MockFact
   private def getJson(history: History): String = {
     val key = if (history.key == null) "null" else s"""\"${history.key}\""""
     val value = if (history.value == null) "null" else s"""\"${history.value}\""""
-    s"""{\"key\":$key,\"value\":$value,\"timestamp\":${history.timestamp},\"operation\":\"${history.operation}\"}"""
+    s"""{\"${HistoryFields.Key}\":$key,\"${HistoryFields.Value}\":$value,""" +
+      s"""\"${HistoryFields.Timestamp}\":${history.timestamp},\"${HistoryFields.Operation}\":\"${history.operation}\"}"""
   }
 
 }

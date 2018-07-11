@@ -18,7 +18,8 @@
 package com.bwsw.cloudstack.storage.kv.cache
 
 import com.bwsw.cloudstack.storage.kv.entity.Storage
-import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils._
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch._
+import com.bwsw.cloudstack.storage.kv.util.test.{getRequestSuccessFuture, getRequestFailureFuture}
 import com.sksamuel.elastic4s.get.GetDefinition
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http._
@@ -31,16 +32,16 @@ import scala.concurrent.{ExecutionContext, Future}
 class ElasticsearchStorageLoaderSpec extends AsyncFunSpec with AsyncMockFactory {
 
   private val storageUuid = "someStorage"
-  private val storage = Storage(storageUuid, "ACC", keepHistory = true)
+  private val storage = Storage(storageUuid, "ACC", historyEnabled = true)
   private val source = Map(
     "type" -> storage.storageType,
-    "history_enabled" -> storage.keepHistory,
+    "history_enabled" -> storage.historyEnabled,
     "deleted" -> false
   ).asInstanceOf[Map[String, AnyRef]]
 
   private val deletedSource = Map(
     "type" -> storage.storageType,
-    "is_history_enabled" -> storage.keepHistory,
+    "history_enabled" -> storage.historyEnabled,
     "deleted" -> true
   ).asInstanceOf[Map[String, AnyRef]]
 
@@ -84,7 +85,7 @@ class ElasticsearchStorageLoaderSpec extends AsyncFunSpec with AsyncMockFactory 
     }
 
     it("should fail with RuntimeException if loading from Elasticsearch fails") {
-      expectGetRequest(fakeClient).returning(getRequestFailureFuture)
+      expectGetRequest(fakeClient).returning(getRequestFailureFuture())
       recoverToSucceededIf[RuntimeException] {
         loader.load(storageUuid)
       }
@@ -97,14 +98,6 @@ class ElasticsearchStorageLoaderSpec extends AsyncFunSpec with AsyncMockFactory 
         loader.load(storageUuid)
       }
     }
-  }
-
-  private def getRequestSuccessFuture[T](response: T): Future[Right[RequestFailure, RequestSuccess[T]]] = {
-    Future(Right(RequestSuccess(200, Option.empty, Map.empty, response)))
-  }
-
-  private def getRequestFailureFuture[T]: Future[Left[RequestFailure, RequestSuccess[T]]] = {
-    Future(Left(RequestFailure(404, Option.empty, Map.empty, ElasticError.fromThrowable(new RuntimeException()))))
   }
 
   private def expectGetRequest(client: HttpClient) = {

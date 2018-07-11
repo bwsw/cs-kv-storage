@@ -79,7 +79,7 @@ class BufferedHistoryKvActor(implicit inj: Injector)
         true
       }
       else {
-        log.error("Failed to save " + history.toString)
+        log.error("Failed to save {}", history.toString)
         false
       }
   }

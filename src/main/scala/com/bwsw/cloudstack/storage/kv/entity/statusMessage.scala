@@ -17,6 +17,7 @@
 
 package com.bwsw.cloudstack.storage.kv.entity
 
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch.DefaultError
 sealed trait StatusMessage
 
 object Ok extends StatusMessage {
@@ -27,7 +28,7 @@ object NotFound extends StatusMessage {
   override def toString: String = "Not found"
 }
 
-case class ElasticsearchError(message: String = "Elasticsearch error") extends StatusMessage {
+case class ElasticsearchError(message: String = DefaultError) extends StatusMessage {
   override def toString: String = message
 }
 

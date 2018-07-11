@@ -20,25 +20,60 @@ package com.bwsw.cloudstack.storage.kv.util
 import com.bwsw.cloudstack.storage.kv.error.InternalError
 import com.sksamuel.elastic4s.http.RequestFailure
 
-/** An utility for Elasticsearch operations **/
-object ElasticsearchUtils {
+package object elasticsearch {
 
   val RegistryIndex = "storage-registry"
   val DocumentType = "_doc"
 
-  val HistoryStorageTemplate = "storage-history"
-  val StorageTemplate = "storage-data"
+  val HistoryStorageTemplateName = "storage-history"
+  val DataStorageTemplateName = "storage-data"
 
-  val TemporaryStorageType = "TEMP"
-  val StorageValueField = "value"
+  val DefaultError = "Elasticsearch error"
+
+  val ScrollTimeoutUnit = "ms"
+
+  object StorageType {
+    val Temporary = "TEMP"
+    val VirtualMachine = "VM"
+    val Account = "ACCOUNT"
+  }
+
+  object StorageFields {
+    val Value = "value"
+  }
+
+  object HistoryFields {
+    val Key = "key"
+    val Value = "value"
+    val Timestamp = "timestamp"
+    val TimestampUnit = "ms"
+    val Operation = "operation"
+  }
+
+  object RegistryFields {
+    val Type = "type"
+    val HistoryEnabled = "history_enabled"
+    val Deleted = "deleted"
+    val Account = "account"
+    val Name = "name"
+    val Description = "description"
+    val Ttl = "ttl"
+    val ExpirationTimestamp = "expiration_timestamp"
+  }
+
+  object ScriptOperations {
+    val NoOp = "noop"
+    val Updated = "updated"
+  }
 
   def getStorageIndex(storageUuid: String): String = s"storage-data-$storageUuid"
 
   def getHistoricalStorageIndex(storageUuid: String): String = s"storage-history-$storageUuid"
 
+
   def getError(requestFailure: RequestFailure): InternalError = {
     if (requestFailure.error == null)
-      InternalError("Elasticsearch error")
+      InternalError(DefaultError)
     else InternalError(requestFailure.error.reason)
   }
 }
