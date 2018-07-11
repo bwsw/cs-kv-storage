@@ -36,9 +36,10 @@ class ElasticsearchKvStorageManager(client: HttpClient) extends KvStorageManager
   import scala.concurrent.ExecutionContext.Implicits.global
 
   def updateTempStorageTtl(storage: String, ttl: Long): Future[Either[StorageError, Unit]] = {
-    client.execute(update(storage) in RegistryIndex / DocumentType
-      script
-      s"""if (ctx._source.type == "$TemporaryStorageType"){ ctx._source.ttl = $ttl } else { ctx.op="noop"}""")
+    client.execute(update(storage) in RegistryIndex / DocumentType script
+                     s"if (ctx._source.type == '$TemporaryStorageType')" +
+                       s"{ ctx._source.expiration_timestamp = ctx._source.expiration_timestamp - ctx._source.ttl + " +
+                       s"$ttl; ctx._source.ttl = $ttl } else { ctx.op='noop'}")
       .map {
         case Left(failure) => failure.status match {
           case 404 =>
@@ -63,7 +64,7 @@ class ElasticsearchKvStorageManager(client: HttpClient) extends KvStorageManager
         case Right(success) =>
           if (success.result.found)
             if (success.result.source("type") == TemporaryStorageType)
-              Right()
+              Right(())
             else
               Left(BadRequestError())
           else Left(NotFoundError())
