@@ -57,7 +57,7 @@ class ElasticsearchKvStorageManager(client: HttpClient, cache: StorageCache) ext
       case Left(failure) => failure.status match {
         case 404 => Left(NotFoundError())
         case _ =>
-          logger.error(s"Elasticsearch request failure: ${failure.error}")
+          logger.error("Elasticsearch update request failure: {}", failure.error)
           Left(getError(failure))
       }
       case Right(RequestSuccess(_, _, _, updateRequest)) => updateRequest.result match {

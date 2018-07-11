@@ -50,7 +50,7 @@ class ElasticsearchHistoryProcessor(
     }
     client.execute(bulk(indices)).map {
       case Left(failure) =>
-        logger.error(s"""Elasticsearch history save request failure: ${failure.error}""")
+        logger.error("Elasticsearch save request failure: {}", failure.error)
         Some(histories)
       case Right(success) =>
         val erroneous = success.result.items.filter(_.error.isDefined).map(item => histories(item.itemId))
@@ -88,7 +88,7 @@ class ElasticsearchHistoryProcessor(
 
     search.execute.map {
       case Left(failure) =>
-        logger.error(s"Elasticsearch search request failure $failure.error")
+        logger.error("Elasticsearch search request failure: {}", failure.error)
         Left(getError(failure))
       case Right(RequestSuccess(status, body, headers, result)) =>
         try {
@@ -123,7 +123,7 @@ class ElasticsearchHistoryProcessor(
         case Left(RequestFailure(400, _, _, _)) =>
           Left(BadRequestError())
         case Left(failure) =>
-          logger.error(s"Elasticsearch scroll request failure $failure.error")
+          logger.error("Elasticsearch scroll request failure: {}", failure.error)
           Left(getError(failure))
         case Right(success) =>
           try {
