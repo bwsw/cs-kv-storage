@@ -35,7 +35,7 @@ Following components should be deployed:
 The official documentation can be found at https://www.elastic.co/guide/en/elasticsearch/reference/6.2/index.html
 
 Once it is deployed next step is to create necessary indexes and templates. To achieve this [startup script]
-(/elasticsearch/start.sh) should be executed.
+(/elasticsearch/start.sh) should be executed (use -h option to print how to use it).
 
 * cs-kv-storage
 

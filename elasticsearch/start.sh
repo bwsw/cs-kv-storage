@@ -6,10 +6,11 @@ usage_and_exit() {
     echo "OPTIONS"
     echo -e "\t-u <user:password>\n\t\tcredentials for Elasticsearch"
     echo -e "\t-i\n\t\tinteractive mode to prompt for Elasticsearch credentials"
+    echo -e "\t-h\n\t\tprint help and exit"
 }
 
 TOKEN=""
-while getopts u:i opt
+while getopts u:ih opt
 do
     case $opt in
         i)
@@ -25,6 +26,9 @@ do
         u)
         [[ -z "$OPTARG" || $OPTARG != *:* ]] && usage_and_exit && exit 1
         TOKEN=$OPTARG
+        ;;
+        h)
+        usage_and_exit && exit 0
         ;;
     esac
 done
