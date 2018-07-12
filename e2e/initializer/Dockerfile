@@ -12,4 +12,6 @@ RUN \
   apt-get update && \
   apt-get install -y --no-install-recommends curl
 
+VOLUME [ "/etc/cs-kv-storage/configuration" ]
+
 CMD /opt/wait-for-it.sh ${ES_ADDRESS} -s -t 120 -- /etc/cs-kv-storage/init.sh ${ES_ADDRESS}

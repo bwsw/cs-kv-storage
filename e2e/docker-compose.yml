@@ -22,6 +22,8 @@ services:
     build: ./initializer
     depends_on:
       - elasticsearch
+    volumes:
+      - ./../elasticsearch:/etc/cs-kv-storage/configuration
     networks:
       - cs-kv-storage-e2e
   app:
