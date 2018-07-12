@@ -27,7 +27,7 @@ services:
   app:
     image: "git.bw-sw.com:5000/cloudstack-ecosystem/cs-kv-storage:${APP_DOCKER_TAG}"
     depends_on:
-      - initializer
+      - elasticsearch
     volumes:
       - applogs:/var/log/cs-kv-storage
       - "./cs-kv-storage/application.conf:/opt/cs-kv-storage/application.conf"
@@ -35,6 +35,8 @@ services:
       - cs-kv-storage-e2e
   newman:
     image: "postman/newman_ubuntu1404"
+    depends_on:
+      - app
     volumes:
       - ./newman:/etc/newman
     networks:
