@@ -1,6 +1,6 @@
 #!/bin/bash
 
-usage_and_exit() {
+print_help() {
     echo "USAGE"
     echo -e "\t$0 [options] <Elasticsearch URL>"
     echo "OPTIONS"
@@ -24,17 +24,17 @@ do
         fi
         ;;
         u)
-        [[ -z "$OPTARG" || $OPTARG != *:* ]] && usage_and_exit && exit 1
+        [[ -z "$OPTARG" || $OPTARG != *:* ]] && print_help && exit 1
         TOKEN=$OPTARG
         ;;
         h)
-        usage_and_exit && exit 0
+        print_help && exit 0
         ;;
     esac
 done
 shift $((OPTIND -1))
 
-[ -z "$1" ] && usage_and_exit && exit 1
+[ -z "$1" ] && print_help && exit 1
 
 check_status() {
     if [ -z "$2" ]
