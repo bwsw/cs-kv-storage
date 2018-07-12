@@ -43,9 +43,7 @@ class ElasticsearchKvStorageManager(client: HttpClient, cache: StorageCache) ext
     process(
       storage,
       s"if (ctx._source.$Type == '$Temporary') { ctx._source.$ExpirationTimestamp = ctx._source" +
-        s".$ExpirationTimestamp - ctx._source.$Ttl + $ttl; ctx._source.$Ttl = $ttl } else" +
-        s" { ctx" +
-        s".op='$NoOp' }",
+        s".$ExpirationTimestamp - ctx._source.$Ttl + $ttl; ctx._source.$Ttl = $ttl } else { ctx.op='$NoOp' }",
       delete = false)
   }
 

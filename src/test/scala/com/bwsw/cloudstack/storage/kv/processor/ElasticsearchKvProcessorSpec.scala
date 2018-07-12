@@ -58,7 +58,14 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
 
     describe("(get by the key)") {
       it("should return the value if the key exists") {
-        val getResponse = GetResponse(key, index, DocumentType, 1, found = true, null, Map(StorageFields.Value -> value))
+        val getResponse = GetResponse(
+          key,
+          index,
+          DocumentType,
+          1,
+          found = true,
+          null,
+          Map(StorageFields.Value -> value))
         expectGetRequest(fakeClient).returning(getRequestSuccessFuture(getResponse))
 
         elasticsearchKvProcessor.get(storage, key).map {

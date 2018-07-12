@@ -348,7 +348,8 @@ class KvHistoryServletSuite extends ScalatraSuite with FunSpecLike with MockFact
     val key = if (history.key == null) "null" else s"""\"${history.key}\""""
     val value = if (history.value == null) "null" else s"""\"${history.value}\""""
     s"""{\"${HistoryFields.Key}\":$key,\"${HistoryFields.Value}\":$value,""" +
-      s"""\"${HistoryFields.Timestamp}\":${history.timestamp},\"${HistoryFields.Operation}\":\"${history.operation}\"}"""
+      s"""\"${HistoryFields.Timestamp}\":${history.timestamp},\"${HistoryFields.Operation}\":""" +
+      s"""\"${history.operation}\"}"""
   }
 
 }
