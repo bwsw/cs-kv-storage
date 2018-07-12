@@ -115,7 +115,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
 
       it("should return None for keys that do not exist") {
         val noneKeyValues = keyValues + (keyValues.keys.head -> null)
-        val multiGetResponse = MultiGetResponse(keyValues.toList.map(kv => {
+        val multiGetResponse = MultiGetResponse(noneKeyValues.toList.map(kv => {
           if (kv._2 == null)
             GetResponse(kv._1, index, DocumentType, 1, found = false, null, null)
           else
@@ -123,8 +123,8 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
         }))
         expectsMultiGetRequest(fakeClient).returning(getRequestSuccessFuture(multiGetResponse))
 
-        elasticsearchKvProcessor.get(storage, keyValues.keys).map {
-          case Right(values) => assert(values == keyValues.map(kv => {
+        elasticsearchKvProcessor.get(storage, noneKeyValues.keys).map {
+          case Right(values) => assert(values == noneKeyValues.map(kv => {
             if (kv._2 == null)
               kv._1 -> None
             else
