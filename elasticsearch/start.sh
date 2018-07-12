@@ -66,7 +66,8 @@ HISTORY_TEMPLATE_CODE=`check_status "${HISTORY_TEMPLATE_PATH}" "${TOKEN}"`
 if [ ! $REGISTRY_CODE -eq 200 ]
 then
     echo "storage-registry index to be created"
-    create "${REGISTRY_PATH}" "@$DIR/storage-registry.json" "${TOKEN}" && echo "storage-registry index created"
+    create "${REGISTRY_PATH}" "@$DIR/storage-registry.json" "${TOKEN}" && echo "storage-registry index created" || \
+        exit 1
 else
     echo "storage-registry index exists"
 fi
@@ -75,7 +76,7 @@ if [ ! $REGISTRY_LOCK_CODE -eq 200 ]
 then
     echo "storage-registry-lock index to be created"
     create "${REGISTRY_LOCK_PATH}" "@$DIR/storage-registry-lock.json" "${TOKEN}" && \
-        echo "storage-registry-lock index created"
+        echo "storage-registry-lock index created" || exit 1
 else
     echo "storage-registry-lock index exists"
 fi
@@ -83,7 +84,8 @@ fi
 if [ ! $DATA_TEMPLATE_CODE -eq 200 ]
 then
     echo "storage-data template to be created"
-    create "${DATA_TEMPLATE_PATH}" "@$DIR/storage-data-template.json" "${TOKEN}" && echo "storage-data template created"
+    create "${DATA_TEMPLATE_PATH}" "@$DIR/storage-data-template.json" "${TOKEN}" && \
+        echo "storage-data template created" || exit 1
 else
     echo "storage-data template exists"
 fi
@@ -92,7 +94,7 @@ if [ ! $HISTORY_TEMPLATE_CODE -eq 200 ]
 then
     echo "storage-history template to be created"
     create "${HISTORY_TEMPLATE_PATH}" "@$DIR/storage-history-template.json" "${TOKEN}" && \
-        echo "storage-history template created"
+        echo "storage-history template created" || exit 1
 else
     echo "storage-history template exists"
 fi
