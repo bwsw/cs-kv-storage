@@ -43,27 +43,28 @@ class BufferedHistoryKvActor(implicit inj: Injector)
 
   timers.startPeriodicTimer(HistoryTimer, HistoryTimeout, configuration.getFlushHistoryTimeout)
 
-  override def postStop() {
+  override def postStop(): Unit = {
+    log.info("{}: flush {} records on shutdown", getClass.getName, buffer.size + retryBuffer.size)
     if (buffer.nonEmpty || retryBuffer.nonEmpty) {
-      log.info("BufferedHistoryKvActor shutdown initiated. Flushing {} records.", buffer.size + retryBuffer.size)
       val flushSize = configuration.getFlushHistorySize
-      val resultList = (buffer ++ retryBuffer).grouped(flushSize).toList.map(batch => historyProcessor.save(batch.toList))
+      val resultList = (buffer ++ retryBuffer).grouped(flushSize).toList
+        .map(batch => historyProcessor.save(batch.toList))
       Future.foldLeft(resultList)(0) {
         case (sum, None) => sum
         case (sum, Some(list)) => sum + list.size
       }.map { erroneousNum =>
         if (erroneousNum > 0)
-          log.error("BufferedHistoryKvActor unable to save {} histories on shutdown.", erroneousNum)
+          log.error("{}: unable to flush {} records on shutdown", getClass.getName, erroneousNum)
         else
-          log.info("BufferedHistoryKvActor shut down successfully.")
+          log.info("{}: shut down successfully", getClass.getName)
       }
     }
   }
 
   override def receive: Receive = {
     case HistoryTimeout =>
+      log.info("{}: flush {} records by timeout", getClass.getName, buffer.size + retryBuffer.size)
       if (buffer.nonEmpty || retryBuffer.nonEmpty) {
-        log.info("BufferedHistoryKvActor: flush of {} records by timeout.", buffer.size + retryBuffer.size)
         flush(buffer)
         flush(retryBuffer)
       }
@@ -72,8 +73,8 @@ class BufferedHistoryKvActor(implicit inj: Injector)
         case Some(erroneous) =>
           self ! KvHistoryRetry(erroneous)
         case None => //do nothing
-      }.recover{ case failure =>
-        log.error(failure.getCause, "Failure during flush processing")
+      }.recover { case ex =>
+        log.error(ex, "{}: failure during flush", getClass.getName)
         self ! KvHistoryRetry(histories)
       }
     case KvHistoryRetry(erroneous) =>
