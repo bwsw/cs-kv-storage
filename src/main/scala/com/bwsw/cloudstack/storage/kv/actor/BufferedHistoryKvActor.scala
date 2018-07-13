@@ -44,7 +44,7 @@ class BufferedHistoryKvActor(implicit inj: Injector)
   timers.startPeriodicTimer(HistoryTimer, HistoryTimeout, configuration.getFlushHistoryTimeout)
 
   override def postStop() {
-    if (buffer.size + retryBuffer.size > 0){
+    if (buffer.nonEmpty || retryBuffer.nonEmpty) {
       log.info("BufferedHistoryKvActor shutdown initiated. Flushing {} records.", buffer.size + retryBuffer.size)
       val flushSize = configuration.getFlushHistorySize
       val resultList = (buffer ++ retryBuffer).grouped(flushSize).toList.map(batch => historyProcessor.save(batch.toList))
