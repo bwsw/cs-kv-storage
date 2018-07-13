@@ -18,6 +18,7 @@
 package com.bwsw.cloudstack.storage.kv.entity
 
 import com.bwsw.cloudstack.storage.kv.util.elasticsearch.DefaultError
+
 sealed trait StatusMessage
 
 object Ok extends StatusMessage {
