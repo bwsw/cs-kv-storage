@@ -1,18 +1,16 @@
 {
 	"info": {
-		"_postman_id": "9998de18-9307-403e-96f3-ecd2b7cfe7c3",
 		"name": "cs-kv-storage",
+		"_postman_id": "dcd87e92-107f-87fb-ed3f-d95704e92abd",
 		"description": "E2E tests for cs-kv-storage",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
 			"name": "kv-storage",
-			"description": null,
 			"item": [
 				{
 					"name": "List keys",
-					"description": null,
 					"item": [
 						{
 							"name": "List a storage",
@@ -193,7 +191,6 @@
 				},
 				{
 					"name": "Get value",
-					"description": null,
 					"item": [
 						{
 							"name": "Get a value",
@@ -364,7 +361,6 @@
 				},
 				{
 					"name": "Get multiple values",
-					"description": null,
 					"item": [
 						{
 							"name": "Get values",
@@ -559,7 +555,6 @@
 				},
 				{
 					"name": "Set value",
-					"description": null,
 					"item": [
 						{
 							"name": "Set with wrong Content-Type",
@@ -692,7 +687,6 @@
 				},
 				{
 					"name": "Set multiple values",
-					"description": null,
 					"item": [
 						{
 							"name": "Set with wrong Content-Type",
@@ -973,7 +967,6 @@
 				},
 				{
 					"name": "Delete value",
-					"description": null,
 					"item": [
 						{
 							"name": "Delete from non existent storage",
@@ -1093,7 +1086,6 @@
 				},
 				{
 					"name": "Delete multiple values",
-					"description": null,
 					"item": [
 						{
 							"name": "Delete with wrong Content-Type",
@@ -1342,7 +1334,6 @@
 				},
 				{
 					"name": "Clear storage",
-					"description": null,
 					"item": [
 						{
 							"name": "Clear storage",
@@ -1441,11 +1432,9 @@
 		},
 		{
 			"name": "kv-storage-manager",
-			"description": null,
 			"item": [
 				{
 					"name": "Set temporary storage ttl",
-					"description": null,
 					"item": [
 						{
 							"name": "Set TTL of non existent storage",
@@ -1714,7 +1703,6 @@
 				},
 				{
 					"name": "Delete temporary storage",
-					"description": null,
 					"item": [
 						{
 							"name": "Delete persistent storage",
@@ -1722,7 +1710,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "e6030dc9-9312-42fc-8dcc-22a4ee86a63f",
+										"id": "ae335863-bb13-488e-b45f-b00cd8872de2",
 										"type": "text/javascript",
 										"exec": [
 											"pm.test(\"Status code is 400\", function () {",
@@ -1735,12 +1723,14 @@
 											"",
 											"pm.sendRequest({",
 											"        url: pm.variables.get(\"es_url\") + \"/storage-registry/_doc/\" + pm.variables.get(\"acc_storage\"),",
-											"        method: 'HEAD'},",
+											"        method: 'GET'},",
 											"    function (err, res) {",
 											"        pm.test(\"Storage is not deleted\", function () {",
 											"            pm.expect(res).to.have.property('code', 200);",
 											"            pm.expect(res).to.have.property('status', 'OK');",
+											"            pm.expect(res.json()._source.deleted).to.eql(false);",
 											"        });",
+											"",
 											"    }",
 											");"
 										]
@@ -1808,117 +1798,12 @@
 							"response": []
 						},
 						{
-							"name": "Delete storage with no index",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "9a6b606b-da10-406e-af2a-386da0fefea8",
-										"type": "text/javascript",
-										"exec": [
-											"pm.test(\"Status code is 200\", function () {",
-											"    pm.response.to.have.status(200);",
-											"});",
-											"",
-											"pm.test(\"Body is empty\", function () {",
-											"    pm.response.to.have.body(\"\");",
-											"});",
-											"",
-											"",
-											"pm.sendRequest({",
-											"        url: pm.variables.get(\"es_url\") + \"/storage-registry/_doc/\" + pm.variables.get(\"no_index_storage\"),",
-											"        method: 'HEAD'},",
-											"    function (err, res) {",
-											"        pm.test(\"Storage record in registry deleted\", function () {",
-											"            pm.expect(res).to.have.property('code', 404);",
-											"            pm.expect(res).to.have.property('status', 'Not Found');",
-											"        });",
-											"    }",
-											");"
-										]
-									}
-								}
-							],
-							"request": {
-								"method": "DELETE",
-								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": ""
-								},
-								"url": {
-									"raw": "{{url}}/storage/{{no_index_storage}}",
-									"host": [
-										"{{url}}"
-									],
-									"path": [
-										"storage",
-										"{{no_index_storage}}"
-									]
-								},
-								"description": "Delete temporary storage that have no record with its UUID in storage registry"
-							},
-							"response": []
-						},
-						{
-							"name": "Delete unregistered storage",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "06a24d02-082d-416e-950a-e42d4ceae842",
-										"type": "text/javascript",
-										"exec": [
-											"pm.test(\"Status code is 200\", function () {",
-											"    pm.response.to.have.status(200);",
-											"});",
-											"",
-											"pm.test(\"Body is empty\", function () {",
-											"    pm.response.to.have.body(\"\");",
-											"});",
-											"",
-											"pm.sendRequest({",
-											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"not_registered_storage\"),",
-											"        method: 'HEAD'},",
-											"    function (err, res) {",
-											"        pm.test(\"Storage index deleted\", function () {",
-											"            pm.expect(res).to.have.property('code', 404);",
-											"            pm.expect(res).to.have.property('status', 'Not Found');",
-											"        });",
-											"    }",
-											");"
-										]
-									}
-								}
-							],
-							"request": {
-								"method": "DELETE",
-								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": ""
-								},
-								"url": {
-									"raw": "{{url}}/storage/{{not_registered_storage}}",
-									"host": [
-										"{{url}}"
-									],
-									"path": [
-										"storage",
-										"{{not_registered_storage}}"
-									]
-								},
-								"description": "Delete temporary storage that have no record with its UUID in storage registry"
-							},
-							"response": []
-						},
-						{
 							"name": "Delete temporary storage",
 							"event": [
 								{
 									"listen": "test",
 									"script": {
-										"id": "a569be0a-d84f-475a-a859-b8b2260c4a06",
+										"id": "122029a7-7015-4c37-9bd6-4f92b620fef8",
 										"type": "text/javascript",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
@@ -1932,25 +1817,16 @@
 											"",
 											"pm.sendRequest({",
 											"        url: pm.variables.get(\"es_url\") + \"/storage-registry/_doc/\" + pm.variables.get(\"temp_storage\"),",
-											"        method: 'HEAD'},",
+											"        method: 'GET'},",
 											"    function (err, res) {",
-											"        pm.test(\"Storage record in registry deleted\", function () {",
-											"            pm.expect(res).to.have.property('code', 404);",
-											"            pm.expect(res).to.have.property('status', 'Not Found');",
+											"        pm.test(\"Storage is deleted\", function () {",
+											"            pm.expect(res).to.have.property('code', 200);",
+											"            pm.expect(res).to.have.property('status', 'OK');",
+											"            pm.expect(res.json()._source.deleted).to.eql(true);",
 											"        });",
 											"    }",
 											");",
-											"",
-											"pm.sendRequest({",
-											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"temp_storage\"),",
-											"        method: 'HEAD'},",
-											"    function (err, res) {",
-											"        pm.test(\"Storage index deleted\", function () {",
-											"            pm.expect(res).to.have.property('code', 404);",
-											"            pm.expect(res).to.have.property('status', 'Not Found');",
-											"        });",
-											"    }",
-											");"
+											""
 										]
 									}
 								}
@@ -1982,15 +1858,12 @@
 		},
 		{
 			"name": "kv-history",
-			"description": "",
 			"item": [
 				{
 					"name": "Search and list history",
-					"description": "",
 					"item": [
 						{
 							"name": "validation",
-							"description": "",
 							"item": [
 								{
 									"name": "Search with invalid operations",
@@ -2017,7 +1890,10 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {},
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
 										"url": {
 											"raw": "{{url}}/history/{{read_only_storage}}?operations=set,clear,invalid",
 											"host": [
@@ -2062,7 +1938,10 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {},
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
 										"url": {
 											"raw": "{{url}}/history/{{read_only_storage}}?start=today",
 											"host": [
@@ -2107,7 +1986,10 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {},
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
 										"url": {
 											"raw": "{{url}}/history/{{read_only_storage}}?start=-1000",
 											"host": [
@@ -2152,7 +2034,10 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {},
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
 										"url": {
 											"raw": "{{url}}/history/{{read_only_storage}}?end=today",
 											"host": [
@@ -2197,7 +2082,10 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {},
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
 										"url": {
 											"raw": "{{url}}/history/{{read_only_storage}}?end=-1000",
 											"host": [
@@ -2242,7 +2130,10 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {},
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
 										"url": {
 											"raw": "{{url}}/history/{{read_only_storage}}?start=1000&end=500",
 											"host": [
@@ -2291,7 +2182,10 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {},
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
 										"url": {
 											"raw": "{{url}}/history/{{read_only_storage}}?size=large",
 											"host": [
@@ -2336,7 +2230,10 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {},
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
 										"url": {
 											"raw": "{{url}}/history/{{read_only_storage}}?size=-1000",
 											"host": [
@@ -2381,7 +2278,10 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {},
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
 										"url": {
 											"raw": "{{url}}/history/{{read_only_storage}}?page=first",
 											"host": [
@@ -2426,7 +2326,10 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {},
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
 										"url": {
 											"raw": "{{url}}/history/{{read_only_storage}}?page=-1000",
 											"host": [
@@ -2471,7 +2374,10 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {},
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
 										"url": {
 											"raw": "{{url}}/history/{{read_only_storage}}?scroll=1.day",
 											"host": [
@@ -2516,7 +2422,10 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {},
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
 										"url": {
 											"raw": "{{url}}/history/{{read_only_storage}}?scroll=-1000",
 											"host": [
@@ -2561,7 +2470,10 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {},
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
 										"url": {
 											"raw": "{{url}}/history/{{read_only_storage}}?sort=bubble",
 											"host": [
@@ -2606,7 +2518,10 @@
 									"request": {
 										"method": "GET",
 										"header": [],
-										"body": {},
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
 										"url": {
 											"raw": "{{url}}/history/{{read_only_storage}}?sort=timestamp,key,-timestamp",
 											"host": [
@@ -2665,7 +2580,10 @@
 							"request": {
 								"method": "GET",
 								"header": [],
-								"body": {},
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
 								"url": {
 									"raw": "{{url}}/history/{{read_only_storage}}?keys=key1,key1&sort=timestamp",
 									"host": [
@@ -2724,7 +2642,10 @@
 							"request": {
 								"method": "GET",
 								"header": [],
-								"body": {},
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
 								"url": {
 									"raw": "{{url}}/history/{{read_only_storage}}?operations=delete,delete",
 									"host": [
@@ -2786,7 +2707,10 @@
 							"request": {
 								"method": "GET",
 								"header": [],
-								"body": {},
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
 								"url": {
 									"raw": "{{url}}/history/{{read_only_storage}}?sort=key,timestamp,key",
 									"host": [
@@ -2842,7 +2766,10 @@
 							"request": {
 								"method": "GET",
 								"header": [],
-								"body": {},
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
 								"url": {
 									"raw": "{{url}}/history/{{read_only_storage}}?size=2&page=3&sort=key",
 									"host": [
@@ -2906,7 +2833,10 @@
 							"request": {
 								"method": "GET",
 								"header": [],
-								"body": {},
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
 								"url": {
 									"raw": "{{url}}/history/{{read_only_storage}}?scroll=30000&size=3&sort=key,-timestamp",
 									"host": [
@@ -2970,7 +2900,10 @@
 							"request": {
 								"method": "GET",
 								"header": [],
-								"body": {},
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
 								"url": {
 									"raw": "{{url}}/history/{{read_only_storage}}?page=2&scroll=30000&size=3&sort=key,-timestamp",
 									"host": [
@@ -3027,7 +2960,10 @@
 							"request": {
 								"method": "GET",
 								"header": [],
-								"body": {},
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
 								"url": {
 									"raw": "{{url}}/history/{{no_history_storage}}",
 									"host": [
@@ -3066,7 +3002,10 @@
 							"request": {
 								"method": "GET",
 								"header": [],
-								"body": {},
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
 								"url": {
 									"raw": "{{url}}/history/{{acc_storage}}",
 									"host": [
@@ -3105,7 +3044,10 @@
 							"request": {
 								"method": "GET",
 								"header": [],
-								"body": {},
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
 								"url": {
 									"raw": "{{url}}/history/{{non_existent_storage}}",
 									"host": [
@@ -3124,7 +3066,6 @@
 				},
 				{
 					"name": "List history",
-					"description": "",
 					"item": [
 						{
 							"name": "List history for subsequent request",
@@ -3486,7 +3427,6 @@
 		},
 		{
 			"name": "health",
-			"description": null,
 			"item": [
 				{
 					"name": "Check health",
@@ -3887,141 +3827,115 @@
 			"id": "5332bc22-159e-48fa-b269-6873b5f87eb7",
 			"key": "storage_uuid",
 			"value": "b3d1b2a6-bd5b-49d5-bd9e-86538fdc180d",
-			"type": "string",
-			"description": ""
+			"type": "string"
 		},
 		{
 			"id": "31670846-1a02-47f2-a182-0013af755bae",
 			"key": "es_url",
 			"value": "http://elasticsearch:9200",
-			"type": "string",
-			"description": ""
+			"type": "string"
 		},
 		{
 			"id": "29551212-f4a8-4875-ad90-579237f7607e",
 			"key": "some_key",
 			"value": "key1",
-			"type": "string",
-			"description": ""
+			"type": "string"
 		},
 		{
 			"id": "0412a306-b822-41c4-ab2c-bf1ed2fccef8",
 			"key": "some_value",
 			"value": "value1",
-			"type": "string",
-			"description": ""
+			"type": "string"
 		},
 		{
 			"id": "9acfadc0-e0f1-44e2-be2e-170b0c74e3e2",
 			"key": "empty_key",
 			"value": "empty_key",
-			"type": "string",
-			"description": ""
+			"type": "string"
 		},
 		{
 			"id": "6e2e9bc4-5191-4317-965d-395e8b224bcf",
 			"key": "non_existent_storage",
 			"value": "nonexistent",
-			"type": "string",
-			"description": ""
+			"type": "string"
 		},
 		{
 			"id": "c612bbbe-86dc-4446-a954-ce042316186a",
 			"key": "read_only_storage",
 			"value": "read-only",
-			"type": "string",
-			"description": ""
+			"type": "string"
 		},
 		{
 			"id": "f91e82c9-355d-447c-82f3-d88da54753af",
 			"key": "editable_storage",
 			"value": "editable-single",
-			"type": "string",
-			"description": ""
+			"type": "string"
 		},
 		{
 			"id": "4a96d955-2558-4b63-a7d0-1a88926aab7f",
 			"key": "multieditable_storage",
 			"value": "editable-multiple",
-			"type": "string",
-			"description": ""
+			"type": "string"
 		},
 		{
 			"id": "ee26f829-9518-4306-b567-177115ad854b",
 			"key": "deletable_storage",
 			"value": "deletable-single",
-			"type": "string",
-			"description": ""
+			"type": "string"
 		},
 		{
 			"id": "bf5d5f82-1705-40b4-a470-f6c01a004a62",
 			"key": "multideletable_storage",
 			"value": "deletable-multiple",
-			"type": "string",
-			"description": ""
+			"type": "string"
 		},
 		{
 			"id": "86856615-aaac-4d71-ad1a-df17be2d94ca",
 			"key": "cleanable_storage",
 			"value": "cleanable",
-			"type": "string",
-			"description": ""
+			"type": "string"
 		},
 		{
 			"id": "11ff4e21-9479-4d8c-8465-c7ff6a8d8cd2",
 			"key": "temp_storage",
 			"value": "temp",
-			"type": "string",
-			"description": ""
+			"type": "string"
 		},
 		{
 			"id": "20672d2a-a816-4df6-b664-06c843bd1147",
 			"key": "acc_storage",
 			"value": "account",
-			"type": "string",
-			"description": ""
+			"type": "string"
 		},
 		{
 			"id": "7b54600c-8620-4fc5-ac6e-a738cac981c0",
 			"key": "no_index_storage",
 			"value": "no-index",
-			"type": "string",
-			"description": ""
-		},
-		{
-			"id": "c3f7f928-6564-430d-aa5d-e44ad1fcf5f5",
-			"key": "not_registered_storage",
-			"value": "not-registered",
-			"type": "string",
-			"description": ""
+			"type": "string"
 		},
 		{
 			"id": "01b656d5-7b5a-4a4c-8a73-db4080f847cb",
 			"key": "storage_registry",
 			"value": "storage-registry",
-			"type": "string",
-			"description": ""
+			"type": "string"
 		},
 		{
 			"id": "e24754e6-1fe6-425e-b68f-e20ee09a1d36",
 			"key": "storage_data_template",
 			"value": "storage-data",
-			"type": "string",
-			"description": ""
+			"type": "string"
 		},
 		{
 			"id": "d3376450-405e-4557-802c-a1295f907c46",
 			"key": "storage_history_template",
 			"value": "storage-history",
-			"type": "string",
-			"description": ""
+			"type": "string"
 		},
 		{
 			"id": "304c4297-30df-4c14-b19f-d827bca13973",
 			"key": "no_history_storage",
 			"value": "no-history",
-			"type": "string",
-			"description": ""
+			"type": "string"
 		}
 	]
 }
