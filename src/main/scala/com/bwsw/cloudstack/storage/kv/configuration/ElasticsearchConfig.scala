@@ -52,7 +52,7 @@ class ElasticsearchConfig {
   }
 
   def isAuthEnabled: Boolean = {
-    try{
+    try {
       conf.hasPath("auth.username") && conf.hasPath("auth.password")
     } catch {
       case _: ConfigException.BadPath => false

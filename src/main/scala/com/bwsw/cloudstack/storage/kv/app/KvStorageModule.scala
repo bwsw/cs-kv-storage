@@ -33,7 +33,6 @@ import org.apache.http.auth.{AuthScope, UsernamePasswordCredentials}
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.impl.client.BasicCredentialsProvider
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder
-import org.elasticsearch.client.RestClientBuilder.{HttpClientConfigCallback, RequestConfigCallback}
 import scaldi.Module
 
 class KvStorageModule extends Module {
@@ -56,18 +55,13 @@ class KvStorageModule extends Module {
     }
     HttpClient(
       ElasticsearchClientUri(elasticsearchConfig.getUri),
-      new RequestConfigCallback {
-        override def customizeRequestConfig(requestConfigBuilder: RequestConfig.Builder) = {
-          requestConfigBuilder
-        }
+      (requestConfigBuilder: RequestConfig.Builder) => {
+        requestConfigBuilder
       },
-      new HttpClientConfigCallback {
-        override def customizeHttpClient(httpClientBuilder: HttpAsyncClientBuilder) = {
-          httpClientBuilder.setDefaultCredentialsProvider(provider)
-        }
+      (httpClientBuilder: HttpAsyncClientBuilder) => {
+        httpClientBuilder.setDefaultCredentialsProvider(provider)
       })
-  }
-  else {
+  } else {
     HttpClient(ElasticsearchClientUri(elasticsearchConfig.getUri))
   }
 
