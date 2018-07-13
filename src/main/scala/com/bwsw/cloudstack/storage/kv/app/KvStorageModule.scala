@@ -29,6 +29,10 @@ import com.bwsw.cloudstack.storage.kv.processor.{ElasticsearchHistoryProcessor, 
 import com.bwsw.cloudstack.storage.kv.util.Clock
 import com.sksamuel.elastic4s.ElasticsearchClientUri
 import com.sksamuel.elastic4s.http.HttpClient
+import org.apache.http.auth.{AuthScope, UsernamePasswordCredentials}
+import org.apache.http.client.config.RequestConfig
+import org.apache.http.impl.client.BasicCredentialsProvider
+import org.apache.http.impl.nio.client.HttpAsyncClientBuilder
 import scaldi.Module
 
 class KvStorageModule extends Module {
@@ -40,6 +44,27 @@ class KvStorageModule extends Module {
   implicit val actorSystem: ActorSystem = ActorSystem("cs-kv-storage")
   implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
 
+  val client: HttpClient = if (elasticsearchConfig.isAuthEnabled) {
+    lazy val provider: BasicCredentialsProvider = {
+      val provider = new BasicCredentialsProvider
+      val credentials = new UsernamePasswordCredentials(
+        elasticsearchConfig.getUsername,
+        elasticsearchConfig.getPassword)
+      provider.setCredentials(AuthScope.ANY, credentials)
+      provider
+    }
+    HttpClient(
+      ElasticsearchClientUri(elasticsearchConfig.getUri),
+      (requestConfigBuilder: RequestConfig.Builder) => {
+        requestConfigBuilder
+      },
+      (httpClientBuilder: HttpAsyncClientBuilder) => {
+        httpClientBuilder.setDefaultCredentialsProvider(provider)
+      })
+  } else {
+    HttpClient(ElasticsearchClientUri(elasticsearchConfig.getUri))
+  }
+
   bind[Clock] toNonLazy clock
   bind[AppConfig] toNonLazy appConfig
   bind[ElasticsearchConfig] toNonLazy elasticsearchConfig
@@ -47,7 +72,7 @@ class KvStorageModule extends Module {
   bind[ActorSystem] toNonLazy actorSystem
   bind[Materializer] toNonLazy actorMaterializer
 
-  bind[HttpClient] toNonLazy HttpClient(ElasticsearchClientUri(elasticsearchConfig.getUri))
+  bind[HttpClient] toNonLazy client
   bind[KvProcessor] to injected[ElasticsearchKvProcessor]
   bind[KvStorageManager] to injected[ElasticsearchKvStorageManager]
   bind[HistoryKvActor] to injected[BufferedHistoryKvActor]

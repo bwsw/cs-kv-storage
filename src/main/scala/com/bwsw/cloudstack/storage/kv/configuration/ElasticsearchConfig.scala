@@ -17,7 +17,7 @@
 
 package com.bwsw.cloudstack.storage.kv.configuration
 
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{ConfigException, ConfigFactory}
 
 /** Provides access to Elasticsearch specific configurations **/
 class ElasticsearchConfig {
@@ -49,5 +49,13 @@ class ElasticsearchConfig {
 
   def getMaxKeyLength: Int = {
     conf.getInt("limit.key.max-size")
+  }
+
+  def isAuthEnabled: Boolean = {
+    try {
+      conf.hasPath("auth.username") && conf.hasPath("auth.password")
+    } catch {
+      case _: ConfigException.BadPath => false
+    }
   }
 }
