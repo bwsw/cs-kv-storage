@@ -19,7 +19,8 @@ package com.bwsw.cloudstack.storage.kv.processor
 
 import com.bwsw.cloudstack.storage.kv.configuration.{AppConfig, ElasticsearchConfig}
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError}
-import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils._
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch._
+import com.bwsw.cloudstack.storage.kv.util.test._
 import com.sksamuel.elastic4s.bulk.BulkDefinition
 import com.sksamuel.elastic4s.delete.{DeleteByIdDefinition, DeleteByQueryDefinition}
 import com.sksamuel.elastic4s.get.{GetDefinition, MultiGetDefinition}
@@ -57,7 +58,14 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
 
     describe("(get by the key)") {
       it("should return the value if the key exists") {
-        val getResponse = GetResponse(key, index, DocumentType, 1, found = true, null, Map(StorageValueField -> value))
+        val getResponse = GetResponse(
+          key,
+          index,
+          DocumentType,
+          1,
+          found = true,
+          null,
+          Map(StorageFields.Value -> value))
         expectGetRequest(fakeClient).returning(getRequestSuccessFuture(getResponse))
 
         elasticsearchKvProcessor.get(storage, key).map {
@@ -87,7 +95,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
       }
 
       it("should return InternalError if the request fails") {
-        expectGetRequest(fakeClient).returning(getRequestFailureFuture)
+        expectGetRequest(fakeClient).returning(getRequestFailureFuture())
         elasticsearchKvProcessor.get(storage, key).map {
           case Left(_: InternalError) => succeed
           case _ => fail
@@ -104,7 +112,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
           1,
           found = true,
           null,
-          Map(StorageValueField -> kv._2))))
+          Map(StorageFields.Value -> kv._2))))
         expectsMultiGetRequest(fakeClient).returning(getRequestSuccessFuture(multiGetResponse))
 
         elasticsearchKvProcessor.get(storage, keyValues.keys).map {
@@ -115,16 +123,16 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
 
       it("should return None for keys that do not exist") {
         val noneKeyValues = keyValues + (keyValues.keys.head -> null)
-        val multiGetResponse = MultiGetResponse(keyValues.toList.map(kv => {
+        val multiGetResponse = MultiGetResponse(noneKeyValues.toList.map(kv => {
           if (kv._2 == null)
             GetResponse(kv._1, index, DocumentType, 1, found = false, null, null)
           else
-            GetResponse(kv._1, index, DocumentType, 1, found = true, null, Map(StorageValueField -> kv._2))
+            GetResponse(kv._1, index, DocumentType, 1, found = true, null, Map(StorageFields.Value -> kv._2))
         }))
         expectsMultiGetRequest(fakeClient).returning(getRequestSuccessFuture(multiGetResponse))
 
-        elasticsearchKvProcessor.get(storage, keyValues.keys).map {
-          case Right(values) => assert(values == keyValues.map(kv => {
+        elasticsearchKvProcessor.get(storage, noneKeyValues.keys).map {
+          case Right(values) => assert(values == noneKeyValues.map(kv => {
             if (kv._2 == null)
               kv._1 -> None
             else
@@ -145,7 +153,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
       }
 
       it("should return InternalError if the request fails") {
-        expectsMultiGetRequest(fakeClient).returning(getRequestFailureFuture)
+        expectsMultiGetRequest(fakeClient).returning(getRequestFailureFuture())
         elasticsearchKvProcessor.get(storage, keyValues.keys).map {
           case Left(_: InternalError) => succeed
           case _ => fail
@@ -233,7 +241,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
 
       it("should return InternalError if the request fails") {
         expectsMaxKeyValueLength(fakeEsConf, key.length, value.length)
-        expectsIndexRequest(fakeClient).returning(getRequestFailureFuture)
+        expectsIndexRequest(fakeClient).returning(getRequestFailureFuture())
         elasticsearchKvProcessor.set(storage, key, value).map {
           case Left(error: InternalError) => succeed
           case _ => fail
@@ -356,7 +364,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
 
       it("should return InternalError if the request fails") {
         expectsMaxKeyValueLength(fakeEsConf, getMaxLength(keyValues.keys), getMaxLength(keyValues.values))
-        expectsBulkIndexRequest(fakeClient, keyValues).returning(getRequestFailureFuture)
+        expectsBulkIndexRequest(fakeClient, keyValues).returning(getRequestFailureFuture())
         elasticsearchKvProcessor.set(storage, keyValues).map {
           case Left(_: InternalError) => succeed
           case _ => fail
@@ -386,7 +394,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
       }
 
       it("should return InternalError if the request fails") {
-        expectsDeleteRequest(fakeClient).returning(getRequestFailureFuture)
+        expectsDeleteRequest(fakeClient).returning(getRequestFailureFuture())
         elasticsearchKvProcessor.delete(storage, key).map {
           case Left(_: InternalError) => succeed
           case _ => fail
@@ -435,7 +443,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
       }
 
       it("should return InternalError if the request fails") {
-        expectsBulkDeleteRequest(fakeClient).returning(getRequestFailureFuture)
+        expectsBulkDeleteRequest(fakeClient).returning(getRequestFailureFuture())
         elasticsearchKvProcessor.delete(storage, keyValues.keys).map {
           case Left(_: InternalError) => succeed
           case _ => fail
@@ -459,7 +467,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
         None,
         None,
         None,
-        Map(StorageValueField -> kv._2),
+        Map(StorageFields.Value -> kv._2),
         null,
         null,
         null)).toArray
@@ -545,7 +553,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
       }
 
       it("should return InternalError if the request fails") {
-        expectsSearchRequest(fakeClient, fakeEsConf, scrollSize).returning(getRequestFailureFuture)
+        expectsSearchRequest(fakeClient, fakeEsConf, scrollSize).returning(getRequestFailureFuture())
         elasticsearchKvProcessor.list(storage).map {
           case Left(_: InternalError) => succeed
           case _ => fail
@@ -554,7 +562,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
 
       it("should return InternalError if scrolling fails") {
         expectsSearchRequest(fakeClient, fakeEsConf, scrollSize).returning(getRequestSuccessFuture(searchResponse))
-        expectsSearchScrollRequest(fakeClient, fakeConf, scrollId1).returning(getRequestFailureFuture)
+        expectsSearchScrollRequest(fakeClient, fakeConf, scrollId1).returning(getRequestFailureFuture())
         elasticsearchKvProcessor.list(storage).map {
           case Left(_: InternalError) => succeed
           case _ => fail
@@ -583,21 +591,13 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
       }
 
       it("should return InternalError if the request fails") {
-        expectsDeleteByQueryRequest(fakeClient).returning(getRequestFailureFuture)
+        expectsDeleteByQueryRequest(fakeClient).returning(getRequestFailureFuture())
         elasticsearchKvProcessor.clear(storage).map {
           case Left(error: InternalError) => succeed
           case _ => fail
         }
       }
     }
-  }
-
-  private def getRequestSuccessFuture[T](response: T): Future[Right[RequestFailure, RequestSuccess[T]]] = {
-    Future(Right(RequestSuccess(200, Option.empty, Map.empty, response)))
-  }
-
-  private def getRequestFailureFuture[T]: Future[Left[RequestFailure, RequestSuccess[T]]] = {
-    Future(Left(RequestFailure(404, Option.empty, Map.empty, ElasticError.fromThrowable(new RuntimeException()))))
   }
 
   private def expectGetRequest(client: HttpClient) = {
@@ -619,18 +619,18 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
     (client.execute[IndexDefinition, IndexResponse](_: IndexDefinition)(
       _: HttpExecutable[IndexDefinition, IndexResponse],
       _: ExecutionContext))
-      .expects(indexInto(index / DocumentType) id key fields (StorageValueField -> value), IndexHttpExecutable, *)
+      .expects(indexInto(index / DocumentType) id key fields (StorageFields.Value -> value), IndexHttpExecutable, *)
   }
 
   private def expectsIndexRequest(client: HttpClient, key: String, value: String) = {
     (client.execute[IndexDefinition, IndexResponse](_: IndexDefinition)(
       _: HttpExecutable[IndexDefinition, IndexResponse],
       _: ExecutionContext))
-      .expects(indexInto(index / DocumentType) id key fields (StorageValueField -> value), IndexHttpExecutable, *)
+      .expects(indexInto(index / DocumentType) id key fields (StorageFields.Value -> value), IndexHttpExecutable, *)
   }
 
   private def expectsBulkIndexRequest(client: HttpClient, kvs: Map[String, String]) = {
-    val sets = kvs.toList.map(kv => indexInto(index / DocumentType) id kv._1 fields (StorageValueField -> kv._2))
+    val sets = kvs.toList.map(kv => indexInto(index / DocumentType) id kv._1 fields (StorageFields.Value -> kv._2))
     (client.execute[BulkDefinition, BulkResponse](_: BulkDefinition)(
       _: HttpExecutable[BulkDefinition, BulkResponse],
       _: ExecutionContext))

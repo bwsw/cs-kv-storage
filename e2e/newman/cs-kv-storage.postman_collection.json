@@ -1,0 +1,4476 @@
+{
+	"info": {
+		"name": "cs-kv-storage",
+		"_postman_id": "4eabd494-d186-754f-5ab1-064514e95db3",
+		"description": "E2E tests for cs-kv-storage",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "kv-storage",
+			"item": [
+				{
+					"name": "List keys",
+					"item": [
+						{
+							"name": "List a storage",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "8d355335-0953-4854-8c56-48beb876dfc2",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function() {",
+											"  pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Content-Type is application/json\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+											"});",
+											"",
+											"pm.test(\"Response body contains list of keys\", function () {",
+											"    var jsonData = pm.response.json().sort();",
+											"    pm.expect(jsonData).to.eql(['key1', 'key2', 'key3', 'key4', 'key5']);",
+											"});",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/list/{{read_only_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"list",
+										"{{read_only_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "List an empty storage",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "2517b115-9ba1-4c38-ba67-debb430bade5",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function() {",
+											"  pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Content-Type is application/json\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+											"});",
+											"",
+											"pm.test(\"Response body is an empty array\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData).to.eql([]);",
+											"});",
+											""
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "98982517-5143-481d-a85b-8eb037420a29",
+										"type": "text/javascript",
+										"exec": [
+											"const es_url = pm.variables.get(\"es_url\");"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/list/empty",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"list",
+										"empty"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "List nonexistent storage",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "f2910574-e8fa-4909-a6b4-ce4fefc34250",
+										"type": "text/javascript",
+										"exec": [
+											"const es_url = pm.variables.get(\"es_url\");"
+										]
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"id": "1554d6eb-03b7-4d64-ae88-eaac04c9fed4",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 404\", function() {",
+											"  pm.response.to.have.status(404);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/list/nonexistent",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"list",
+										"nonexistent"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "5c60f670-969a-41c8-8a8b-7e214fa9852a",
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"id": "5b8f7e24-ed2a-4917-8fe7-2325319de32d",
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						}
+					],
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "Get value",
+					"item": [
+						{
+							"name": "Get a value",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "243f7d3c-db59-40fe-85cf-bf460eac8e91",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function() {",
+											"  pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Content-Type is text/plain\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\", \"text/plain;charset=utf-8\");",
+											"});",
+											"",
+											"pm.test(\"Response body is a \" + pm.variables.get(\"some_value\"), function () {",
+											"    pm.expect(pm.response.text()).to.eql(pm.variables.get(\"some_value\"));",
+											"});",
+											"",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/get/{{read_only_storage}}/{{some_key}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"get",
+										"{{read_only_storage}}",
+										"{{some_key}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get nonexistent value",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "b3e11298-d466-4d27-a46a-a84b4137d701",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 404\", function() {",
+											"  pm.response.to.have.status(404);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/get/{{read_only_storage}}/{{empty_key}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"get",
+										"{{read_only_storage}}",
+										"{{empty_key}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get from nonexistent storage",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "b5b3a0ca-49f9-4b38-9d82-64c6afb2d334",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"id": "3881f3bb-15aa-49b2-9203-0e7f0a479a14",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 404\", function() {",
+											"  pm.response.to.have.status(404);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/get/{{non_existent_storage}}/{{some_key}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"get",
+										"{{non_existent_storage}}",
+										"{{some_key}}"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "acfe6b56-9863-4802-a1b4-1a24081550cc",
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"id": "bdb3fe18-a2da-400a-b983-1077bb202a25",
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						}
+					],
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "Get multiple values",
+					"item": [
+						{
+							"name": "Get values",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "419e39ab-5024-4e8d-9e1f-c2b977cbd0da",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Content-Type is application/json\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+											"});",
+											"",
+											"pm.test(\"Response body is a map key to value\", function () {",
+											"    var example = {",
+											"        \"key1\": \"value1\",",
+											"        \"key2\": \"value2\",",
+											"        \"key3\": \"value3\"",
+											"    }",
+											"    pm.expect(pm.response.json()).to.eql(example);",
+											"});",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "[\"key1\", \"key2\", \"key3\"]"
+								},
+								"url": {
+									"raw": "{{url}}/get/{{read_only_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"get",
+										"{{read_only_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get from nonexistent storage",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "e4ba83a0-c5e9-4089-a366-48c031f59c11",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 404\", function () {",
+											"    pm.response.to.have.status(404);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "[\"key1\", \"key2\", \"key3\"]"
+								},
+								"url": {
+									"raw": "{{url}}/get/{{non_existent_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"get",
+										"{{non_existent_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get with wrong Content-Type",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "924874c6-58c0-4fc2-b28d-604c08a0a436",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "[\"key1\", \"key2\", \"key3\"]"
+								},
+								"url": {
+									"raw": "{{url}}/get/{{read_only_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"get",
+										"{{read_only_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get with bad json",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "f90777c6-79c7-41a0-ba3c-db8036a51b13",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "[\"key1\", \"key2\", \"key3\""
+								},
+								"url": {
+									"raw": "{{url}}/get/{{read_only_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"get",
+										"{{read_only_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get with wrong body format",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "2f62666e-8edb-414f-ae53-1d5c150736d6",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\"key1\": \"value1\"}"
+								},
+								"url": {
+									"raw": "{{url}}/get/{{read_only_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"get",
+										"{{read_only_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get nonexistent value",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "4442ce4e-af75-4242-ace7-c4438f476f17",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Content-Type is application/json\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+											"});",
+											"",
+											"pm.test(\"Response body is a map key to value\", function () {",
+											"    var example = {",
+											"        \"key1\": \"value1\",",
+											"        \"key2\": \"value2\",",
+											"        \"key3\": \"value3\",",
+											"        [pm.variables.get(\"empty_key\")]: null",
+											"    }",
+											"    pm.expect(pm.response.json()).to.eql(example);",
+											"});",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "[\"key1\", \"key2\", \"key3\", \"{{empty_key}}\"]"
+								},
+								"url": {
+									"raw": "{{url}}/get/{{read_only_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"get",
+										"{{read_only_storage}}"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "Set value",
+					"item": [
+						{
+							"name": "Set with wrong Content-Type",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "c7e683da-04ef-4858-9b29-359e6fead5de",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"editable_storage\") + \"/_doc/\" + pm.variables.get(\"some_key\"),",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Document is not changed\", function () {",
+											"        pm.expect(res.json()._source.value).to.eql(pm.variables.get(\"some_value\"));",
+											"    });",
+											"});"
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "d296aab1-4aa2-4e1d-8b34-8e217df06b7e",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "newValue"
+								},
+								"url": {
+									"raw": "{{url}}/set/{{editable_storage}}/{{some_key}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"set",
+										"{{editable_storage}}",
+										"{{some_key}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Set value",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "c7d4cab6-a194-41e1-8126-ddf84e4a239c",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"editable_storage\") + \"/_doc/\" + pm.variables.get(\"some_key\"),",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Document actually indexed\", function () {",
+											"        pm.expect(res.json()[\"_source\"][\"value\"]).to.eql(\"newValue\");",
+											"    });",
+											"});",
+											""
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "546e693f-cf78-42ad-b416-ffdc2737ffc6",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "text/plain"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "newValue"
+								},
+								"url": {
+									"raw": "{{url}}/set/{{editable_storage}}/{{some_key}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"set",
+										"{{editable_storage}}",
+										"{{some_key}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Set in nonexistent storage",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "3a50046b-410c-4225-add2-2a802564d57e",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 404\", function () {",
+											"    pm.response.to.have.status(404);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											""
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "546e693f-cf78-42ad-b416-ffdc2737ffc6",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "text/plain"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "newValue"
+								},
+								"url": {
+									"raw": "{{url}}/set/{{non_existent_storage}}/{{some_key}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"set",
+										"{{non_existent_storage}}",
+										"{{some_key}}"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "Set multiple values",
+					"item": [
+						{
+							"name": "Set with wrong Content-Type",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "71e973a4-d61a-44f3-9e05-824c7bfcea72",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"const source = JSON.stringify({\"ids\": [\"key1\",\"key2\",\"key3\",\"key4\"]})",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"multieditable_storage\") + \"/_doc/_mget?source=\" + source + \"&source_content_type=application/json\",",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Documents are not changed\", function () {",
+											"            const result = res.json()[\"docs\"].map(function callback(c, i, a){",
+											"                return {",
+											"                    key: c._id,",
+											"                    value: c._source.value",
+											"                };",
+											"            })",
+											"            const example = [",
+											"                {key: \"key1\", value: \"value1\"},",
+											"                {key: \"key2\", value: \"value2\"},",
+											"                {key: \"key3\", value: \"value3\"},",
+											"                {key: \"key4\", value: \"value4\"}];",
+											"            pm.expect(result).to.eql(example);",
+											"    });",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "text/plain"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"key1\": \"newValue1\",\n\t\"key2\": \"newValue2\",\n\t\"key3\": \"newValue3\",\n\t\"key4\": \"newValue4\"\n}"
+								},
+								"url": {
+									"raw": "{{url}}/set/{{multieditable_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"set",
+										"{{multieditable_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Set with bad json",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "07d22477-c4ed-457a-b4d7-b3a8be1901ae",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"const source = JSON.stringify({\"ids\": [\"key1\",\"key2\",\"key3\",\"key4\"]})",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"multieditable_storage\") + \"/_doc/_mget?source=\" + source + \"&source_content_type=application/json\",",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Documents are not changed\", function () {",
+											"            const result = res.json()[\"docs\"].map(function callback(c, i, a){",
+											"                return {",
+											"                    key: c._id,",
+											"                    value: c._source.value",
+											"                };",
+											"            })",
+											"            const example = [",
+											"                {key: \"key1\", value: \"value1\"},",
+											"                {key: \"key2\", value: \"value2\"},",
+											"                {key: \"key3\", value: \"value3\"},",
+											"                {key: \"key4\", value: \"value4\"}];",
+											"            pm.expect(result).to.eql(example);",
+											"    });",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"key1\": \"newValue1\",\n\t\"key2\": \"newValue2\",\n\t\"key3\": \"newValue3\",\n\t\"key4\": \"newValue4\"\n"
+								},
+								"url": {
+									"raw": "{{url}}/set/{{multieditable_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"set",
+										"{{multieditable_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Set with wrong body format",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "a9ca34c3-fea7-4e36-b0ae-d472d731ef91",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"const source = JSON.stringify({\"ids\": [\"key1\",\"key2\",\"key3\",\"key4\"]})",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"multieditable_storage\") + \"/_doc/_mget?source=\" + source + \"&source_content_type=application/json\",",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Documents are not changed\", function () {",
+											"            const result = res.json()[\"docs\"].map(function callback(c, i, a){",
+											"                return {",
+											"                    key: c._id,",
+											"                    value: c._source.value",
+											"                };",
+											"            })",
+											"            const example = [",
+											"                {key: \"key1\", value: \"value1\"},",
+											"                {key: \"key2\", value: \"value2\"},",
+											"                {key: \"key3\", value: \"value3\"},",
+											"                {key: \"key4\", value: \"value4\"}];",
+											"            pm.expect(result).to.eql(example);",
+											"    });",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "[\n\t{\"key1\": \"newValue1\"},\n\t{\"key2\": \"newValue2\"},\n\t{\"key3\": \"newValue3\"},\n\t{\"key4\": \"newValue4\"}\n]\n"
+								},
+								"url": {
+									"raw": "{{url}}/set/{{storage_uuid}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"set",
+										"{{storage_uuid}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Set values",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "c9fce8c3-f738-484e-bda5-e3cb563b2c93",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Content-Type is application/json\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+											"});",
+											"",
+											"pm.test(\"Response body contains statuses of operations\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    var example = {",
+											"        \"key1\" : true,",
+											"        \"key2\" : true,",
+											"        \"key3\" : true,",
+											"        \"key4\" : true",
+											"    }",
+											"    pm.expect(jsonData).to.eql(example);",
+											"});",
+											"const source = JSON.stringify({\"ids\": [\"key1\",\"key2\",\"key3\",\"key4\"]})",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"multieditable_storage\") + \"/_doc/_mget?source=\" + source + \"&source_content_type=application/json\",",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Documents are actually indexed\", function () {",
+											"            const result = res.json()[\"docs\"].map(function callback(c, i, a){",
+											"                return {",
+											"                    key: c[\"_id\"],",
+											"                    value: c[\"_source\"][\"value\"]",
+											"                };",
+											"            })",
+											"            const example = [",
+											"                {key: \"key1\", value: \"newValue1\"},",
+											"                {key: \"key2\", value: \"newValue2\"},",
+											"                {key: \"key3\", value: \"newValue3\"},",
+											"                {key: \"key4\", value: \"newValue4\"}];",
+											"    });",
+											"});",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"key1\": \"newValue1\",\n\t\"key2\": \"newValue2\",\n\t\"key3\": \"newValue3\",\n\t\"key4\": \"newValue4\"\n}"
+								},
+								"url": {
+									"raw": "{{url}}/set/{{multieditable_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"set",
+										"{{multieditable_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Set in nonexistent storage",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "26f39146-9fc7-456b-ac4e-fe698208a2df",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 404\", function () {",
+											"    pm.response.to.have.status(404);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"key1\": \"newValue1\",\n\t\"key2\": \"newValue2\",\n\t\"key3\": \"newValue3\",\n\t\"key4\": \"newValue4\"\n}"
+								},
+								"url": {
+									"raw": "{{url}}/set/{{non_existent_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"set",
+										"{{non_existent_storage}}"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "Delete value",
+					"item": [
+						{
+							"name": "Delete from nonexistent storage",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "5053937f-d3bd-4bc9-af0a-012e7a6f0895",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 404\", function () {",
+											"    pm.response.to.have.status(404);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});"
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "530b5c22-7ca1-49dd-955e-ff22d92f122d",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/delete/{{non_existent_storage}}/{{some_key}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"delete",
+										"{{non_existent_storage}}",
+										"{{some_key}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete value",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "838612af-7652-4cbe-8a1d-c39d2d8dbe01",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"deletable_storage\") + \"/_doc/\" + pm.variables.get(\"some_key\"),",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Document is actually deleted\", function () {",
+											"            pm.expect(res.json().found).to.eql(false);",
+											"        });",
+											"    }",
+											");",
+											""
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "530b5c22-7ca1-49dd-955e-ff22d92f122d",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/delete/{{deletable_storage}}/{{some_key}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"delete",
+										"{{deletable_storage}}",
+										"{{some_key}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete nonexistent value",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "d492bd0e-3c75-4b76-a178-7447baa9575b",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});"
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "530b5c22-7ca1-49dd-955e-ff22d92f122d",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/delete/{{deletable_storage}}/{{empty_key}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"delete",
+										"{{deletable_storage}}",
+										"{{empty_key}}"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "Delete multiple values",
+					"item": [
+						{
+							"name": "Delete with wrong Content-Type",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "454e7675-3e94-4e07-abc0-1fd1739577f2",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"const source = JSON.stringify({\"ids\": [\"key1\",\"key2\",\"key3\"]})",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"multideletable_storage\") + \"/_doc/_mget?source=\" + source + \"&source_content_type=application/json\",",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Documents are not deleted\", function () {",
+											"            const result = res.json().docs.every(function callback(c){",
+											"                return c.found;",
+											"            });",
+											"            pm.expect(result).to.eql(true);",
+											"        });",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "text/plain"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "[\"key1\", \"key2\", \"key3\"]"
+								},
+								"url": {
+									"raw": "{{url}}/delete/{{multideletable_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"delete",
+										"{{multideletable_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete with bad json",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "8a3b4a3f-10a5-4bb9-89a8-b219dc784403",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"const source = JSON.stringify({\"ids\": [\"key1\",\"key2\",\"key3\"]})",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"multideletable_storage\") + \"/_doc/_mget?source=\" + source + \"&source_content_type=application/json\",",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Documents are not deleted\", function () {",
+											"            const result = res.json().docs.every(function callback(c){",
+											"                return c.found;",
+											"            });",
+											"            pm.expect(result).to.eql(true);",
+											"        });",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "[\"key1\", \"key2\", \"key3\""
+								},
+								"url": {
+									"raw": "{{url}}/delete/{{multideletable_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"delete",
+										"{{multideletable_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete with wrong body format",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "a8149f84-eda1-4f3f-9fde-cab72c57656f",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"const source = JSON.stringify({\"ids\": [\"key1\",\"key2\",\"key3\"]})",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"multideletable_storage\") + \"/_doc/_mget?source=\" + source + \"&source_content_type=application/json\",",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Documents are not deleted\", function () {",
+											"            const result = res.json().docs.every(function callback(c){",
+											"                return c.found;",
+											"            });",
+											"            pm.expect(result).to.eql(true);",
+											"        });",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{ \"keys\" : [\"key1\", \"key2\", \"key3\"] }"
+								},
+								"url": {
+									"raw": "{{url}}/delete/{{multideletable_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"delete",
+										"{{multideletable_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete values",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "1bbe1693-2136-4b00-a71c-e1697864fa72",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Content-Type is application/json\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+											"});",
+											"",
+											"pm.test(\"Response body contains statuses of operations\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    var example = {",
+											"        \"key1\" : true,",
+											"        \"key2\" : true,",
+											"        \"key3\" : true",
+											"    }",
+											"    pm.expect(jsonData).to.eql(example);",
+											"});",
+											"",
+											"const source = JSON.stringify({\"ids\": [\"key1\",\"key2\",\"key3\"]})",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"multideletable_storage\") + \"/_doc/_mget?source=\" + source + \"&source_content_type=application/json\",",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Documents actually deleted\", function () {",
+											"            const result = res.json().docs.every(function callback(c){",
+											"                return !c.found;",
+											"            });",
+											"            pm.expect(result).to.eql(true);",
+											"        });",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "[\"key1\", \"key2\", \"key3\"]"
+								},
+								"url": {
+									"raw": "{{url}}/delete/{{multideletable_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"delete",
+										"{{multideletable_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete from nonexistent storage",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "e84fb5c5-9502-4142-9173-230b61af26b0",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 404\", function () {",
+											"    pm.response.to.have.status(404);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "[\"key1\", \"key2\", \"key3\"]"
+								},
+								"url": {
+									"raw": "{{url}}/delete/{{non_existent_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"delete",
+										"{{non_existent_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete nonexistent value",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "b5f2a6a5-5a5e-438a-a965-8fe6840f4b47",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Content-Type is application/json\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+											"});",
+											"",
+											"pm.test(\"Response body contains statuses of operations\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    var example = {",
+											"        [pm.variables.get(\"empty_key\")] : true",
+											"    }",
+											"    pm.expect(jsonData).to.eql(example);",
+											"});",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "[\"{{empty_key}}\"]"
+								},
+								"url": {
+									"raw": "{{url}}/delete/{{multideletable_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"delete",
+										"{{multideletable_storage}}"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "Clear storage",
+					"item": [
+						{
+							"name": "Clear storage",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "e939ce71-26ea-49c9-8210-60556275a03d",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"var test = function() {",
+											"    pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"cleanable_storage\") + \"/_doc/_search\",",
+											"        method: 'POST',",
+											"        header: 'Content-Type:application/json',",
+											"        body: {",
+											"            mode: 'raw',",
+											"            raw: JSON.stringify({\"query\": {\"match_all\": {}}})",
+											"        }},",
+											"    function (err, res) {",
+											"        pm.test(\"Storage is clear\", function() {",
+											"            pm.expect(res.json().hits.total).to.eql(0);",
+											"        });",
+											"});",
+											"};",
+											"setTimeout(test, 1500);",
+											""
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "3f04a838-3537-4dd5-83cd-e97ba1a13787",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/clear/{{cleanable_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"clear",
+										"{{cleanable_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Clear nonexistent storage",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "0ec3e5af-5f8c-44ac-bb8e-266320e5a421",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 404\", function () {",
+											"    pm.response.to.have.status(404);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});"
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "3f04a838-3537-4dd5-83cd-e97ba1a13787",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/clear/{{non_existent_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"clear",
+										"{{non_existent_storage}}"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"_postman_isSubFolder": true
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "1614f2d8-26fe-4d0d-bcc6-d35f15fdd259",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "bb925800-7558-47e4-966c-d611b1567ccd",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "kv-storage-manager",
+			"item": [
+				{
+					"name": "Set temporary storage ttl",
+					"item": [
+						{
+							"name": "Set TTL of nonexistent storage",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "164d5bf7-f101-4d95-a3f8-1e410302ff90",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 404\", function () {",
+											"    pm.response.to.have.status(404);",
+											"})",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/storage/{{non_existent_storage}}?ttl=565656",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"storage",
+										"{{non_existent_storage}}"
+									],
+									"query": [
+										{
+											"key": "ttl",
+											"value": "565656"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Set TTL of persistent storage",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "588b00a6-5bcf-48fd-a01e-a03d0c2a8748",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"})",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/storage-registry/_doc/\" + pm.variables.get(\"acc_storage\"),",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"TTL is not set\", function () {",
+											"            pm.expect(res.json()._source.ttl).to.eql(undefined);",
+											"    });",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/storage/{{acc_storage}}?ttl=565656",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"storage",
+										"{{acc_storage}}"
+									],
+									"query": [
+										{
+											"key": "ttl",
+											"value": "565656"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Set bad TTL",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "5af7de9a-4d90-428a-af97-53330b3314c4",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"})",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/storage-registry/_doc/\" + pm.variables.get(\"temp_storage\"),",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"TTL is not changed\", function () {",
+											"            pm.expect(res.json()._source.ttl).to.eql(10000);",
+											"    });",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/storage/{{temp_storage}}?ttl=10.seconds",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"storage",
+										"{{temp_storage}}"
+									],
+									"query": [
+										{
+											"key": "ttl",
+											"value": "10.seconds"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Set without TTL specified",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "0bbceeda-3ca6-4c4a-98ee-483930feabc9",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"})",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/storage-registry/_doc/\" + pm.variables.get(\"temp_storage\"),",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"TTL is not changed\", function () {",
+											"            pm.expect(res.json()._source.ttl).to.eql(10000);",
+											"    });",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/storage/{{temp_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"storage",
+										"{{temp_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Set temporary storage ttl",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "29760974-f725-40bb-b399-367d69190275",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"})",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/storage-registry/_doc/\" + pm.variables.get(\"temp_storage\"),",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"TTL and expiration timestamp actually changed\", function () {",
+											"            pm.expect(res.json()._source.ttl).to.eql(565656);",
+											"            pm.expect(res.json()._source.expiration_timestamp).to.eql(1565656);",
+											"    });",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/storage/{{temp_storage}}?ttl=565656",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"storage",
+										"{{temp_storage}}"
+									],
+									"query": [
+										{
+											"key": "ttl",
+											"value": "565656"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "Delete temporary storage",
+					"item": [
+						{
+							"name": "Delete persistent storage",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "ae335863-bb13-488e-b45f-b00cd8872de2",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.expect(pm.response.text()).to.eql(\"\");",
+											"});",
+											"",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/storage-registry/_doc/\" + pm.variables.get(\"acc_storage\"),",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Storage is not deleted\", function () {",
+											"            pm.expect(res).to.have.property('code', 200);",
+											"            pm.expect(res).to.have.property('status', 'OK');",
+											"            pm.expect(res.json()._source.deleted).to.eql(false);",
+											"        });",
+											"",
+											"    }",
+											");"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/storage/{{acc_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"storage",
+										"{{acc_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete nonexistent storage",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "f098c7a9-7991-4119-9ee3-e8a8a653367a",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 404\", function () {",
+											"    pm.response.to.have.status(404);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/storage/{{non_existent_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"storage",
+										"{{non_existent_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete temporary storage",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "122029a7-7015-4c37-9bd6-4f92b620fef8",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/storage-registry/_doc/\" + pm.variables.get(\"temp_storage\"),",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Storage is deleted\", function () {",
+											"            pm.expect(res).to.have.property('code', 200);",
+											"            pm.expect(res).to.have.property('status', 'OK');",
+											"            pm.expect(res.json()._source.deleted).to.eql(true);",
+											"        });",
+											"    }",
+											");",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/storage/{{temp_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"storage",
+										"{{temp_storage}}"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"_postman_isSubFolder": true
+				}
+			]
+		},
+		{
+			"name": "kv-history",
+			"item": [
+				{
+					"name": "Search and list history",
+					"item": [
+						{
+							"name": "validation",
+							"item": [
+								{
+									"name": "Search with invalid operations",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "5cc2445c-74cb-4e4c-95a6-db85ef32a08e",
+												"type": "text/javascript",
+												"exec": [
+													"pm.test(\"Status code is 400\", function() {",
+													"  pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Body is empty\", function () {",
+													"    pm.response.to.have.body(\"\");",
+													"});",
+													"",
+													""
+												]
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{url}}/history/{{read_only_storage}}?operations=set,clear,invalid",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"history",
+												"{{read_only_storage}}"
+											],
+											"query": [
+												{
+													"key": "operations",
+													"value": "set,clear,invalid"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Search with invalid start",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "5cc2445c-74cb-4e4c-95a6-db85ef32a08e",
+												"type": "text/javascript",
+												"exec": [
+													"pm.test(\"Status code is 400\", function() {",
+													"  pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Body is empty\", function () {",
+													"    pm.response.to.have.body(\"\");",
+													"});",
+													"",
+													""
+												]
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{url}}/history/{{read_only_storage}}?start=today",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"history",
+												"{{read_only_storage}}"
+											],
+											"query": [
+												{
+													"key": "start",
+													"value": "today"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Search with negative start",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "5cc2445c-74cb-4e4c-95a6-db85ef32a08e",
+												"type": "text/javascript",
+												"exec": [
+													"pm.test(\"Status code is 400\", function() {",
+													"  pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Body is empty\", function () {",
+													"    pm.response.to.have.body(\"\");",
+													"});",
+													"",
+													""
+												]
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{url}}/history/{{read_only_storage}}?start=-1000",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"history",
+												"{{read_only_storage}}"
+											],
+											"query": [
+												{
+													"key": "start",
+													"value": "-1000"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Search with invalid end",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "5cc2445c-74cb-4e4c-95a6-db85ef32a08e",
+												"type": "text/javascript",
+												"exec": [
+													"pm.test(\"Status code is 400\", function() {",
+													"  pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Body is empty\", function () {",
+													"    pm.response.to.have.body(\"\");",
+													"});",
+													"",
+													""
+												]
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{url}}/history/{{read_only_storage}}?end=today",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"history",
+												"{{read_only_storage}}"
+											],
+											"query": [
+												{
+													"key": "end",
+													"value": "today"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Search with negative end",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "5cc2445c-74cb-4e4c-95a6-db85ef32a08e",
+												"type": "text/javascript",
+												"exec": [
+													"pm.test(\"Status code is 400\", function() {",
+													"  pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Body is empty\", function () {",
+													"    pm.response.to.have.body(\"\");",
+													"});",
+													"",
+													""
+												]
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{url}}/history/{{read_only_storage}}?end=-1000",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"history",
+												"{{read_only_storage}}"
+											],
+											"query": [
+												{
+													"key": "end",
+													"value": "-1000"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Search with start > end",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "5cc2445c-74cb-4e4c-95a6-db85ef32a08e",
+												"type": "text/javascript",
+												"exec": [
+													"pm.test(\"Status code is 400\", function() {",
+													"  pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Body is empty\", function () {",
+													"    pm.response.to.have.body(\"\");",
+													"});",
+													"",
+													""
+												]
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{url}}/history/{{read_only_storage}}?start=1000&end=500",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"history",
+												"{{read_only_storage}}"
+											],
+											"query": [
+												{
+													"key": "start",
+													"value": "1000"
+												},
+												{
+													"key": "end",
+													"value": "500"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Search with invalid size",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "5cc2445c-74cb-4e4c-95a6-db85ef32a08e",
+												"type": "text/javascript",
+												"exec": [
+													"pm.test(\"Status code is 400\", function() {",
+													"  pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Body is empty\", function () {",
+													"    pm.response.to.have.body(\"\");",
+													"});",
+													"",
+													""
+												]
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{url}}/history/{{read_only_storage}}?size=large",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"history",
+												"{{read_only_storage}}"
+											],
+											"query": [
+												{
+													"key": "size",
+													"value": "large"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Search with negative size",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "5cc2445c-74cb-4e4c-95a6-db85ef32a08e",
+												"type": "text/javascript",
+												"exec": [
+													"pm.test(\"Status code is 400\", function() {",
+													"  pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Body is empty\", function () {",
+													"    pm.response.to.have.body(\"\");",
+													"});",
+													"",
+													""
+												]
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{url}}/history/{{read_only_storage}}?size=-1000",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"history",
+												"{{read_only_storage}}"
+											],
+											"query": [
+												{
+													"key": "size",
+													"value": "-1000"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Search with invalid page",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "5cc2445c-74cb-4e4c-95a6-db85ef32a08e",
+												"type": "text/javascript",
+												"exec": [
+													"pm.test(\"Status code is 400\", function() {",
+													"  pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Body is empty\", function () {",
+													"    pm.response.to.have.body(\"\");",
+													"});",
+													"",
+													""
+												]
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{url}}/history/{{read_only_storage}}?page=first",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"history",
+												"{{read_only_storage}}"
+											],
+											"query": [
+												{
+													"key": "page",
+													"value": "first"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Search with negative page",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "5cc2445c-74cb-4e4c-95a6-db85ef32a08e",
+												"type": "text/javascript",
+												"exec": [
+													"pm.test(\"Status code is 400\", function() {",
+													"  pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Body is empty\", function () {",
+													"    pm.response.to.have.body(\"\");",
+													"});",
+													"",
+													""
+												]
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{url}}/history/{{read_only_storage}}?page=-1000",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"history",
+												"{{read_only_storage}}"
+											],
+											"query": [
+												{
+													"key": "page",
+													"value": "-1000"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Search with invalid scroll",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "5cc2445c-74cb-4e4c-95a6-db85ef32a08e",
+												"type": "text/javascript",
+												"exec": [
+													"pm.test(\"Status code is 400\", function() {",
+													"  pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Body is empty\", function () {",
+													"    pm.response.to.have.body(\"\");",
+													"});",
+													"",
+													""
+												]
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{url}}/history/{{read_only_storage}}?scroll=1.day",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"history",
+												"{{read_only_storage}}"
+											],
+											"query": [
+												{
+													"key": "scroll",
+													"value": "1.day"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Search with negative scroll",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "5cc2445c-74cb-4e4c-95a6-db85ef32a08e",
+												"type": "text/javascript",
+												"exec": [
+													"pm.test(\"Status code is 400\", function() {",
+													"  pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Body is empty\", function () {",
+													"    pm.response.to.have.body(\"\");",
+													"});",
+													"",
+													""
+												]
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{url}}/history/{{read_only_storage}}?scroll=-1000",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"history",
+												"{{read_only_storage}}"
+											],
+											"query": [
+												{
+													"key": "scroll",
+													"value": "-1000"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Search with invalid sort",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "5cc2445c-74cb-4e4c-95a6-db85ef32a08e",
+												"type": "text/javascript",
+												"exec": [
+													"pm.test(\"Status code is 400\", function() {",
+													"  pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Body is empty\", function () {",
+													"    pm.response.to.have.body(\"\");",
+													"});",
+													"",
+													""
+												]
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{url}}/history/{{read_only_storage}}?sort=bubble",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"history",
+												"{{read_only_storage}}"
+											],
+											"query": [
+												{
+													"key": "sort",
+													"value": "bubble"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Search with opposite sort options",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "5cc2445c-74cb-4e4c-95a6-db85ef32a08e",
+												"type": "text/javascript",
+												"exec": [
+													"pm.test(\"Status code is 400\", function() {",
+													"  pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"Body is empty\", function () {",
+													"    pm.response.to.have.body(\"\");",
+													"});",
+													"",
+													""
+												]
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{url}}/history/{{read_only_storage}}?sort=timestamp,key,-timestamp",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"history",
+												"{{read_only_storage}}"
+											],
+											"query": [
+												{
+													"key": "sort",
+													"value": "timestamp,key,-timestamp"
+												}
+											]
+										}
+									},
+									"response": []
+								}
+							],
+							"_postman_isSubFolder": true
+						},
+						{
+							"name": "Search with duplicated keys",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "98410d13-a7ed-4cac-bba1-4ffcdde034d8",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function() {",
+											"  pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Content-Type is application/json\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+											"});",
+											"",
+											"pm.test(\"Response body is valid\", function () {",
+											"    var example = {",
+											"        \"total\": 1,",
+											"        \"size\": 1,",
+											"        \"page\": 1,",
+											"        \"items\": [",
+											"            {\"key\": \"key2\", \"value\": \"value2\", \"timestamp\": 1010, \"operation\": \"set\"}",
+											"        ]",
+											"    };",
+											"    pm.expect(pm.response.json()).to.eql(example);",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/history/{{read_only_storage}}?keys=key2,key2",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"history",
+										"{{read_only_storage}}"
+									],
+									"query": [
+										{
+											"key": "keys",
+											"value": "key2,key2",
+											"equals": true
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search with start",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "8da31ec3-f47f-47b5-9b47-a7682d7fc854",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function() {",
+											"  pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Content-Type is application/json\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+											"});",
+											"",
+											"pm.test(\"Response body is valid\", function () {",
+											"    var example = {",
+											"        \"total\": 2,",
+											"        \"size\": 2,",
+											"        \"page\": 1,",
+											"        \"items\": [",
+											"            {\"key\": \"key1\", \"value\": \"value1\", \"timestamp\": 1011, \"operation\": \"set\"},",
+											"            {\"key\": \"key6\", \"value\": null, \"timestamp\": 1011, \"operation\": \"delete\"}",
+											"        ]",
+											"    };",
+											"    pm.expect(pm.response.json()).to.eql(example);",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/history/{{read_only_storage}}?start=1011&sort=key",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"history",
+										"{{read_only_storage}}"
+									],
+									"query": [
+										{
+											"key": "start",
+											"value": "1011",
+											"equals": true
+										},
+										{
+											"key": "sort",
+											"value": "key",
+											"equals": true
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search with end",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "cdeb5ce8-b64a-41d4-87c3-fece4d9d0e6f",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function() {",
+											"  pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Content-Type is application/json\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+											"});",
+											"",
+											"pm.test(\"Response body is valid\", function () {",
+											"    var example = {",
+											"        \"total\": 6,",
+											"        \"size\": 6,",
+											"        \"page\": 1,",
+											"        \"items\": [",
+											"            {\"key\": \"key1\", \"value\": \"value\", \"timestamp\": 1010, \"operation\": \"set\"},",
+											"            {\"key\": \"key2\", \"value\": \"value2\", \"timestamp\": 1010, \"operation\": \"set\"},",
+											"            {\"key\": \"key3\", \"value\": \"value3\", \"timestamp\": 1010, \"operation\": \"set\"},",
+											"            {\"key\": \"key4\", \"value\": \"value4\", \"timestamp\": 1010, \"operation\": \"set\"},",
+											"            {\"key\": \"key5\", \"value\": \"value5\", \"timestamp\": 1010, \"operation\": \"set\"},",
+											"            {\"key\": \"key6\", \"value\": \"value6\", \"timestamp\": 1010, \"operation\": \"set\"}",
+											"        ]",
+											"    };",
+											"    pm.expect(pm.response.json()).to.eql(example);",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/history/{{read_only_storage}}?end=1010&sort=key",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"history",
+										"{{read_only_storage}}"
+									],
+									"query": [
+										{
+											"key": "end",
+											"value": "1010",
+											"equals": true
+										},
+										{
+											"key": "sort",
+											"value": "key",
+											"equals": true
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search with duplicated operations",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "cbb3b0f1-276d-44d3-add1-e19ef99aea5c",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function() {",
+											"  pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Content-Type is application/json\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+											"});",
+											"",
+											"pm.test(\"Response body is valid\", function () {",
+											"    var example = {",
+											"        \"total\": 1,",
+											"        \"size\": 1,",
+											"        \"page\": 1,",
+											"        \"items\": [",
+											"            {\"key\": \"key6\", \"value\": null, \"timestamp\": 1011, \"operation\": \"delete\"}",
+											"        ]",
+											"    };",
+											"    pm.expect(pm.response.json()).to.eql(example);",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/history/{{read_only_storage}}?operations=delete,delete",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"history",
+										"{{read_only_storage}}"
+									],
+									"query": [
+										{
+											"key": "operations",
+											"value": "delete,delete"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search with duplicated sorts",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "f9c2dd82-5557-4507-b2c0-3700276ec1c1",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function() {",
+											"  pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Content-Type is application/json\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+											"});",
+											"",
+											"pm.test(\"Response body is valid\", function () {",
+											"    var example = {",
+											"        \"total\": 8,",
+											"        \"size\": 8,",
+											"        \"page\": 1,",
+											"        \"items\": [",
+											"            {\"key\": \"key1\", \"value\": \"value\", \"timestamp\": 1010, \"operation\": \"set\"},",
+											"            {\"key\": \"key1\", \"value\": \"value1\", \"timestamp\": 1011, \"operation\": \"set\"},",
+											"            {\"key\": \"key2\", \"value\": \"value2\", \"timestamp\": 1010, \"operation\": \"set\"},",
+											"            {\"key\": \"key3\", \"value\": \"value3\", \"timestamp\": 1010, \"operation\": \"set\"},",
+											"            {\"key\": \"key4\", \"value\": \"value4\", \"timestamp\": 1010, \"operation\": \"set\"},",
+											"            {\"key\": \"key5\", \"value\": \"value5\", \"timestamp\": 1010, \"operation\": \"set\"},",
+											"            {\"key\": \"key6\", \"value\": \"value6\", \"timestamp\": 1010, \"operation\": \"set\"},",
+											"            {\"key\": \"key6\", \"value\": null, \"timestamp\": 1011, \"operation\": \"delete\"}",
+											"        ]",
+											"    };",
+											"    pm.expect(pm.response.json()).to.eql(example);",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/history/{{read_only_storage}}?sort=key,timestamp,key",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"history",
+										"{{read_only_storage}}"
+									],
+									"query": [
+										{
+											"key": "sort",
+											"value": "key,timestamp,key"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search with page and size",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "828f7dfc-6ba1-4ec9-a6d2-bd56328e953e",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function() {",
+											"  pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Content-Type is application/json\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+											"});",
+											"",
+											"pm.test(\"Response body is valid\", function () {",
+											"    var example = {",
+											"        \"total\": 8,",
+											"        \"size\": 2,",
+											"        \"page\": 3,",
+											"        \"items\": [",
+											"            {\"key\": \"key4\", \"value\": \"value4\", \"timestamp\": 1010, \"operation\": \"set\"},",
+											"            {\"key\": \"key5\", \"value\": \"value5\", \"timestamp\": 1010, \"operation\": \"set\"}",
+											"        ]",
+											"    };",
+											"    pm.expect(pm.response.json()).to.eql(example);",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/history/{{read_only_storage}}?size=2&page=3&sort=key",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"history",
+										"{{read_only_storage}}"
+									],
+									"query": [
+										{
+											"key": "size",
+											"value": "2"
+										},
+										{
+											"key": "page",
+											"value": "3"
+										},
+										{
+											"key": "sort",
+											"value": "key"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search with scroll and size",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "e2f68fd9-e554-41ce-be42-649f5727cf4e",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function() {",
+											"  pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Content-Type is application/json\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+											"});",
+											"",
+											"pm.test(\"Response body is valid\", function () {",
+											"    var json = pm.response.json()",
+											"    var items = [",
+											"        {\"key\": \"key1\", \"value\": \"value1\", \"timestamp\": 1011, \"operation\": \"set\"},",
+											"        {\"key\": \"key1\", \"value\": \"value\", \"timestamp\": 1010, \"operation\": \"set\"},",
+											"        {\"key\": \"key2\", \"value\": \"value2\", \"timestamp\": 1010, \"operation\": \"set\"}",
+											"    ];",
+											"    pm.expect(json.total).to.eql(8);",
+											"    pm.expect(json.size).to.eql(3);",
+											"    pm.expect(json.scrollId).to.not.eql(\"\");",
+											"    pm.expect(json.items).to.eql(items);",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/history/{{read_only_storage}}?scroll=30000&size=3&sort=key,-timestamp",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"history",
+										"{{read_only_storage}}"
+									],
+									"query": [
+										{
+											"key": "scroll",
+											"value": "30000"
+										},
+										{
+											"key": "size",
+											"value": "3"
+										},
+										{
+											"key": "sort",
+											"value": "key,-timestamp"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search with page and scroll",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "9ba1e6d1-9dc5-4dbc-bdae-aaf099d141fa",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function() {",
+											"  pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Content-Type is application/json\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+											"});",
+											"",
+											"pm.test(\"Response body is valid\", function () {",
+											"    var json = pm.response.json()",
+											"    var items = [",
+											"        {\"key\": \"key1\", \"value\": \"value1\", \"timestamp\": 1011, \"operation\": \"set\"},",
+											"        {\"key\": \"key1\", \"value\": \"value\", \"timestamp\": 1010, \"operation\": \"set\"},",
+											"        {\"key\": \"key2\", \"value\": \"value2\", \"timestamp\": 1010, \"operation\": \"set\"}",
+											"    ];",
+											"    pm.expect(json.total).to.eql(8);",
+											"    pm.expect(json.size).to.eql(3);",
+											"    pm.expect(json.scrollId).to.not.eql(\"\");",
+											"    pm.expect(json.items).to.eql(items);",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/history/{{read_only_storage}}?page=2&scroll=30000&size=3&sort=key,-timestamp",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"history",
+										"{{read_only_storage}}"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "2"
+										},
+										{
+											"key": "scroll",
+											"value": "30000"
+										},
+										{
+											"key": "size",
+											"value": "3"
+										},
+										{
+											"key": "sort",
+											"value": "key,-timestamp"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search in storage that does not support history",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "9a6af6c9-eac7-4768-bfe9-c03323a22d59",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 400\", function() {",
+											"  pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/history/{{no_history_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"history",
+										"{{no_history_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search in storage that does not have history storage",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "0caf0a9d-2644-4ecc-a80e-1109bc5fa65d",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 500\", function() {",
+											"  pm.response.to.have.status(500);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/history/{{acc_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"history",
+										"{{acc_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search in nonexistent storage",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "ce25fae6-c354-472b-8b64-7c200883b6e6",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 404\", function() {",
+											"  pm.response.to.have.status(404);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/history/{{non_existent_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"history",
+										"{{non_existent_storage}}"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "List history",
+					"item": [
+						{
+							"name": "List history for subsequent request",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "dc97e805-f917-463e-8eef-15be36d9da72",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function() {",
+											"  pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Content-Type is application/json\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+											"});",
+											"",
+											"pm.test(\"Response body is valid\", function () {",
+											"    var json = pm.response.json()",
+											"    var items = [",
+											"        {\"key\": \"key3\", \"value\": \"value3\", \"timestamp\": 1010, \"operation\": \"set\"},",
+											"        {\"key\": \"key4\", \"value\": \"value4\", \"timestamp\": 1010, \"operation\": \"set\"},",
+											"        {\"key\": \"key5\", \"value\": \"value5\", \"timestamp\": 1010, \"operation\": \"set\"}",
+											"    ];",
+											"    pm.expect(json.total).to.eql(8);",
+											"    pm.expect(json.size).to.eql(3);",
+											"    pm.expect(json.scrollId).to.not.eql(\"\");",
+											"    pm.expect(json.items).to.eql(items);",
+											"});",
+											"",
+											""
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "b6634035-57df-4cce-b603-b9d975442a53",
+										"type": "text/javascript",
+										"exec": [
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"url\") + \"/history/\" + pm.variables.get(\"read_only_storage\") + \"?scroll=30000&size=3&sort=key\",",
+											"        method: 'GET'",
+											"},",
+											"    function (err, res) {",
+											"        pm.environment.set(\"scrollId\", res.json().scrollId);",
+											"    }",
+											");"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"scrollId\": \"{{scrollId}}\",\n\t\"timeout\": 30000\n}"
+								},
+								"url": {
+									"raw": "{{url}}/history",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"history"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "List history with wrong Content-Type",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "f7485668-0fec-4cfc-9bf6-ee3b00828a5c",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 400\", function() {",
+											"  pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});"
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "b6634035-57df-4cce-b603-b9d975442a53",
+										"type": "text/javascript",
+										"exec": [
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"url\") + \"/history/\" + pm.variables.get(\"read_only_storage\") + \"?scroll=30000&size=3&sort=key\",",
+											"        method: 'GET'",
+											"},",
+											"    function (err, res) {",
+											"        pm.environment.set(\"scrollId\", res.json().scrollId);",
+											"    }",
+											");"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "text/plain"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"scrollId\": \"{{scrollId}}\",\n\t\"timeout\": 30000\n}"
+								},
+								"url": {
+									"raw": "{{url}}/history",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"history"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "List history with invalid json",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "f7485668-0fec-4cfc-9bf6-ee3b00828a5c",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 400\", function() {",
+											"  pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});"
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "e95e4be4-f69d-46a5-9a16-1392f1b1f37d",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"scrollId\": \"scrollId\"\n\t\"timeout\": 30000\n}"
+								},
+								"url": {
+									"raw": "{{url}}/history",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"history"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "List history with invalid timeout",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "f7485668-0fec-4cfc-9bf6-ee3b00828a5c",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 400\", function() {",
+											"  pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});"
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "9c232a1b-fc31-43cd-871a-2c65cc4611d0",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"scrollId\": \"scrollId\",\n\t\"timeout\": \"30sec\"\n}"
+								},
+								"url": {
+									"raw": "{{url}}/history",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"history"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "List history with invalid scroll id",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "f7485668-0fec-4cfc-9bf6-ee3b00828a5c",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 400\", function() {",
+											"  pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});"
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "7c39ca55-2f19-4a81-b1c0-5ce8e2b03c1d",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"scrollId\": 1,\n\t\"timeout\": 30000\n}"
+								},
+								"url": {
+									"raw": "{{url}}/history",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"history"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "List history with expired/nonexistent scroll id",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "f7485668-0fec-4cfc-9bf6-ee3b00828a5c",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 400\", function() {",
+											"  pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});"
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "ae17ccf4-cc49-46e3-a1c6-ee38807fab69",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\u0001\n\t\"scrollId\": \"DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAAAzFjJuVGlDMnQ2U2FXNFItMERyTGo2M1EAAAAAAAAANBYyblRpQzJ0NlNhVzRSLTBEckxqNjNRAAAAAAAAADUWMm5UaUMydDZTYVc0Ui0wRHJMajYzUQAAAAAAAAA2FjJuVGlDMnQ2U2FXNFItMERyTGo2M1EAAAAAAAAANxYyblRpQzJ0NlNhVzRSLTBEckxqNjNR\",\n\t\"timeout\": 30000\n}"
+								},
+								"url": {
+									"raw": "{{url}}/history",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"history"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"_postman_isSubFolder": true
+				}
+			]
+		},
+		{
+			"name": "health",
+			"item": [
+				{
+					"name": "Check health",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "91566781-aaab-45c6-af73-f5b7d6cff594",
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Body is empty\", function () {",
+									"    pm.response.to.have.body(\"\");",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{url}}/health",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Check health detailed",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "2276f893-f223-43aa-a5ba-9bb6364f25ec",
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+									"});",
+									"",
+									"pm.test(\"Body contains detailed checks info\", function () {",
+									"    var example = {",
+									"        status: \"HEALTHY\",",
+									"        checks: [",
+									"            {",
+									"                name: \"STORAGE_REGISTRY\",",
+									"                status: \"HEALTHY\",",
+									"                message: \"OK\"",
+									"            },",
+									"            {",
+									"                name: \"STORAGE_DATA_TEMPLATE\",",
+									"                status: \"HEALTHY\",",
+									"                message: \"OK\"",
+									"            },",
+									"            {",
+									"                name: \"STORAGE_HISTORY_TEMPLATE\",",
+									"                status: \"HEALTHY\",",
+									"                message: \"OK\"",
+									"            }]",
+									"    };",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.eql(example);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{url}}/health?detailed=true",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"health"
+							],
+							"query": [
+								{
+									"key": "detailed",
+									"value": "true"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Unhealthy registry",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "7950abda-8fca-4d49-95c1-2b8da8ddd536",
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 500\", function () {",
+									"    pm.response.to.have.status(500);",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+									"});",
+									"",
+									"pm.test(\"Body contains detailed checks info\", function () {",
+									"    var example = {",
+									"        status: \"UNHEALTHY\",",
+									"        checks: [",
+									"            {",
+									"                name: \"STORAGE_REGISTRY\",",
+									"                status: \"UNHEALTHY\",",
+									"                message: \"Not found\"",
+									"            },",
+									"            {",
+									"                name: \"STORAGE_DATA_TEMPLATE\",",
+									"                status: \"HEALTHY\",",
+									"                message: \"OK\"",
+									"            },",
+									"            {",
+									"                name: \"STORAGE_HISTORY_TEMPLATE\",",
+									"                status: \"HEALTHY\",",
+									"                message: \"OK\"",
+									"            }]",
+									"    };",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.eql(example);",
+									"});"
+								]
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "c54850c2-147e-482f-8f2a-fcd50877925b",
+								"type": "text/javascript",
+								"exec": [
+									"const es_url = pm.variables.get(\"es_url\");",
+									"const storage_registry = pm.variables.get(\"storage_registry\");",
+									"//remove storage registry",
+									"pm.sendRequest({",
+									"  url: es_url + \"/\" + storage_registry,",
+									"  method: 'DELETE'",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{url}}/health?detailed=true",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"health"
+							],
+							"query": [
+								{
+									"key": "detailed",
+									"value": "true"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Unhealthy registry and storage template",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "c974abbf-ae8a-4b9c-9b1e-9f087a30dbfd",
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 500\", function () {",
+									"    pm.response.to.have.status(500);",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+									"});",
+									"",
+									"pm.test(\"Body contains detailed checks info\", function () {",
+									"    var example = {",
+									"        status: \"UNHEALTHY\",",
+									"        checks: [",
+									"            {",
+									"                name: \"STORAGE_REGISTRY\",",
+									"                status: \"UNHEALTHY\",",
+									"                message: \"Not found\"",
+									"            },",
+									"            {",
+									"                name: \"STORAGE_DATA_TEMPLATE\",",
+									"                status: \"UNHEALTHY\",",
+									"                message: \"Not found\"",
+									"            },",
+									"            {",
+									"                name: \"STORAGE_HISTORY_TEMPLATE\",",
+									"                status: \"HEALTHY\",",
+									"                message: \"OK\"",
+									"            }]",
+									"    };",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.eql(example);",
+									"});"
+								]
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "3e95c134-0741-47dd-8826-1d4cccacc60b",
+								"type": "text/javascript",
+								"exec": [
+									"const es_url = pm.variables.get(\"es_url\");",
+									"const storage_data_template = pm.variables.get(\"storage_data_template\");",
+									"//remove storage registry",
+									"pm.sendRequest({",
+									"  url: es_url + \"/_template/\" + storage_data_template,",
+									"  method: 'DELETE'",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{url}}/health?detailed=true",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"health"
+							],
+							"query": [
+								{
+									"key": "detailed",
+									"value": "true"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Fully unhealthy",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "ba313573-16b9-4393-aa11-e86a9febacac",
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 500\", function () {",
+									"    pm.response.to.have.status(500);",
+									"});",
+									"",
+									"pm.test(\"Content-Type is application/json\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+									"});",
+									"",
+									"pm.test(\"Body contains detailed checks info\", function () {",
+									"    var example = {",
+									"        status: \"UNHEALTHY\",",
+									"        checks: [",
+									"            {",
+									"                name: \"STORAGE_REGISTRY\",",
+									"                status: \"UNHEALTHY\",",
+									"                message: \"Not found\"",
+									"            },",
+									"            {",
+									"                name: \"STORAGE_DATA_TEMPLATE\",",
+									"                status: \"UNHEALTHY\",",
+									"                message: \"Not found\"",
+									"            },",
+									"            {",
+									"                name: \"STORAGE_HISTORY_TEMPLATE\",",
+									"                status: \"UNHEALTHY\",",
+									"                message: \"Not found\"",
+									"            }]",
+									"    };",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.eql(example);",
+									"});"
+								]
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "4e30e048-2f49-4a4d-bbbd-f551ffe330b3",
+								"type": "text/javascript",
+								"exec": [
+									"const es_url = pm.variables.get(\"es_url\");",
+									"const storage_history_template = pm.variables.get(\"storage_history_template\");",
+									"//remove storage registry",
+									"pm.sendRequest({",
+									"  url: es_url + \"/_template/\" + storage_history_template,",
+									"  method: 'DELETE'",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{url}}/health?detailed=true",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"health"
+							],
+							"query": [
+								{
+									"key": "detailed",
+									"value": "true"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "47257ac9-4e9a-40a2-b4bf-5a2fda812bbb",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "738f7413-5a71-432e-9df7-1cc3f7995c7a",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"id": "da6dd540-7f95-4306-88c6-d33b57fa6a4b",
+			"key": "url",
+			"value": "http://app:8080",
+			"type": "string"
+		},
+		{
+			"id": "5332bc22-159e-48fa-b269-6873b5f87eb7",
+			"key": "storage_uuid",
+			"value": "b3d1b2a6-bd5b-49d5-bd9e-86538fdc180d",
+			"type": "string"
+		},
+		{
+			"id": "31670846-1a02-47f2-a182-0013af755bae",
+			"key": "es_url",
+			"value": "http://elasticsearch:9200",
+			"type": "string"
+		},
+		{
+			"id": "29551212-f4a8-4875-ad90-579237f7607e",
+			"key": "some_key",
+			"value": "key1",
+			"type": "string"
+		},
+		{
+			"id": "0412a306-b822-41c4-ab2c-bf1ed2fccef8",
+			"key": "some_value",
+			"value": "value1",
+			"type": "string"
+		},
+		{
+			"id": "9acfadc0-e0f1-44e2-be2e-170b0c74e3e2",
+			"key": "empty_key",
+			"value": "empty_key",
+			"type": "string"
+		},
+		{
+			"id": "6e2e9bc4-5191-4317-965d-395e8b224bcf",
+			"key": "non_existent_storage",
+			"value": "nonexistent",
+			"type": "string"
+		},
+		{
+			"id": "c612bbbe-86dc-4446-a954-ce042316186a",
+			"key": "read_only_storage",
+			"value": "read-only",
+			"type": "string"
+		},
+		{
+			"id": "f91e82c9-355d-447c-82f3-d88da54753af",
+			"key": "editable_storage",
+			"value": "editable-single",
+			"type": "string"
+		},
+		{
+			"id": "4a96d955-2558-4b63-a7d0-1a88926aab7f",
+			"key": "multieditable_storage",
+			"value": "editable-multiple",
+			"type": "string"
+		},
+		{
+			"id": "ee26f829-9518-4306-b567-177115ad854b",
+			"key": "deletable_storage",
+			"value": "deletable-single",
+			"type": "string"
+		},
+		{
+			"id": "bf5d5f82-1705-40b4-a470-f6c01a004a62",
+			"key": "multideletable_storage",
+			"value": "deletable-multiple",
+			"type": "string"
+		},
+		{
+			"id": "86856615-aaac-4d71-ad1a-df17be2d94ca",
+			"key": "cleanable_storage",
+			"value": "cleanable",
+			"type": "string"
+		},
+		{
+			"id": "11ff4e21-9479-4d8c-8465-c7ff6a8d8cd2",
+			"key": "temp_storage",
+			"value": "temp",
+			"type": "string"
+		},
+		{
+			"id": "20672d2a-a816-4df6-b664-06c843bd1147",
+			"key": "acc_storage",
+			"value": "account",
+			"type": "string"
+		},
+		{
+			"id": "7b54600c-8620-4fc5-ac6e-a738cac981c0",
+			"key": "no_index_storage",
+			"value": "no-index",
+			"type": "string"
+		},
+		{
+			"id": "01b656d5-7b5a-4a4c-8a73-db4080f847cb",
+			"key": "storage_registry",
+			"value": "storage-registry",
+			"type": "string"
+		},
+		{
+			"id": "e24754e6-1fe6-425e-b68f-e20ee09a1d36",
+			"key": "storage_data_template",
+			"value": "storage-data",
+			"type": "string"
+		},
+		{
+			"id": "d3376450-405e-4557-802c-a1295f907c46",
+			"key": "storage_history_template",
+			"value": "storage-history",
+			"type": "string"
+		},
+		{
+			"id": "304c4297-30df-4c14-b19f-d827bca13973",
+			"key": "no_history_storage",
+			"value": "no-history",
+			"type": "string"
+		}
+	]
+}

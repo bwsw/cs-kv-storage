@@ -28,12 +28,9 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.FunSpecLike
 import org.scalatra.test.scalatest._
 
-import scala.concurrent.Future
 import scala.concurrent.duration._
 
 class KvStorageServletSuite extends ScalatraSuite with FunSpecLike with MockFactory {
-
-  import scala.concurrent.ExecutionContext.Implicits.global
 
   implicit val system: ActorSystem = ActorSystem()
   private val processor = mock[KvProcessor]
@@ -47,7 +44,8 @@ class KvStorageServletSuite extends ScalatraSuite with FunSpecLike with MockFact
   private val jsonNullValues = "{\"key1\":null,\"key2\":null,\"key3\":null}"
   private val jsonKeyResult = "{\"key1\":true,\"key2\":true,\"key3\":true}"
   private val storage = "someStorage"
-  private val internalError = Future(Left(InternalError("some reason")))
+  private val internalError = Left(InternalError("some reason"))
+  private val notFoundError = Left(NotFoundError())
   private val jsonHeaders = Map("Content-Type" -> "application/json")
   private val textHeaders = Map("Content-Type" -> "text/plain")
 
@@ -69,7 +67,7 @@ class KvStorageServletSuite extends ScalatraSuite with FunSpecLike with MockFact
 
       it("should return 404 Not Found if key or storage does not exist") {
         kvActor.underlyingActor
-          .clearAndExpect(ResponsiveExpectation(KvGetRequest(storage, someKey), () => Left(NotFoundError())))
+          .clearAndExpect(ResponsiveExpectation(KvGetRequest(storage, someKey), () => notFoundError))
         get(path, Seq(), Map()) {
           status should equal(404)
         }
@@ -125,7 +123,7 @@ class KvStorageServletSuite extends ScalatraSuite with FunSpecLike with MockFact
 
       it("should return 404 Not Found if storage does not exist") {
         kvActor.underlyingActor
-          .clearAndExpect(ResponsiveExpectation(KvMultiGetRequest(storage, keys), () => Left(NotFoundError())))
+          .clearAndExpect(ResponsiveExpectation(KvMultiGetRequest(storage, keys), () => notFoundError))
         post(path, jsonKeys, jsonHeaders) {
           status should equal(404)
         }
@@ -145,7 +143,7 @@ class KvStorageServletSuite extends ScalatraSuite with FunSpecLike with MockFact
 
       it("should set the value by the key") {
         kvActor.underlyingActor
-          .clearAndExpect(ResponsiveExpectation(KvSetRequest(storage, someKey, someValue), () => Right(Unit)))
+          .clearAndExpect(ResponsiveExpectation(KvSetRequest(storage, someKey, someValue), () => Right(())))
         put(path, someValue, textHeaders) {
           status should equal(200)
           response.getContentType should include("text/plain")
@@ -169,7 +167,7 @@ class KvStorageServletSuite extends ScalatraSuite with FunSpecLike with MockFact
 
       it("should return 404 Not Found if storage does not exist") {
         kvActor.underlyingActor
-          .clearAndExpect(ResponsiveExpectation(KvSetRequest(storage, someKey, someValue), () => Left(NotFoundError())))
+          .clearAndExpect(ResponsiveExpectation(KvSetRequest(storage, someKey, someValue), () => notFoundError))
         put(path, someValue, textHeaders) {
           status should equal(404)
         }
@@ -225,7 +223,7 @@ class KvStorageServletSuite extends ScalatraSuite with FunSpecLike with MockFact
 
       it("should return 404 Not Found if storage does not exist") {
         kvActor.underlyingActor
-          .clearAndExpect(ResponsiveExpectation(KvMultiSetRequest(storage, keyValues), () => Left(NotFoundError())))
+          .clearAndExpect(ResponsiveExpectation(KvMultiSetRequest(storage, keyValues), () => notFoundError))
         put(path, jsonKeyValues, jsonHeaders) {
           status should equal(404)
         }
@@ -243,7 +241,7 @@ class KvStorageServletSuite extends ScalatraSuite with FunSpecLike with MockFact
     describe("(delete by the key)") {
       val path = s"/delete/$storage/$someKey"
 
-      def test(result: Future[Either[StorageError, Unit]], status: Int) = {
+      def test(result: Either[StorageError, Unit], status: Int) = {
         kvActor.underlyingActor.clearAndExpect(ResponsiveExpectation(KvDeleteRequest(storage, someKey), () => result))
         delete(path, Seq(), Map()) {
           status should equal(status)
@@ -251,7 +249,7 @@ class KvStorageServletSuite extends ScalatraSuite with FunSpecLike with MockFact
       }
 
       it("should delete the value by the key") {
-        test(Future(Right(Unit)), 200)
+        test(Right(()), 200)
       }
 
       it("should return 500 Internal Server Error if request processing fails") {
@@ -300,7 +298,7 @@ class KvStorageServletSuite extends ScalatraSuite with FunSpecLike with MockFact
 
       it("should return 404 Not Found if storage does not exist") {
         kvActor.underlyingActor
-          .clearAndExpect(ResponsiveExpectation(KvMultiDeleteRequest(storage, keys), () => Left(NotFoundError())))
+          .clearAndExpect(ResponsiveExpectation(KvMultiDeleteRequest(storage, keys), () => notFoundError))
         post(path, jsonKeys, jsonHeaders) {
           status should equal(404)
         }
@@ -329,7 +327,7 @@ class KvStorageServletSuite extends ScalatraSuite with FunSpecLike with MockFact
 
       it("should return 404 Not Found if storage does not exist") {
         kvActor.underlyingActor
-          .clearAndExpect(ResponsiveExpectation(KvListRequest(storage), () => Left(NotFoundError())))
+          .clearAndExpect(ResponsiveExpectation(KvListRequest(storage), () => notFoundError))
         get(path, Seq(), textHeaders) {
           status should equal(404)
         }
@@ -346,7 +344,7 @@ class KvStorageServletSuite extends ScalatraSuite with FunSpecLike with MockFact
     describe("(clear)") {
       val path = s"/clear/$storage"
 
-      def test(result: Future[Either[StorageError, Unit]], status: Int) = {
+      def test(result: Either[StorageError, Unit], status: Int) = {
         kvActor.underlyingActor.clearAndExpect(ResponsiveExpectation(KvClearRequest(storage), () => result))
         post(path, Array[Byte](), Map()) {
           status should equal(status)
@@ -354,17 +352,17 @@ class KvStorageServletSuite extends ScalatraSuite with FunSpecLike with MockFact
       }
 
       it("should clear the storage") {
-        test(Future(Right(Unit)), 200)
+        test(Right(()), 200)
       }
 
       it("should return 404 Not Found if storage does not exist") {
         kvActor.underlyingActor
-          .clearAndExpect(ResponsiveExpectation(KvListRequest(storage), () => Left(NotFoundError())))
-        test(Future(Left(NotFoundError())), 404)
+          .clearAndExpect(ResponsiveExpectation(KvListRequest(storage), () => notFoundError))
+        test(notFoundError, 404)
       }
 
       it("should return 409 Conflict Error if the document is changed while deletion") {
-        test(Future(Left(ConflictError())), 409)
+        test(Left(ConflictError()), 409)
       }
 
       it("should return 500 Internal Server Error if request processing fails") {

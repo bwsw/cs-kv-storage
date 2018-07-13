@@ -1,0 +1,68 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+version: '3.3'
+services:
+  elasticsearch:
+    image: "docker.elastic.co/elasticsearch/elasticsearch:6.2.4"
+    environment:
+      - cluster.name=cs-kv-storage-compose
+      - discovery.type=single-node
+      - discovery.zen.minimum_master_nodes=1
+      - network.host=0.0.0.0
+      - xpack.security.enabled=false
+    volumes:
+      - eslogs:/usr/share/elasticsearch/logs
+      - esdata:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200/_cluster/health?wait_for_status=yellow"]
+      interval: 60s
+      timeout: 30s
+      retries: 2
+    networks:
+      - cs-kv-storage-e2e
+  initializer:
+    build: ./initializer
+    depends_on:
+      - elasticsearch
+    volumes:
+      - ./../elasticsearch:/etc/cs-kv-storage/configuration
+    networks:
+      - cs-kv-storage-e2e
+  app:
+    image: "git.bw-sw.com:5000/cloudstack-ecosystem/cs-kv-storage:${APP_DOCKER_TAG}"
+    depends_on:
+      - elasticsearch
+    volumes:
+      - applogs:/var/log/cs-kv-storage
+      - "./cs-kv-storage/application.conf:/opt/cs-kv-storage/application.conf"
+    networks:
+      - cs-kv-storage-e2e
+  newman:
+    image: "postman/newman_ubuntu1404"
+    depends_on:
+      - app
+    volumes:
+      - ./newman:/etc/newman
+    networks:
+      - cs-kv-storage-e2e
+volumes:
+  eslogs:
+  esdata:
+  applogs:
+networks:
+  cs-kv-storage-e2e:
