@@ -26,7 +26,8 @@ import com.bwsw.cloudstack.storage.kv.entity.{Check, _}
 import com.bwsw.cloudstack.storage.kv.message.request.{HealthCheckRequest, TemplateCheckRequest}
 import com.bwsw.cloudstack.storage.kv.message.response.{DetailedHealthCheckResponse, HealthCheckResponse,
   StatusHealthCheckResponse}
-import com.bwsw.cloudstack.storage.kv.util.elasticsearch.{DataStorageTemplateName, HistoryStorageTemplateName, RegistryIndex}
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch.{DataStorageTemplateName, HistoryStorageTemplateName,
+  RegistryIndex}
 import com.sksamuel.elastic4s.admin.IndicesExists
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http._

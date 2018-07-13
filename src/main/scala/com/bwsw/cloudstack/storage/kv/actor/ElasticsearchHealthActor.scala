@@ -26,8 +26,8 @@ import com.bwsw.cloudstack.storage.kv.entity.HealthStatus.{Healthy, Unhealthy}
 import com.bwsw.cloudstack.storage.kv.entity._
 import com.bwsw.cloudstack.storage.kv.message.request.{HealthCheckRequest, TemplateCheckRequest}
 import com.bwsw.cloudstack.storage.kv.message.response.{DetailedHealthCheckResponse, StatusHealthCheckResponse}
-import com.bwsw.cloudstack.storage.kv.util.elasticsearch.{RegistryIndex, DataStorageTemplateName,
-  HistoryStorageTemplateName}
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch.{DataStorageTemplateName, HistoryStorageTemplateName,
+  RegistryIndex}
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.HttpClient
 import scaldi.Injector

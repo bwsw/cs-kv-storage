@@ -181,11 +181,11 @@ object ElasticsearchHistoryProcessor {
 }
 
 private case class Search(
-                             searchDef: SearchDefinition,
-                             query: Seq[QueryDefinition],
-                             size: Option[Int],
-                             page: Option[Int])
-                         (implicit appConfig: AppConfig, client: HttpClient) {
+    searchDef: SearchDefinition,
+    query: Seq[QueryDefinition],
+    size: Option[Int],
+    page: Option[Int])
+  (implicit appConfig: AppConfig, client: HttpClient) {
 
   def storage(storageUuid: String): Search = {
     this.copy(searchDef = search(getHistoricalStorageIndex(storageUuid)))

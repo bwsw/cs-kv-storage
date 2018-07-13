@@ -18,7 +18,7 @@
 package com.bwsw.cloudstack.storage.kv.cache
 
 import com.bwsw.cloudstack.storage.kv.entity.Storage
-import com.bwsw.cloudstack.storage.kv.util.elasticsearch.{RegistryIndex, DocumentType, RegistryFields, DefaultError}
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch.{DocumentType, RegistryFields, RegistryIndex}
 import com.sksamuel.elastic4s.http.ElasticDsl.{get, _}
 import com.sksamuel.elastic4s.http.HttpClient
 

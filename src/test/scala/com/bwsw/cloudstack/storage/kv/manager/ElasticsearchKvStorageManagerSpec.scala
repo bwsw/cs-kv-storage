@@ -19,10 +19,10 @@ package com.bwsw.cloudstack.storage.kv.manager
 
 import com.bwsw.cloudstack.storage.kv.cache.StorageCache
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError}
-import com.bwsw.cloudstack.storage.kv.util.elasticsearch.{RegistryIndex, DocumentType}
-import com.bwsw.cloudstack.storage.kv.util.elasticsearch.StorageType.Temporary
-import com.bwsw.cloudstack.storage.kv.util.elasticsearch.ScriptOperations.{Updated, NoOp}
 import com.bwsw.cloudstack.storage.kv.util.elasticsearch.RegistryFields._
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch.ScriptOperations.{NoOp, Updated}
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch.StorageType.Temporary
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch.{DocumentType, RegistryIndex}
 import com.bwsw.cloudstack.storage.kv.util.test.{getRequestFailureFuture, getRequestSuccessFuture}
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.update.UpdateResponse
@@ -31,7 +31,7 @@ import com.sksamuel.elastic4s.update.UpdateDefinition
 import org.scalamock.scalatest.AsyncMockFactory
 import org.scalatest.AsyncFunSpec
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFactory {
 

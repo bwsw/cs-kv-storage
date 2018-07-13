@@ -70,7 +70,6 @@ package object elasticsearch {
 
   def getHistoricalStorageIndex(storageUuid: String): String = s"storage-history-$storageUuid"
 
-
   def getError(requestFailure: RequestFailure): InternalError = {
     if (requestFailure.error == null)
       InternalError(DefaultError)

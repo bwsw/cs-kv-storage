@@ -19,7 +19,7 @@ package com.bwsw.cloudstack.storage.kv.cache
 
 import com.bwsw.cloudstack.storage.kv.entity.Storage
 import com.bwsw.cloudstack.storage.kv.util.elasticsearch._
-import com.bwsw.cloudstack.storage.kv.util.test.{getRequestSuccessFuture, getRequestFailureFuture}
+import com.bwsw.cloudstack.storage.kv.util.test.{getRequestFailureFuture, getRequestSuccessFuture}
 import com.sksamuel.elastic4s.get.GetDefinition
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http._
@@ -27,22 +27,22 @@ import com.sksamuel.elastic4s.http.get.GetResponse
 import org.scalamock.scalatest.AsyncMockFactory
 import org.scalatest.AsyncFunSpec
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 class ElasticsearchStorageLoaderSpec extends AsyncFunSpec with AsyncMockFactory {
 
   private val storageUuid = "someStorage"
   private val storage = Storage(storageUuid, "ACC", historyEnabled = true)
   private val source = Map(
-    "type" -> storage.storageType,
-    "history_enabled" -> storage.historyEnabled,
-    "deleted" -> false
+    RegistryFields.Type -> storage.storageType,
+    RegistryFields.HistoryEnabled -> storage.historyEnabled,
+    RegistryFields.Deleted -> false
   ).asInstanceOf[Map[String, AnyRef]]
 
   private val deletedSource = Map(
-    "type" -> storage.storageType,
-    "history_enabled" -> storage.historyEnabled,
-    "deleted" -> true
+    RegistryFields.Type -> storage.storageType,
+    RegistryFields.HistoryEnabled -> storage.historyEnabled,
+    RegistryFields.Deleted -> true
   ).asInstanceOf[Map[String, AnyRef]]
 
   describe("An ElasticsearchStorageLoader") {

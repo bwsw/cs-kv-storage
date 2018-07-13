@@ -37,7 +37,7 @@ import org.scalatest
 import org.scalatest.AsyncFunSpec
 
 import scala.collection.immutable
-import scala.concurrent.{Future, ExecutionContext}
+import scala.concurrent.{ExecutionContext, Future}
 
 class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
 
@@ -277,7 +277,8 @@ class ElasticsearchHistoryProcessorSpec extends AsyncFunSpec with AsyncMockFacto
         val start = Some(1.asInstanceOf[Long])
         val end = Some(2.asInstanceOf[Long])
         val scroll = Some(2000.asInstanceOf[Long])
-        val sort = immutable.Set(SortField(HistoryFields.Key, Sorting.Asc), SortField(HistoryFields.Timestamp, Sorting.Desc))
+        val sort = immutable
+          .Set(SortField(HistoryFields.Key, Sorting.Asc), SortField(HistoryFields.Timestamp, Sorting.Desc))
 
         val searchDefinition = ElasticDsl.search(getHistoricalStorageIndex(storageUuid)).
           size(pageSize.get).scroll(scroll.get + ScrollTimeoutUnit).query(boolQuery().filter(List(

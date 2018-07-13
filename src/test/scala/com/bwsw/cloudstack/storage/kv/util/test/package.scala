@@ -24,16 +24,10 @@ import scala.concurrent.{ExecutionContext, Future}
 package object test {
 
   def getRequestSuccessFuture[T](response: T)
-                                (implicit executionContext: ExecutionContext): Future[Right[RequestFailure,
-    RequestSuccess[T]]] =
-    Future(Right(RequestSuccess(200, Option.empty, Map.empty, response)))
+    (implicit executionContext: ExecutionContext): Future[Right[RequestFailure, RequestSuccess[T]]] = Future(Right(
+    RequestSuccess(200, Option.empty, Map.empty, response)))
 
   def getRequestFailureFuture[T](statusCode: Int = 500)
-                                (implicit executionContext: ExecutionContext): Future[Left[RequestFailure,
-    RequestSuccess[T]]] =
-    Future(Left(RequestFailure(
-      statusCode,
-      Option.empty,
-      Map.empty,
-      ElasticError.fromThrowable(new RuntimeException()))))
+    (implicit executionContext: ExecutionContext): Future[Left[RequestFailure, RequestSuccess[T]]] = Future(Left(
+    RequestFailure(statusCode, Option.empty, Map.empty, ElasticError.fromThrowable(new RuntimeException()))))
 }

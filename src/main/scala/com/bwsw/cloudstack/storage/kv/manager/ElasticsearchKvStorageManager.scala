@@ -19,10 +19,10 @@ package com.bwsw.cloudstack.storage.kv.manager
 
 import com.bwsw.cloudstack.storage.kv.cache.StorageCache
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, NotFoundError, StorageError}
-import com.bwsw.cloudstack.storage.kv.util.elasticsearch.{RegistryIndex, DocumentType, getError}
-import com.bwsw.cloudstack.storage.kv.util.elasticsearch.StorageType.Temporary
-import com.bwsw.cloudstack.storage.kv.util.elasticsearch.ScriptOperations._
 import com.bwsw.cloudstack.storage.kv.util.elasticsearch.RegistryFields._
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch.ScriptOperations._
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch.StorageType.Temporary
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch.{DocumentType, RegistryIndex, getError}
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.{HttpClient, RequestSuccess}
 import org.slf4j.LoggerFactory
