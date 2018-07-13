@@ -1,7 +1,7 @@
 {
 	"info": {
 		"name": "cs-kv-storage",
-		"_postman_id": "dcd87e92-107f-87fb-ed3f-d95704e92abd",
+		"_postman_id": "4eabd494-d186-754f-5ab1-064514e95db3",
 		"description": "E2E tests for cs-kv-storage",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -3014,7 +3014,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "25b6e232-11b8-4a3a-be48-7cf1ea25176c",
+										"id": "8da31ec3-f47f-47b5-9b47-a7682d7fc854",
 										"type": "text/javascript",
 										"exec": [
 											"pm.test(\"Status code is 200\", function() {",
@@ -3035,7 +3035,6 @@
 											"            {\"key\": \"key6\", \"value\": null, \"timestamp\": 1011, \"operation\": \"delete\"}",
 											"        ]",
 											"    };",
-											"    console.log(pm.response.json())",
 											"    pm.expect(pm.response.json()).to.eql(example);",
 											"});"
 										]
@@ -3080,7 +3079,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "ddb6744a-3e2b-4664-95f3-a10ea97d825c",
+										"id": "cdeb5ce8-b64a-41d4-87c3-fece4d9d0e6f",
 										"type": "text/javascript",
 										"exec": [
 											"pm.test(\"Status code is 200\", function() {",
@@ -3105,7 +3104,6 @@
 											"            {\"key\": \"key6\", \"value\": \"value6\", \"timestamp\": 1010, \"operation\": \"set\"}",
 											"        ]",
 											"    };",
-											"    console.log(pm.response.json())",
 											"    pm.expect(pm.response.json()).to.eql(example);",
 											"});"
 										]

@@ -24,7 +24,5 @@ case class KvHistory(storage: String, key: String, value: String, timestamp: Lon
     *
     * @return new KvHistory
     */
-  def makeAttempt: KvHistory = {
-    KvHistory(storage, key, value, timestamp, operation, attempt + 1)
-  }
+  def makeAttempt: KvHistory = this.copy(attempt = attempt + 1)
 }

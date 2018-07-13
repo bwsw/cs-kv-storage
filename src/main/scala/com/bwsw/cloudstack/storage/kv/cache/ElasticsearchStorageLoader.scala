@@ -18,7 +18,7 @@
 package com.bwsw.cloudstack.storage.kv.cache
 
 import com.bwsw.cloudstack.storage.kv.entity.Storage
-import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils._
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch.{DocumentType, RegistryFields, RegistryIndex}
 import com.sksamuel.elastic4s.http.ElasticDsl.{get, _}
 import com.sksamuel.elastic4s.http.HttpClient
 
@@ -33,11 +33,11 @@ class ElasticsearchStorageLoader(client: HttpClient) extends StorageLoader {
       client.execute(get(RegistryIndex, DocumentType, id)).map {
         case Left(_) => throw new RuntimeException("Storage info loading failed")
         case Right(success) =>
-          if (success.result.found && !getValue[Boolean](success.result.source, "deleted")) {
+          if (success.result.found && !getValue[Boolean](success.result.source, RegistryFields.Deleted)) {
             Some(Storage(
               success.result.id,
-              getValue(success.result.source, "type"),
-              getValue(success.result.source, "history_enabled")))
+              getValue(success.result.source, RegistryFields.Type),
+              getValue(success.result.source, RegistryFields.HistoryEnabled)))
           }
           else None
       }

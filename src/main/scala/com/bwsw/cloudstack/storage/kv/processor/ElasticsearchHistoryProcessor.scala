@@ -21,7 +21,7 @@ import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
 import com.bwsw.cloudstack.storage.kv.entity._
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, StorageError}
 import com.bwsw.cloudstack.storage.kv.message.KvHistory
-import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils._
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch._
 import com.sksamuel.elastic4s.http.ElasticDsl.{search, _}
 import com.sksamuel.elastic4s.http.search.{SearchHits, SearchResponse}
 import com.sksamuel.elastic4s.http.{HttpClient, RequestFailure, RequestSuccess}
@@ -44,20 +44,28 @@ class ElasticsearchHistoryProcessor(
   import ElasticsearchHistoryProcessor._
 
   def save(histories: List[KvHistory]): Future[Option[List[KvHistory]]] = {
+    logger.info("Start saving {} history records", histories.size)
+
     val indices = histories.map {
       record =>
         indexInto(getHistoricalStorageIndex(record.storage), DocumentType) fields getFields(record)
     }
     client.execute(bulk(indices)).map {
       case Left(failure) =>
-        logger.error("Elasticsearch save request failure: {}", failure.error)
+        logger.error("Elasticsearch save request of {} history records failed: {}", histories.size, failure.error)
         Some(histories)
       case Right(success) =>
         val erroneous = success.result.items.filter(_.error.isDefined).map(item => histories(item.itemId))
-        if (erroneous.isEmpty)
+        if (erroneous.isEmpty) {
+          logger.info("{} history records saved successfully", histories.size)
           None
-        else
+        } else {
+          logger.warn(
+            "Failed to save {} history records, {} saved successfully",
+            erroneous.size,
+            histories.size - erroneous.size)
           Some(erroneous.toList)
+        }
     }
   }
 
@@ -116,7 +124,7 @@ class ElasticsearchHistoryProcessor(
   }
 
   def scroll(scrollId: String, timeout: Long): Future[Either[StorageError, ScrollSearchResult[History]]] = {
-    client.execute(searchScroll(scrollId).keepAlive(timeout + "ms"))
+    client.execute(searchScroll(scrollId).keepAlive(timeout + ScrollTimeoutUnit))
       .map {
         case Left(RequestFailure(404, _, _, _)) =>
           Left(BadRequestError())
@@ -147,10 +155,10 @@ object ElasticsearchHistoryProcessor {
 
   private def getFields(history: KvHistory): Map[String, Any] = {
     Map(
-      "key" -> history.key,
-      "value" -> history.value,
-      "timestamp" -> history.timestamp,
-      "operation" -> history.operation.toString)
+      HistoryFields.Key -> history.key,
+      HistoryFields.Value -> history.value,
+      HistoryFields.Timestamp -> history.timestamp,
+      HistoryFields.Operation -> history.operation.toString)
   }
 
   private def getString(name: String)(implicit fields: Map[String, Any]): String = {
@@ -172,7 +180,11 @@ object ElasticsearchHistoryProcessor {
   private def getItems(searchHits: SearchHits): List[History] = searchHits.hits.map {
     hit =>
       implicit val fields: Map[String, Any] = hit.sourceAsMap
-      History(getString("key"), getString("value"), getLong("timestamp"), Operation.parse(getString("operation")))
+      History(
+        getString(HistoryFields.Key),
+        getString(HistoryFields.Value),
+        getLong(HistoryFields.Timestamp),
+        Operation.parse(getString(HistoryFields.Operation)))
   }.toList
 }
 
@@ -189,14 +201,14 @@ private case class Search(
 
   def keys(keys: Set[String]): Search = {
     if (keys.nonEmpty)
-      this.copy(query = query :+ termsQuery("key", keys))
+      this.copy(query = query :+ termsQuery(HistoryFields.Key, keys))
     else
       this
   }
 
   def operations(operations: Set[Operation]): Search = {
     if (operations.nonEmpty)
-      this.copy(query = query :+ termsQuery("operation", operations.map(_.toString)))
+      this.copy(query = query :+ termsQuery(HistoryFields.Operation, operations.map(_.toString)))
     else
       this
   }
@@ -204,13 +216,13 @@ private case class Search(
   def time(start: Option[Long], end: Option[Long]): Search = {
     (start, end) match {
       case (None, None) => this
-      case (None, Some(e)) => this.copy(query = query :+ rangeQuery("timestamp").lte(e))
-      case (Some(s), None) => this.copy(query = query :+ rangeQuery("timestamp").gte(s))
+      case (None, Some(e)) => this.copy(query = query :+ rangeQuery(HistoryFields.Timestamp).lte(e))
+      case (Some(s), None) => this.copy(query = query :+ rangeQuery(HistoryFields.Timestamp).gte(s))
       case (Some(s), Some(e)) =>
         if (s == e)
-          this.copy(query = query :+ termQuery("timestamp", s))
+          this.copy(query = query :+ termQuery(HistoryFields.Timestamp, s))
         else
-          this.copy(query = query :+ rangeQuery("timestamp").gte(s).lte(e))
+          this.copy(query = query :+ rangeQuery(HistoryFields.Timestamp).gte(s).lte(e))
     }
   }
 
@@ -224,7 +236,7 @@ private case class Search(
 
   def scroll(value: Option[Long]): Search = {
     if (value.nonEmpty)
-      this.copy(searchDef = searchDef.scroll(value.get + "ms"))
+      this.copy(searchDef = searchDef.scroll(value.get + HistoryFields.TimestampUnit))
     else
       this
   }

@@ -25,6 +25,7 @@ import scaldi.Injector
 import scaldi.akka.AkkaInjectable._
 
 import scala.collection.mutable.ListBuffer
+import scala.concurrent.{Await, Future}
 
 /** Actor responsible for history buffering and time or queue size based flushing to storages **/
 class BufferedHistoryKvActor(implicit inj: Injector)
@@ -42,19 +43,41 @@ class BufferedHistoryKvActor(implicit inj: Injector)
 
   timers.startPeriodicTimer(HistoryTimer, HistoryTimeout, configuration.getFlushHistoryTimeout)
 
+  override def postStop(): Unit = {
+    log.info("{}: flush {} records on shutdown", getClass.getName, buffer.size + retryBuffer.size)
+    if (buffer.nonEmpty || retryBuffer.nonEmpty) {
+      val flushSize = configuration.getFlushHistorySize
+      val resultList = (buffer ++ retryBuffer).grouped(flushSize).toList
+        .map(batch => historyProcessor.save(batch.toList))
+      val result = Future.foldLeft(resultList)(0) {
+        case (sum, None) => sum
+        case (sum, Some(list)) => sum + list.size
+      }.map { erroneousNum =>
+        if (erroneousNum > 0)
+          log.error("{}: unable to flush {} records on shutdown", getClass.getName, erroneousNum)
+        else
+          log.info("{}: shut down successfully", getClass.getName)
+      }
+      Await.result(result, configuration.getFlushHistoryTimeout)
+    }
+  }
+
   override def receive: Receive = {
     case HistoryTimeout =>
-      flush(buffer)
-      flush(retryBuffer)
-    case KvHistoryFlush(histories) => histories match {
-      case List() => //do nothing
-      case list =>
-        historyProcessor.save(histories).map {
-          case Some(erroneous) =>
-            self ! KvHistoryRetry(erroneous)
-          case None => //do nothing
-        }
-    }
+      log.info("{}: flush {} records by timeout", getClass.getName, buffer.size + retryBuffer.size)
+      if (buffer.nonEmpty || retryBuffer.nonEmpty) {
+        flush(buffer)
+        flush(retryBuffer)
+      }
+    case KvHistoryFlush(histories) =>
+      historyProcessor.save(histories).map {
+        case Some(erroneous) =>
+          self ! KvHistoryRetry(erroneous)
+        case None => //do nothing
+      }.recover { case ex =>
+        log.error(ex, "{}: failure during flush", getClass.getName)
+        self ! KvHistoryRetry(histories)
+      }
     case KvHistoryRetry(erroneous) =>
       retry(erroneous)
     case history: KvHistory =>
@@ -79,7 +102,7 @@ class BufferedHistoryKvActor(implicit inj: Injector)
         true
       }
       else {
-        log.error("Failed to save " + history.toString)
+        log.error("Failed to save {}", history.toString)
         false
       }
   }

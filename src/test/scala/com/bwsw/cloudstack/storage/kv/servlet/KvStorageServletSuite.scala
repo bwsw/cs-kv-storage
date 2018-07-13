@@ -143,7 +143,7 @@ class KvStorageServletSuite extends ScalatraSuite with FunSpecLike with MockFact
 
       it("should set the value by the key") {
         kvActor.underlyingActor
-          .clearAndExpect(ResponsiveExpectation(KvSetRequest(storage, someKey, someValue), () => Right(Unit)))
+          .clearAndExpect(ResponsiveExpectation(KvSetRequest(storage, someKey, someValue), () => Right(())))
         put(path, someValue, textHeaders) {
           status should equal(200)
           response.getContentType should include("text/plain")
@@ -249,7 +249,7 @@ class KvStorageServletSuite extends ScalatraSuite with FunSpecLike with MockFact
       }
 
       it("should delete the value by the key") {
-        test(Right(Unit), 200)
+        test(Right(()), 200)
       }
 
       it("should return 500 Internal Server Error if request processing fails") {
@@ -352,7 +352,7 @@ class KvStorageServletSuite extends ScalatraSuite with FunSpecLike with MockFact
       }
 
       it("should clear the storage") {
-        test(Right(Unit), 200)
+        test(Right(()), 200)
       }
 
       it("should return 404 Not Found if storage does not exist") {

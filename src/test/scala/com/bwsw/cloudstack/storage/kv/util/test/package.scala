@@ -15,24 +15,19 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package com.bwsw.cloudstack.storage.kv.entity
+package com.bwsw.cloudstack.storage.kv.util
 
-import com.bwsw.cloudstack.storage.kv.util.elasticsearch.DefaultError
+import com.sksamuel.elastic4s.http.{ElasticError, RequestFailure, RequestSuccess}
 
-sealed trait StatusMessage
+import scala.concurrent.{ExecutionContext, Future}
 
-object Ok extends StatusMessage {
-  override def toString: String = "OK"
-}
+package object test {
 
-object NotFound extends StatusMessage {
-  override def toString: String = "Not found"
-}
+  def getRequestSuccessFuture[T](response: T)
+    (implicit executionContext: ExecutionContext): Future[Right[RequestFailure, RequestSuccess[T]]] = Future(Right(
+    RequestSuccess(200, Option.empty, Map.empty, response)))
 
-case class ElasticsearchError(message: String = DefaultError) extends StatusMessage {
-  override def toString: String = message
-}
-
-case class Unexpected(message: String) extends StatusMessage {
-  override def toString: String = message
+  def getRequestFailureFuture[T](statusCode: Int = 500)
+    (implicit executionContext: ExecutionContext): Future[Left[RequestFailure, RequestSuccess[T]]] = Future(Left(
+    RequestFailure(statusCode, Option.empty, Map.empty, ElasticError.fromThrowable(new RuntimeException()))))
 }

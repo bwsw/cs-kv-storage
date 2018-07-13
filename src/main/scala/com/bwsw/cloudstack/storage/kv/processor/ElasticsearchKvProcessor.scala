@@ -19,11 +19,11 @@ package com.bwsw.cloudstack.storage.kv.processor
 
 import com.bwsw.cloudstack.storage.kv.configuration.ElasticsearchConfig
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, ConflictError, InternalError, NotFoundError, StorageError}
-import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils._
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.get.GetResponse
 import com.sksamuel.elastic4s.http.search.SearchHits
 import com.sksamuel.elastic4s.http.{ElasticDsl, HttpClient}
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch._
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
@@ -71,12 +71,12 @@ class ElasticsearchKvProcessor(client: HttpClient, conf: ElasticsearchConfig) ex
   def set(storage: String, key: String, value: String): Future[Either[StorageError, Unit]] = {
     if (isKvValid(key, value))
       client.execute {
-        indexInto(getStorageIndex(storage) / DocumentType) id key fields (StorageValueField -> value)
+        indexInto(getStorageIndex(storage) / DocumentType) id key fields (StorageFields.Value -> value)
       }.map {
         case Left(failure) =>
           logger.error("Elasticsearch index request failure: {}", failure.error)
           Left(getError(failure))
-        case Right(_) => Right(Unit)
+        case Right(_) => Right(())
       }
     else
       Future(Left(BadRequestError()))
@@ -85,7 +85,7 @@ class ElasticsearchKvProcessor(client: HttpClient, conf: ElasticsearchConfig) ex
   def set(storage: String, kvs: Map[String, String]): Future[Either[StorageError, Map[String, Boolean]]] = {
     val splitKvs = kvs.partition { kv => isKvValid(kv._1, kv._2) }
     val sets = splitKvs._1.map { case (key, value) =>
-      indexInto(getStorageIndex(storage) / DocumentType) id key fields (StorageValueField -> value)
+      indexInto(getStorageIndex(storage) / DocumentType) id key fields (StorageFields.Value -> value)
     }
     val bad = splitKvs._2.map { case (key, _) => (key, false) }
     if (sets.nonEmpty) {
@@ -110,7 +110,7 @@ class ElasticsearchKvProcessor(client: HttpClient, conf: ElasticsearchConfig) ex
       case Left(failure) =>
         logger.error("Elasticsearch delete by id request failure: {}", failure.error)
         Left(getError(failure))
-      case Right(_) => Right(Unit)
+      case Right(_) => Right(())
     }
   }
 
@@ -160,7 +160,7 @@ class ElasticsearchKvProcessor(client: HttpClient, conf: ElasticsearchConfig) ex
           if (success.result.versionConflicts > 0)
             Left(ConflictError())
           else
-            Right(Unit)
+            Right(())
       }
   }
 
@@ -201,7 +201,7 @@ object ElasticsearchKvProcessor {
   private val logger = LoggerFactory.getLogger(getClass)
 
   private def getValue(fields: Map[String, Any]): Either[StorageError, String] = {
-    fields.get(StorageValueField) match {
+    fields.get(StorageFields.Value) match {
       case Some(null) => Right(null)
       case Some(s: String) => Right(s)
       case _ => Left(InternalError("Invalid result"))
@@ -218,7 +218,7 @@ object ElasticsearchKvProcessor {
           val result = getValue(r.source)
           result match {
             case Left(error) =>
-              logger.error("Field {} is not specified in the response: {}", StorageValueField, r: Any)
+              logger.error("Field {} is not specified in the response: {}", StorageFields.Value, r: Any)
               Left(error)
             case Right(value) => getValues(tail, results + (r.id -> Some(value)))
           }

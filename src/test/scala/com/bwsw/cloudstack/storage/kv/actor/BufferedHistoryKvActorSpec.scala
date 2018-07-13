@@ -24,6 +24,7 @@ import com.bwsw.cloudstack.storage.kv.entity.Operation.{Clear, Delete, Set}
 import com.bwsw.cloudstack.storage.kv.entity.Storage
 import com.bwsw.cloudstack.storage.kv.message.{KvHistory, KvHistoryBulk}
 import com.bwsw.cloudstack.storage.kv.processor.HistoryProcessor
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch.StorageType
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.Eventually
 import org.scalatest.{FunSpecLike, Matchers}
@@ -44,14 +45,14 @@ class BufferedHistoryKvActorSpec
 
   private val historyProcessor = mock[HistoryProcessor]
   private val appConf = mock[AppConfig]
-  private val storage = Storage("someStorage", "ACC", keepHistory = true)
+  private val storage = Storage("someStorage", StorageType.Account, historyEnabled = true)
   private val someKey = "someKey"
   private val someValue = "someValue"
   private val timestamp = System.currentTimeMillis()
-  private val history = KvHistory(storage.uUID, someKey, someValue, timestamp, Set)
+  private val history = KvHistory(storage.uuid, someKey, someValue, timestamp, Set)
   private val historyListRetry = List(
-    KvHistory(storage.uUID, someKey, null, timestamp, Delete),
-    KvHistory(storage.uUID, null, null, timestamp, Clear))
+    KvHistory(storage.uuid, someKey, null, timestamp, Delete),
+    KvHistory(storage.uuid, null, null, timestamp, Clear))
   private val historyBulk = KvHistoryBulk(history :: historyListRetry)
   private val flushTimeout = 1000.millis
 
@@ -183,6 +184,81 @@ class BufferedHistoryKvActorSpec
         }
         system.stop(bufferedHistoryKvActor)
       }
+    }
+
+    describe("(KvHistoryFlush)") {
+
+      it("should retry on processor failure") {
+        (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout)
+        (appConf.getFlushHistorySize _).expects().returning(historyBulk.values.size).anyNumberOfTimes
+
+        val historyAttempt = Promise[Boolean]
+        expectHistoryProcessingFailure(historyBulk.values.toList, historyAttempt)
+        (appConf.getHistoryRetryLimit _).expects().returning(1).repeat(historyBulk.values.size)
+
+        val historyRetry = Promise[Boolean]
+        expectHistoryProcessing(historyBulk.values.toList.map(h => h.makeAttempt), Future(None), historyRetry)
+
+        val bufferedHistoryKvActor = system.actorOf(Props(new BufferedHistoryKvActor))
+        bufferedHistoryKvActor ! historyBulk
+
+        eventually(timeout(scaled(flushTimeout * 2.9))) {
+          historyAttempt.isCompleted should be(true)
+          historyRetry.isCompleted should be(true)
+        }
+
+        system.stop(bufferedHistoryKvActor)
+      }
+
+      it("should flush all histories on shutdown") {
+        (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout)
+        (appConf.getFlushHistorySize _).expects().returning(historyListRetry.size).anyNumberOfTimes
+        (appConf.getHistoryRetryLimit _).expects().returning(1).anyNumberOfTimes
+
+        // prepare to fill retry buffer
+        val historyPostponed = Promise[Boolean]
+        expectHistoryProcessing(historyListRetry, Future(Some(historyListRetry)), historyPostponed)
+
+        // prepare to flush on shutdown
+        val historyFirstChunkProcessed = Promise[Boolean]
+        expectHistoryProcessing(
+          history :: historyListRetry.take(historyListRetry.size - 1).map(_.makeAttempt),
+          Future(None),
+          historyFirstChunkProcessed)
+
+        val historySecondChunkProcessed = Promise[Boolean]
+        expectHistoryProcessing(
+          List(historyListRetry.last.makeAttempt),
+          Future(None),
+          historySecondChunkProcessed)
+
+        val bufferedHistoryKvActor = system.actorOf(Props(new BufferedHistoryKvActor))
+        bufferedHistoryKvActor ! KvHistoryBulk(historyListRetry)
+
+        // fill retry buffer
+        eventually(timeout(scaled(flushTimeout * 0.9))) {
+          historyPostponed.isCompleted should be(true)
+        }
+
+        // fill buffer
+        bufferedHistoryKvActor ! history
+
+        system.stop(bufferedHistoryKvActor)
+
+        eventually(timeout(scaled(flushTimeout * 1.9))) {
+          historyFirstChunkProcessed.isCompleted should be(true)
+          historySecondChunkProcessed.isCompleted should be(true)
+        }
+      }
+    }
+  }
+
+  private def expectHistoryProcessingFailure(
+      expected: List[KvHistory],
+      verifier: Promise[Boolean]): Unit = {
+    (historyProcessor.save _).expects(expected).onCall { histories: List[KvHistory] =>
+      verifier.success(true)
+      Future {throw new RuntimeException("Error message")}
     }
   }
 
