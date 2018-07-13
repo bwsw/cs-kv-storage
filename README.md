@@ -20,10 +20,47 @@ Storages for Apache CloudStack virtual machines created and deleted automaticall
 Temporal storages with specified TTL created via Apache CloudStack API. TTL can be updated after creation. This
 operation as well as storage deletion can be done via Apache CloudStack API and key-value storage API.
 
+* [Deployment](#deployment)
+* [Configuration](#configuration)
 * [Build & Run](#build-run)
 * [API](#api)
-* [Configuration](#configuration)
 
+
+# Deployment #
+
+Following components should be deployed:
+
+* Elasticsearch 6.2
+
+The official documentation can be found at https://www.elastic.co/guide/en/elasticsearch/reference/6.2/index.html
+
+Once it is deployed next step is to create necessary indexes and templates. To achieve this [initialization script]
+(/elasticsearch/init.sh) should be executed (use -h option to print how to use it).
+
+* cs-kv-storage
+
+See [configuration](#configuration) and [build & run](#build-run) sections.
+
+# Configuration
+
+The example of the configuration file can be found [here](/src/test/resources/application.conf).
+
+| Property | Description |
+| --------- | ----------- |
+| elasticsearch.uri | Elasticsearch addresses in the format elasticsearch://host:port,host:port, http://host:port,host:port or https://host:port,host:port. |
+| elasticsearch.auth.username | Elasticsearch username for authentication. |
+| elasticsearch.auth.password | Elasticsearch password for authentication. |
+| elasticsearch.scroll.page-size | Batch size to retrieve all results for key listing. |
+| elasticsearch.scroll.keep-alive | Timeout between batch requests to retrieve all results for key listing. |
+| elasticsearch.limit.value.max-size | Max length of the value. |
+| elasticsearch.limit.key.max-size | Max length of the key. |
+| app.cache.max-size | Max size of the storage cache. |
+| app.cache.expiration-time | TTL for the storage cache items. |
+| app.history.flush-size | Size of batch requests to save a history of the storage operations. |
+| app.history.flush-timeout | Timeout between batch/retry requests to save a history of the storage operations. |
+| app.history.retry-limit | Amount of attempts to try to log the storage operation. |
+| app.default-page-size | A default number of results returned in the page for search requests. |
+| app.request-timeout | Maximum time to process the request. |
 
 # Build & Run #
 
@@ -444,26 +481,4 @@ below and the content type is application/json:
    ]
 }
 ```
-
-# Configuration
-
-The example of the configuration file can be found [here](/src/test/resources/application.conf).
-
-| Property | Description |
-| --------- | ----------- |
-| elasticsearch.uri | Elasticsearch addesses in the format elasticsearch://host:port,host:port, http://host:port,host:port or https://host:port,host:port. |
-| elasticsearch.auth.username | Elasticsearch username for authentication. |
-| elasticsearch.auth.password | Elasticsearch password for authentication. | 
-| elasticsearch.scroll.page-size | Batch size to retrieve all results for key listing. |
-| elasticsearch.scroll.keep-alive | Timeout between batch requests to retrieve all results for key listing. |
-| elasticsearch.limit.value.max-size | Max length of the value. |
-| elasticsearch.limit.key.max-size | Max length of the key. |
-| app.cache.max-size | Max size of the storage cache. |
-| app.cache.expiration-time | TTL for the storage cache items. |
-| app.history.flush-size | Size of batch requests to save a history of the storage operations. |
-| app.history.flush-timeout | Timeout between batch/retry requests to save a history of the storage operations. |
-| app.history.retry-limit | Amount of attempts to try to log the storage operation. |
-| app.default-page-size | A default number of results returned in the page for search requests. |
-| app.request-timeout | Maximum time to process the request. |
-
 
