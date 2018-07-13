@@ -24,6 +24,7 @@ import com.bwsw.cloudstack.storage.kv.entity.Operation.{Clear, Delete, Set}
 import com.bwsw.cloudstack.storage.kv.entity.Storage
 import com.bwsw.cloudstack.storage.kv.message.{KvHistory, KvHistoryBulk}
 import com.bwsw.cloudstack.storage.kv.processor.HistoryProcessor
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch.StorageType
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.Eventually
 import org.scalatest.{FunSpecLike, Matchers}
@@ -44,14 +45,14 @@ class BufferedHistoryKvActorSpec
 
   private val historyProcessor = mock[HistoryProcessor]
   private val appConf = mock[AppConfig]
-  private val storage = Storage("someStorage", "ACC", keepHistory = true)
+  private val storage = Storage("someStorage", StorageType.Account, historyEnabled = true)
   private val someKey = "someKey"
   private val someValue = "someValue"
   private val timestamp = System.currentTimeMillis()
-  private val history = KvHistory(storage.uUID, someKey, someValue, timestamp, Set)
+  private val history = KvHistory(storage.uuid, someKey, someValue, timestamp, Set)
   private val historyListRetry = List(
-    KvHistory(storage.uUID, someKey, null, timestamp, Delete),
-    KvHistory(storage.uUID, null, null, timestamp, Clear))
+    KvHistory(storage.uuid, someKey, null, timestamp, Delete),
+    KvHistory(storage.uuid, null, null, timestamp, Clear))
   private val historyBulk = KvHistoryBulk(history :: historyListRetry)
   private val flushTimeout = 1000.millis
 

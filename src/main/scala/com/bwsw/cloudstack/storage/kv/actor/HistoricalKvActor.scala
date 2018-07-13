@@ -126,10 +126,10 @@ class HistoricalKvActor(implicit inj: Injector)
       value: String,
       timestamp: Long,
       operation: Operation): Unit = {
-    if (storage.keepHistory)
+    if (storage.historyEnabled)
       response match {
         case Right(_) =>
-          historyKvActor ! KvHistory(storage.uUID, key, value, timestamp, operation)
+          historyKvActor ! KvHistory(storage.uuid, key, value, timestamp, operation)
         case Left(_) => // do nothing
       }
   }
@@ -140,11 +140,11 @@ class HistoricalKvActor(implicit inj: Injector)
       timestamp: Long,
       operation: Operation,
       values: Map[String, String] = Map()): Unit = {
-    if (storage.keepHistory)
+    if (storage.historyEnabled)
       response match {
         case Right(results) =>
           historyKvActor ! KvHistoryBulk(results.filter(_._2).map {
-            case (key, _) => KvHistory(storage.uUID, key, values.getOrElse(key, null), timestamp, operation)
+            case (key, _) => KvHistory(storage.uuid, key, values.getOrElse(key, null), timestamp, operation)
           })
         case Left(_) => // do nothing
       }

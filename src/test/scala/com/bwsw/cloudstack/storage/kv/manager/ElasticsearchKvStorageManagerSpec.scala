@@ -19,7 +19,11 @@ package com.bwsw.cloudstack.storage.kv.manager
 
 import com.bwsw.cloudstack.storage.kv.cache.StorageCache
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError}
-import com.bwsw.cloudstack.storage.kv.util.ElasticsearchUtils._
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch.RegistryFields._
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch.ScriptOperations.{NoOp, Updated}
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch.StorageType.Temporary
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch.{DocumentType, RegistryIndex}
+import com.bwsw.cloudstack.storage.kv.util.test.{getRequestFailureFuture, getRequestSuccessFuture}
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.update.UpdateResponse
 import com.sksamuel.elastic4s.http.{update => _, _}
@@ -27,7 +31,7 @@ import com.sksamuel.elastic4s.update.UpdateDefinition
 import org.scalamock.scalatest.AsyncMockFactory
 import org.scalatest.AsyncFunSpec
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFactory {
 
@@ -47,7 +51,7 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
           DocumentType,
           storage,
           2,
-          "updated",
+          Updated,
           forcedRefresh = false,
           Shards(2, 1, 0),
           None)
@@ -64,7 +68,7 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
           DocumentType,
           storage,
           2,
-          "noop",
+          NoOp,
           forcedRefresh = false,
           Shards(2, 1, 0),
           None)
@@ -100,7 +104,7 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
           DocumentType,
           storage,
           2,
-          "updated",
+          Updated,
           forcedRefresh = false,
           Shards(2, 1, 0),
           None)
@@ -120,7 +124,7 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
           DocumentType,
           storage,
           2,
-          "noop",
+          NoOp,
           forcedRefresh = false,
           Shards(2, 1, 0),
           None)
@@ -158,9 +162,9 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
       _: ExecutionContext))
       .expects(
         update(storage) in RegistryIndex / DocumentType script
-          s"if (ctx._source.type == '$TemporaryStorageType') " +
-            s"{ ctx._source.expiration_timestamp = ctx._source.expiration_timestamp - ctx._source.ttl + " +
-            s"$ttl; ctx._source.ttl = $ttl } else { ctx.op='noop' }",
+          s"if (ctx._source.$Type == '$Temporary') " +
+            s"{ ctx._source.$ExpirationTimestamp = ctx._source.$ExpirationTimestamp - ctx._source.$Ttl + " +
+            s"$ttl; ctx._source.$Ttl = $ttl } else { ctx.op='$NoOp' }",
         UpdateHttpExecutable,
         *)
   }
@@ -171,17 +175,9 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
       _: ExecutionContext))
       .expects(
         update(storage) in RegistryIndex / DocumentType script
-          s"if (ctx._source.type == '$TemporaryStorageType') " +
-            s"{ ctx._source.deleted = true } else { ctx.op='noop' }",
+          s"if (ctx._source.$Type == '$Temporary') " +
+            s"{ ctx._source.$Deleted = true } else { ctx.op='$NoOp' }",
         UpdateHttpExecutable,
         *)
-  }
-
-  private def getRequestSuccessFuture[T](response: T): Future[Right[RequestFailure, RequestSuccess[T]]] = {
-    Future(Right(RequestSuccess(200, Option.empty, Map.empty, response)))
-  }
-
-  private def getRequestFailureFuture[T](status: Int): Future[Left[RequestFailure, RequestSuccess[T]]] = {
-    Future(Left(RequestFailure(status, Option.empty, Map.empty, ElasticError.fromThrowable(new RuntimeException()))))
   }
 }
