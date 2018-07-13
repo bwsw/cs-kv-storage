@@ -44,20 +44,28 @@ class ElasticsearchHistoryProcessor(
   import ElasticsearchHistoryProcessor._
 
   def save(histories: List[KvHistory]): Future[Option[List[KvHistory]]] = {
+    logger.info("Start saving {} history records", histories.size)
+
     val indices = histories.map {
       record =>
         indexInto(getHistoricalStorageIndex(record.storage), DocumentType) fields getFields(record)
     }
     client.execute(bulk(indices)).map {
       case Left(failure) =>
-        logger.error("Elasticsearch save request failure: {}", failure.error)
+        logger.error("Elasticsearch save request of {} history records failed: {}", histories.size, failure.error)
         Some(histories)
       case Right(success) =>
         val erroneous = success.result.items.filter(_.error.isDefined).map(item => histories(item.itemId))
-        if (erroneous.isEmpty)
+        if (erroneous.isEmpty) {
+          logger.info("{} history records saved successfully", histories.size)
           None
-        else
+        } else {
+          logger.warn(
+            "Failed to save {} history records, {} saved successfully",
+            erroneous.size,
+            histories.size - erroneous.size)
           Some(erroneous.toList)
+        }
     }
   }
 
