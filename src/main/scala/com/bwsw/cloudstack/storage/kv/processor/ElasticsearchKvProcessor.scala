@@ -76,7 +76,7 @@ class ElasticsearchKvProcessor(client: HttpClient, conf: ElasticsearchConfig) ex
         case Left(failure) =>
           logger.error("Elasticsearch index request failure: {}", failure.error)
           Left(getError(failure))
-        case Right(_) => Right(Unit)
+        case Right(_) => Right(())
       }
     else
       Future(Left(BadRequestError()))
@@ -110,7 +110,7 @@ class ElasticsearchKvProcessor(client: HttpClient, conf: ElasticsearchConfig) ex
       case Left(failure) =>
         logger.error("Elasticsearch delete by id request failure: {}", failure.error)
         Left(getError(failure))
-      case Right(_) => Right(Unit)
+      case Right(_) => Right(())
     }
   }
 
@@ -160,7 +160,7 @@ class ElasticsearchKvProcessor(client: HttpClient, conf: ElasticsearchConfig) ex
           if (success.result.versionConflicts > 0)
             Left(ConflictError())
           else
-            Right(Unit)
+            Right(())
       }
   }
 
