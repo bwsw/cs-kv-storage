@@ -1,0 +1,16 @@
+{"index": {}}
+{"key": "key1", "value": "value", "timestamp": 1010, "operation": "set"}
+{"index": {}}
+{"key": "key2", "value": "value2", "timestamp": 1010, "operation": "set"}
+{"index": {}}
+{"key": "key3", "value": "value3", "timestamp": 1010, "operation": "set"}
+{"index": {}}
+{"key": "key4", "value": "value4", "timestamp": 1010, "operation": "set"}
+{"index": {}}
+{"key": "key5", "value": "value5", "timestamp": 1010, "operation": "set"}
+{"index": {}}
+{"key": "key6", "value": "value6", "timestamp": 1010, "operation": "set"}
+{"index": {}}
+{"key": "key6", "value": null, "timestamp": 1011, "operation": "delete"}
+{"index": {}}
+{"key": "key1", "value": "value1", "timestamp": 1011, "operation": "set"}
