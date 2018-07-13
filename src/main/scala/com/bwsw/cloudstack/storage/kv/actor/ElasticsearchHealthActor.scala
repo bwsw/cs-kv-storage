@@ -71,6 +71,7 @@ class ElasticsearchHealthActor(implicit inj: Injector)
   private def checkIndex(index: String, name: CheckName): Future[Check] = {
     client.execute(indexExists(index)).map {
       case Left(failure) =>
+        log.error("Elasticsearch index exists request failure: {}", failure.error)
         Check(
           name,
           Unhealthy,

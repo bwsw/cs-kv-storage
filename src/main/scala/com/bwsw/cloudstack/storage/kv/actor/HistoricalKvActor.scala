@@ -108,6 +108,7 @@ class HistoricalKvActor(implicit inj: Injector)
     case KvErrorResponse(error) =>
       sender() ! Left(error)
     case failure: Status.Failure =>
+      log.error(failure.cause, getClass.getName)
       sender() ! Left(InternalError(failure.cause.getMessage))
   }
 
@@ -147,9 +148,5 @@ class HistoricalKvActor(implicit inj: Injector)
           })
         case Left(_) => // do nothing
       }
-  }
-
-  protected def logError(storage: String): Unit = {
-    log.error(s"Error while updating storage $storage information.")
   }
 }
