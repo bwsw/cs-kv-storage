@@ -17,6 +17,8 @@
 
 #!/bin/bash
 
+cd "$(dirname "$0")"
+export APP_DOCKER_TAG=$1
 docker-compose up -d --force-recreate --build app
 docker-compose up --build initializer
 docker-compose run newman run cs-kv-storage.postman_collection.json --reporters=cli
