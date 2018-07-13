@@ -49,10 +49,10 @@ class BufferedHistoryKvActorSpec
   private val someKey = "someKey"
   private val someValue = "someValue"
   private val timestamp = System.currentTimeMillis()
-  private val history = KvHistory(storage.uUID, someKey, someValue, timestamp, Set)
+  private val history = KvHistory(storage.uuid, someKey, someValue, timestamp, Set)
   private val historyListRetry = List(
-    KvHistory(storage.uUID, someKey, null, timestamp, Delete),
-    KvHistory(storage.uUID, null, null, timestamp, Clear))
+    KvHistory(storage.uuid, someKey, null, timestamp, Delete),
+    KvHistory(storage.uuid, null, null, timestamp, Clear))
   private val historyBulk = KvHistoryBulk(history :: historyListRetry)
   private val flushTimeout = 1000.millis
 
