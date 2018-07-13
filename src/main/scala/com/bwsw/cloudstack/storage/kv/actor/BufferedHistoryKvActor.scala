@@ -25,7 +25,7 @@ import scaldi.Injector
 import scaldi.akka.AkkaInjectable._
 
 import scala.collection.mutable.ListBuffer
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 
 /** Actor responsible for history buffering and time or queue size based flushing to storages **/
 class BufferedHistoryKvActor(implicit inj: Injector)
@@ -49,7 +49,7 @@ class BufferedHistoryKvActor(implicit inj: Injector)
       val flushSize = configuration.getFlushHistorySize
       val resultList = (buffer ++ retryBuffer).grouped(flushSize).toList
         .map(batch => historyProcessor.save(batch.toList))
-      Future.foldLeft(resultList)(0) {
+      val result = Future.foldLeft(resultList)(0) {
         case (sum, None) => sum
         case (sum, Some(list)) => sum + list.size
       }.map { erroneousNum =>
@@ -58,6 +58,7 @@ class BufferedHistoryKvActor(implicit inj: Injector)
         else
           log.info("{}: shut down successfully", getClass.getName)
       }
+      Await.result(result, configuration.getFlushHistoryTimeout)
     }
   }
 
