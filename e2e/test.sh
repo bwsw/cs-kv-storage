@@ -18,6 +18,9 @@
 #!/bin/bash
 
 cd "$(dirname "$0")"
+
+[ -z "$1" ] && echo "Application version is not specified" && exit 1
+
 export APP_DOCKER_TAG=$1
 docker-compose up -d --force-recreate --build app
 docker-compose up --build initializer
