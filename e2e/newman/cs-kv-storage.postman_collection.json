@@ -1,16 +1,18 @@
 {
 	"info": {
+		"_postman_id": "c9888eb2-c769-4d6c-9f9f-fcb95fe2eee8",
 		"name": "cs-kv-storage",
-		"_postman_id": "4eabd494-d186-754f-5ab1-064514e95db3",
 		"description": "E2E tests for cs-kv-storage",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
 			"name": "kv-storage",
+			"description": null,
 			"item": [
 				{
 					"name": "List keys",
+					"description": null,
 					"item": [
 						{
 							"name": "List a storage",
@@ -191,6 +193,7 @@
 				},
 				{
 					"name": "Get value",
+					"description": null,
 					"item": [
 						{
 							"name": "Get a value",
@@ -361,6 +364,7 @@
 				},
 				{
 					"name": "Get multiple values",
+					"description": null,
 					"item": [
 						{
 							"name": "Get values",
@@ -657,6 +661,7 @@
 				},
 				{
 					"name": "Set value",
+					"description": null,
 					"item": [
 						{
 							"name": "Set with wrong Content-Type",
@@ -846,6 +851,7 @@
 				},
 				{
 					"name": "Set multiple values",
+					"description": null,
 					"item": [
 						{
 							"name": "Set with wrong Content-Type",
@@ -1172,6 +1178,7 @@
 				},
 				{
 					"name": "Delete value",
+					"description": null,
 					"item": [
 						{
 							"name": "Delete from nonexistent storage",
@@ -1342,6 +1349,7 @@
 				},
 				{
 					"name": "Delete multiple values",
+					"description": null,
 					"item": [
 						{
 							"name": "Delete with wrong Content-Type",
@@ -1689,6 +1697,7 @@
 				},
 				{
 					"name": "Clear storage",
+					"description": null,
 					"item": [
 						{
 							"name": "Clear storage",
@@ -1837,9 +1846,11 @@
 		},
 		{
 			"name": "kv-storage-manager",
+			"description": null,
 			"item": [
 				{
 					"name": "Set temporary storage ttl",
+					"description": null,
 					"item": [
 						{
 							"name": "Set TTL of nonexistent storage",
@@ -2108,6 +2119,7 @@
 				},
 				{
 					"name": "Delete temporary storage",
+					"description": null,
 					"item": [
 						{
 							"name": "Delete persistent storage",
@@ -2263,12 +2275,15 @@
 		},
 		{
 			"name": "kv-history",
+			"description": null,
 			"item": [
 				{
 					"name": "Search and list history",
+					"description": null,
 					"item": [
 						{
 							"name": "validation",
+							"description": null,
 							"item": [
 								{
 									"name": "Search with invalid operations",
@@ -2950,12 +2965,12 @@
 							"_postman_isSubFolder": true
 						},
 						{
-							"name": "Search with duplicated keys",
+							"name": "Search with keys",
 							"event": [
 								{
 									"listen": "test",
 									"script": {
-										"id": "98410d13-a7ed-4cac-bba1-4ffcdde034d8",
+										"id": "14c94906-0edb-4495-a6f3-97ad2632c9a1",
 										"type": "text/javascript",
 										"exec": [
 											"pm.test(\"Status code is 200\", function() {",
@@ -2967,15 +2982,61 @@
 											"});",
 											"",
 											"pm.test(\"Response body is valid\", function () {",
-											"    var example = {",
-											"        \"total\": 1,",
-											"        \"size\": 1,",
-											"        \"page\": 1,",
-											"        \"items\": [",
-											"            {\"key\": \"key2\", \"value\": \"value2\", \"timestamp\": 1010, \"operation\": \"set\"}",
-											"        ]",
-											"    };",
-											"    pm.expect(pm.response.json()).to.eql(example);",
+											"    var json = pm.response.json();",
+											"    pm.expect(json.page).to.eql(1);",
+											"    pm.expect(json.items.every(function(cur){return cur.key===\"key2\" || cur.key===\"key3\"})).to.eql(true);",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/history/{{read_only_storage}}?keys=key2,key3",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"history",
+										"{{read_only_storage}}"
+									],
+									"query": [
+										{
+											"key": "keys",
+											"value": "key2,key3"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search with duplicated keys",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "2ce0f346-dd37-4888-85c0-5e434fb99548",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function() {",
+											"  pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Content-Type is application/json\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+											"});",
+											"",
+											"pm.test(\"Response body is valid\", function () {",
+											"    var json = pm.response.json();",
+											"    pm.expect(json.page).to.eql(1);",
+											"    pm.expect(json.items.every(function(cur){return cur.key==\"key2\"})).to.eql(true);",
 											"});"
 										]
 									}
@@ -3000,8 +3061,7 @@
 									"query": [
 										{
 											"key": "keys",
-											"value": "key2,key2",
-											"equals": true
+											"value": "key2,key2"
 										}
 									]
 								}
@@ -3014,7 +3074,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "8da31ec3-f47f-47b5-9b47-a7682d7fc854",
+										"id": "a0e81d7b-34c5-42f3-a9df-ee10a002ba26",
 										"type": "text/javascript",
 										"exec": [
 											"pm.test(\"Status code is 200\", function() {",
@@ -3026,16 +3086,9 @@
 											"});",
 											"",
 											"pm.test(\"Response body is valid\", function () {",
-											"    var example = {",
-											"        \"total\": 2,",
-											"        \"size\": 2,",
-											"        \"page\": 1,",
-											"        \"items\": [",
-											"            {\"key\": \"key1\", \"value\": \"value1\", \"timestamp\": 1011, \"operation\": \"set\"},",
-											"            {\"key\": \"key6\", \"value\": null, \"timestamp\": 1011, \"operation\": \"delete\"}",
-											"        ]",
-											"    };",
-											"    pm.expect(pm.response.json()).to.eql(example);",
+											"    var json = pm.response.json();",
+											"    pm.expect(json.page).to.eql(1);",
+											"    pm.expect(json.items.every(function(cur){return cur.timestamp>=1011})).to.eql(true);",
 											"});"
 										]
 									}
@@ -3049,7 +3102,7 @@
 									"raw": ""
 								},
 								"url": {
-									"raw": "{{url}}/history/{{read_only_storage}}?start=1011&sort=key",
+									"raw": "{{url}}/history/{{read_only_storage}}?start=1011",
 									"host": [
 										"{{url}}"
 									],
@@ -3060,13 +3113,7 @@
 									"query": [
 										{
 											"key": "start",
-											"value": "1011",
-											"equals": true
-										},
-										{
-											"key": "sort",
-											"value": "key",
-											"equals": true
+											"value": "1011"
 										}
 									]
 								}
@@ -3079,7 +3126,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "cdeb5ce8-b64a-41d4-87c3-fece4d9d0e6f",
+										"id": "4560c0c6-7700-49e8-b561-76df3eb1a452",
 										"type": "text/javascript",
 										"exec": [
 											"pm.test(\"Status code is 200\", function() {",
@@ -3091,20 +3138,9 @@
 											"});",
 											"",
 											"pm.test(\"Response body is valid\", function () {",
-											"    var example = {",
-											"        \"total\": 6,",
-											"        \"size\": 6,",
-											"        \"page\": 1,",
-											"        \"items\": [",
-											"            {\"key\": \"key1\", \"value\": \"value\", \"timestamp\": 1010, \"operation\": \"set\"},",
-											"            {\"key\": \"key2\", \"value\": \"value2\", \"timestamp\": 1010, \"operation\": \"set\"},",
-											"            {\"key\": \"key3\", \"value\": \"value3\", \"timestamp\": 1010, \"operation\": \"set\"},",
-											"            {\"key\": \"key4\", \"value\": \"value4\", \"timestamp\": 1010, \"operation\": \"set\"},",
-											"            {\"key\": \"key5\", \"value\": \"value5\", \"timestamp\": 1010, \"operation\": \"set\"},",
-											"            {\"key\": \"key6\", \"value\": \"value6\", \"timestamp\": 1010, \"operation\": \"set\"}",
-											"        ]",
-											"    };",
-											"    pm.expect(pm.response.json()).to.eql(example);",
+											"    var json = pm.response.json();",
+											"    pm.expect(json.page).to.eql(1);",
+											"    pm.expect(json.items.every(function(cur){return cur.timestamp<=1010})).to.eql(true);",
 											"});"
 										]
 									}
@@ -3118,7 +3154,7 @@
 									"raw": ""
 								},
 								"url": {
-									"raw": "{{url}}/history/{{read_only_storage}}?end=1010&sort=key",
+									"raw": "{{url}}/history/{{read_only_storage}}?end=1010",
 									"host": [
 										"{{url}}"
 									],
@@ -3129,13 +3165,7 @@
 									"query": [
 										{
 											"key": "end",
-											"value": "1010",
-											"equals": true
-										},
-										{
-											"key": "sort",
-											"value": "key",
-											"equals": true
+											"value": "1010"
 										}
 									]
 								}
@@ -3143,12 +3173,12 @@
 							"response": []
 						},
 						{
-							"name": "Search with duplicated operations",
+							"name": "Search with sorts",
 							"event": [
 								{
 									"listen": "test",
 									"script": {
-										"id": "cbb3b0f1-276d-44d3-add1-e19ef99aea5c",
+										"id": "f9c2dd82-5557-4507-b2c0-3700276ec1c1",
 										"type": "text/javascript",
 										"exec": [
 											"pm.test(\"Status code is 200\", function() {",
@@ -3161,10 +3191,17 @@
 											"",
 											"pm.test(\"Response body is valid\", function () {",
 											"    var example = {",
-											"        \"total\": 1,",
-											"        \"size\": 1,",
+											"        \"total\": 8,",
+											"        \"size\": 8,",
 											"        \"page\": 1,",
 											"        \"items\": [",
+											"            {\"key\": \"key1\", \"value\": \"value\", \"timestamp\": 1010, \"operation\": \"set\"},",
+											"            {\"key\": \"key1\", \"value\": \"value1\", \"timestamp\": 1011, \"operation\": \"set\"},",
+											"            {\"key\": \"key2\", \"value\": \"value2\", \"timestamp\": 1010, \"operation\": \"set\"},",
+											"            {\"key\": \"key3\", \"value\": \"value3\", \"timestamp\": 1010, \"operation\": \"set\"},",
+											"            {\"key\": \"key4\", \"value\": \"value4\", \"timestamp\": 1010, \"operation\": \"set\"},",
+											"            {\"key\": \"key5\", \"value\": \"value5\", \"timestamp\": 1010, \"operation\": \"set\"},",
+											"            {\"key\": \"key6\", \"value\": \"value6\", \"timestamp\": 1010, \"operation\": \"set\"},",
 											"            {\"key\": \"key6\", \"value\": null, \"timestamp\": 1011, \"operation\": \"delete\"}",
 											"        ]",
 											"    };",
@@ -3182,7 +3219,7 @@
 									"raw": ""
 								},
 								"url": {
-									"raw": "{{url}}/history/{{read_only_storage}}?operations=delete,delete",
+									"raw": "{{url}}/history/{{read_only_storage}}?sort=key,timestamp",
 									"host": [
 										"{{url}}"
 									],
@@ -3192,8 +3229,8 @@
 									],
 									"query": [
 										{
-											"key": "operations",
-											"value": "delete,delete"
+											"key": "sort",
+											"value": "key,timestamp"
 										}
 									]
 								}
@@ -3266,12 +3303,12 @@
 							"response": []
 						},
 						{
-							"name": "Search with page and size",
+							"name": "Search with sort in descending order",
 							"event": [
 								{
 									"listen": "test",
 									"script": {
-										"id": "828f7dfc-6ba1-4ec9-a6d2-bd56328e953e",
+										"id": "d9e30f93-78e4-4581-8205-80c3eea69978",
 										"type": "text/javascript",
 										"exec": [
 											"pm.test(\"Status code is 200\", function() {",
@@ -3285,11 +3322,17 @@
 											"pm.test(\"Response body is valid\", function () {",
 											"    var example = {",
 											"        \"total\": 8,",
-											"        \"size\": 2,",
-											"        \"page\": 3,",
+											"        \"size\": 8,",
+											"        \"page\": 1,",
 											"        \"items\": [",
+											"            {\"key\": \"key6\", \"value\": null, \"timestamp\": 1011, \"operation\": \"delete\"},",
+											"            {\"key\": \"key6\", \"value\": \"value6\", \"timestamp\": 1010, \"operation\": \"set\"},",
+											"            {\"key\": \"key5\", \"value\": \"value5\", \"timestamp\": 1010, \"operation\": \"set\"},",
 											"            {\"key\": \"key4\", \"value\": \"value4\", \"timestamp\": 1010, \"operation\": \"set\"},",
-											"            {\"key\": \"key5\", \"value\": \"value5\", \"timestamp\": 1010, \"operation\": \"set\"}",
+											"            {\"key\": \"key3\", \"value\": \"value3\", \"timestamp\": 1010, \"operation\": \"set\"},",
+											"            {\"key\": \"key2\", \"value\": \"value2\", \"timestamp\": 1010, \"operation\": \"set\"},",
+											"            {\"key\": \"key1\", \"value\": \"value1\", \"timestamp\": 1011, \"operation\": \"set\"},",
+											"            {\"key\": \"key1\", \"value\": \"value\", \"timestamp\": 1010, \"operation\": \"set\"}",
 											"        ]",
 											"    };",
 											"    pm.expect(pm.response.json()).to.eql(example);",
@@ -3306,7 +3349,165 @@
 									"raw": ""
 								},
 								"url": {
-									"raw": "{{url}}/history/{{read_only_storage}}?size=2&page=3&sort=key",
+									"raw": "{{url}}/history/{{read_only_storage}}?sort=-key,-timestamp",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"history",
+										"{{read_only_storage}}"
+									],
+									"query": [
+										{
+											"key": "sort",
+											"value": "-key,-timestamp"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search with operations",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "c0619705-f8fa-45c6-aceb-b0509aac8b61",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function() {",
+											"  pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Content-Type is application/json\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+											"});",
+											"",
+											"pm.test(\"Response body is valid\", function () {",
+											"    var json = pm.response.json();",
+											"    pm.expect(json.page).to.eql(1);",
+											"    pm.expect(json.items.every(function(cur){return cur.operation==\"delete\" || cur.operation==\"clear\"})).to.eql(true);",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/history/{{read_only_storage}}?operations=delete,clear",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"history",
+										"{{read_only_storage}}"
+									],
+									"query": [
+										{
+											"key": "operations",
+											"value": "delete,clear"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search with duplicated operations",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "c14b2ad6-a2a0-4ac6-ad52-ff8af396767f",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function() {",
+											"  pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Content-Type is application/json\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+											"});",
+											"",
+											"pm.test(\"Response body is valid\", function () {",
+											"    var json = pm.response.json();",
+											"    pm.expect(json.page).to.eql(1);",
+											"    pm.expect(json.items.every(function(cur){return cur.operation==\"delete\"})).to.eql(true);",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/history/{{read_only_storage}}?operations=delete,delete",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"history",
+										"{{read_only_storage}}"
+									],
+									"query": [
+										{
+											"key": "operations",
+											"value": "delete,delete"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search with page and size",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "8151b13e-3f01-4cd3-a47c-86faace150d6",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function() {",
+											"  pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Content-Type is application/json\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+											"});",
+											"",
+											"pm.test(\"Response body is valid\", function () {",
+											"    var json = pm.response.json();",
+											"    pm.expect(json.total).to.eql(8);",
+											"    pm.expect(json.size).to.eql(2);",
+											"    pm.expect(json.page).to.eql(3);",
+											"    pm.expect(json.items.length).to.eql(2);",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/history/{{read_only_storage}}?size=2&page=3",
 									"host": [
 										"{{url}}"
 									],
@@ -3322,10 +3523,6 @@
 										{
 											"key": "page",
 											"value": "3"
-										},
-										{
-											"key": "sort",
-											"value": "key"
 										}
 									]
 								}
@@ -3338,7 +3535,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "e2f68fd9-e554-41ce-be42-649f5727cf4e",
+										"id": "6c024a1b-2fe8-41c9-82fb-f9a111f8bfd5",
 										"type": "text/javascript",
 										"exec": [
 											"pm.test(\"Status code is 200\", function() {",
@@ -3350,16 +3547,11 @@
 											"});",
 											"",
 											"pm.test(\"Response body is valid\", function () {",
-											"    var json = pm.response.json()",
-											"    var items = [",
-											"        {\"key\": \"key1\", \"value\": \"value1\", \"timestamp\": 1011, \"operation\": \"set\"},",
-											"        {\"key\": \"key1\", \"value\": \"value\", \"timestamp\": 1010, \"operation\": \"set\"},",
-											"        {\"key\": \"key2\", \"value\": \"value2\", \"timestamp\": 1010, \"operation\": \"set\"}",
-											"    ];",
+											"    var json = pm.response.json();",
 											"    pm.expect(json.total).to.eql(8);",
 											"    pm.expect(json.size).to.eql(3);",
 											"    pm.expect(json.scrollId).to.not.eql(\"\");",
-											"    pm.expect(json.items).to.eql(items);",
+											"    pm.expect(json.items.length).to.eql(3);",
 											"});"
 										]
 									}
@@ -3373,7 +3565,7 @@
 									"raw": ""
 								},
 								"url": {
-									"raw": "{{url}}/history/{{read_only_storage}}?scroll=30000&size=3&sort=key,-timestamp",
+									"raw": "{{url}}/history/{{read_only_storage}}?scroll=30000&size=3",
 									"host": [
 										"{{url}}"
 									],
@@ -3389,10 +3581,6 @@
 										{
 											"key": "size",
 											"value": "3"
-										},
-										{
-											"key": "sort",
-											"value": "key,-timestamp"
 										}
 									]
 								}
@@ -3405,7 +3593,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "9ba1e6d1-9dc5-4dbc-bdae-aaf099d141fa",
+										"id": "0d420353-d65e-461b-a438-80e4a93bc356",
 										"type": "text/javascript",
 										"exec": [
 											"pm.test(\"Status code is 200\", function() {",
@@ -3417,16 +3605,11 @@
 											"});",
 											"",
 											"pm.test(\"Response body is valid\", function () {",
-											"    var json = pm.response.json()",
-											"    var items = [",
-											"        {\"key\": \"key1\", \"value\": \"value1\", \"timestamp\": 1011, \"operation\": \"set\"},",
-											"        {\"key\": \"key1\", \"value\": \"value\", \"timestamp\": 1010, \"operation\": \"set\"},",
-											"        {\"key\": \"key2\", \"value\": \"value2\", \"timestamp\": 1010, \"operation\": \"set\"}",
-											"    ];",
+											"    var json = pm.response.json();",
 											"    pm.expect(json.total).to.eql(8);",
 											"    pm.expect(json.size).to.eql(3);",
 											"    pm.expect(json.scrollId).to.not.eql(\"\");",
-											"    pm.expect(json.items).to.eql(items);",
+											"    pm.expect(json.items.length).to.eql(3);",
 											"});"
 										]
 									}
@@ -3440,7 +3623,7 @@
 									"raw": ""
 								},
 								"url": {
-									"raw": "{{url}}/history/{{read_only_storage}}?page=2&scroll=30000&size=3&sort=key,-timestamp",
+									"raw": "{{url}}/history/{{read_only_storage}}?page=2&scroll=30000&size=3",
 									"host": [
 										"{{url}}"
 									],
@@ -3460,10 +3643,6 @@
 										{
 											"key": "size",
 											"value": "3"
-										},
-										{
-											"key": "sort",
-											"value": "key,-timestamp"
 										}
 									]
 								}
@@ -3601,6 +3780,7 @@
 				},
 				{
 					"name": "List history",
+					"description": null,
 					"item": [
 						{
 							"name": "List history for subsequent request",
@@ -3962,6 +4142,7 @@
 		},
 		{
 			"name": "health",
+			"description": null,
 			"item": [
 				{
 					"name": "Check health",

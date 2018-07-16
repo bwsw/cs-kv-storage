@@ -17,7 +17,7 @@
 
 package com.bwsw.cloudstack.storage.kv.processor
 
-import com.bwsw.cloudstack.storage.kv.configuration.{AppConfig, ElasticsearchConfig}
+import com.bwsw.cloudstack.storage.kv.configuration.ElasticsearchConfig
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError}
 import com.bwsw.cloudstack.storage.kv.util.elasticsearch._
 import com.bwsw.cloudstack.storage.kv.util.test._
@@ -52,7 +52,6 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
 
   describe("An ElasticsearchKvProcessor") {
     val fakeClient = mock[HttpClient]
-    val fakeConf = mock[AppConfig]
     val fakeEsConf = mock[ElasticsearchConfig]
     val elasticsearchKvProcessor = new ElasticsearchKvProcessor(fakeClient, fakeEsConf)
 
@@ -522,9 +521,9 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
           SearchHits(hits.length, 1, Array()))
 
         expectsSearchRequest(fakeClient, fakeEsConf, scrollSize).returning(getRequestSuccessFuture(searchResponse))
-        expectsSearchScrollRequest(fakeClient, fakeConf, scrollId1)
+        expectsSearchScrollRequest(fakeClient, scrollId1)
           .returning(getRequestSuccessFuture(searchScrollResponse1))
-        expectsSearchScrollRequest(fakeClient, fakeConf, scrollId2)
+        expectsSearchScrollRequest(fakeClient, scrollId2)
           .returning(getRequestSuccessFuture(searchScrollResponse2))
         expectsClearScrollRequest(fakeClient, scrollId3)
           .returning(getRequestSuccessFuture(ClearScrollResponse(succeeded = true, 1)))
@@ -546,7 +545,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
 
       it("should fail if scrolling fails") {
         expectsSearchRequest(fakeClient, fakeEsConf, scrollSize).returning(getRequestSuccessFuture(searchResponse))
-        expectsSearchScrollRequest(fakeClient, fakeConf, scrollId1).throwing(new Exception())
+        expectsSearchScrollRequest(fakeClient, scrollId1).throwing(new Exception())
         recoverToSucceededIf[Exception] {
           elasticsearchKvProcessor.list(storage)
         }
@@ -562,7 +561,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
 
       it("should return InternalError if scrolling fails") {
         expectsSearchRequest(fakeClient, fakeEsConf, scrollSize).returning(getRequestSuccessFuture(searchResponse))
-        expectsSearchScrollRequest(fakeClient, fakeConf, scrollId1).returning(getRequestFailureFuture())
+        expectsSearchScrollRequest(fakeClient, scrollId1).returning(getRequestFailureFuture())
         elasticsearchKvProcessor.list(storage).map {
           case Left(_: InternalError) => succeed
           case _ => fail
@@ -661,7 +660,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
       .expects(ElasticDsl.search(index).size(size).keepAlive(keepAlive), SearchHttpExecutable, *)
   }
 
-  private def expectsSearchScrollRequest(client: HttpClient, conf: AppConfig, scrollId: String) = {
+  private def expectsSearchScrollRequest(client: HttpClient, scrollId: String) = {
     (client.execute[SearchScrollDefinition, SearchResponse](_: SearchScrollDefinition)(
       _: HttpExecutable[SearchScrollDefinition, SearchResponse],
       _: ExecutionContext))
