@@ -43,7 +43,7 @@ See [configuration](#configuration) and [build & run](#build-run) sections.
 
 # Configuration
 
-The example of the configuration file can be found [here](/config/application.conf.example).
+The example of the configuration file can be found [here](/config/application.example.conf).
 
 | Property | Description |
 | --------- | ----------- |
