@@ -66,7 +66,7 @@ class BufferedHistoryKvActorSpec
     describe("(KvHistory)") {
 
       def test(flushSize: Int, verifyTimeoutFactor: Double) = {
-        (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout)
+        (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout).anyNumberOfTimes
         (appConf.getFlushHistorySize _).expects().returning(flushSize).anyNumberOfTimes
         val historyLogged = Promise[Boolean]
         expectHistoryProcessing(List(history), Future(None), historyLogged)
@@ -79,7 +79,7 @@ class BufferedHistoryKvActorSpec
       }
 
       def testRetry(flushSize: Int) = {
-        (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout)
+        (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout).anyNumberOfTimes
         (appConf.getFlushHistorySize _).expects().returning(flushSize).anyNumberOfTimes
         (appConf.getHistoryRetryLimit _).expects().returning(1)
 
@@ -120,7 +120,7 @@ class BufferedHistoryKvActorSpec
     describe("(KvHistoryBulk)") {
 
       def test(flushSizeFactor: Int, verifyTimeoutFactor: Double) = {
-        (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout)
+        (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout).anyNumberOfTimes
         (appConf.getFlushHistorySize _).expects().returning(historyBulk.values.size * flushSizeFactor).anyNumberOfTimes
         val historyLogged = Promise[Boolean]
         expectHistoryProcessing(historyBulk.values.toList, Future(None), historyLogged)
@@ -133,7 +133,7 @@ class BufferedHistoryKvActorSpec
       }
 
       def testRetry(flushSizeFactor: Int) = {
-        (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout)
+        (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout).anyNumberOfTimes
         (appConf.getFlushHistorySize _).expects().returning(historyBulk.values.size * flushSizeFactor).anyNumberOfTimes
 
         val historyAttempt = Promise[Boolean]
@@ -170,7 +170,7 @@ class BufferedHistoryKvActorSpec
       }
 
       it("should process in several just-in-time flushes") {
-        (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout)
+        (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout).anyNumberOfTimes
         (appConf.getFlushHistorySize _).expects().returning(1).anyNumberOfTimes
 
         val historyLogged = historyBulk.values.map((_, Promise[Boolean])).toMap
@@ -189,7 +189,7 @@ class BufferedHistoryKvActorSpec
     describe("(KvHistoryFlush)") {
 
       it("should retry on processor failure") {
-        (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout)
+        (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout).anyNumberOfTimes
         (appConf.getFlushHistorySize _).expects().returning(historyBulk.values.size).anyNumberOfTimes
 
         val historyAttempt = Promise[Boolean]
@@ -211,7 +211,7 @@ class BufferedHistoryKvActorSpec
       }
 
       it("should flush all histories on shutdown") {
-        (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout)
+        (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout).anyNumberOfTimes
         (appConf.getFlushHistorySize _).expects().returning(historyListRetry.size).anyNumberOfTimes
         (appConf.getHistoryRetryLimit _).expects().returning(1).anyNumberOfTimes
 
