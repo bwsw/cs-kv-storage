@@ -278,7 +278,7 @@ GET /list/<storage UUID>
 ```json
 [
     "key1",
-    "key2":
+    "key2",
     "key3"
 ]
 ```
