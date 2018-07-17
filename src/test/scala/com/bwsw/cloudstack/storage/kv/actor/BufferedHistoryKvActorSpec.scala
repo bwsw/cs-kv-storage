@@ -245,7 +245,7 @@ class BufferedHistoryKvActorSpec
 
         system.stop(bufferedHistoryKvActor)
 
-        eventually(timeout(scaled(flushTimeout * 1.9))) {
+        eventually(timeout(scaled(flushTimeout * 3))) {
           historyFirstChunkProcessed.isCompleted should be(true)
           historySecondChunkProcessed.isCompleted should be(true)
         }
