@@ -21,6 +21,9 @@ import com.typesafe.config.{ConfigException, ConfigFactory}
 
 /** Provides access to Elasticsearch specific configurations **/
 class ElasticsearchConfig {
+
+  import ElasticsearchConfig.MaxKeyLength
+
   private val conf = ConfigFactory.load.getConfig("elasticsearch")
 
   def getUri: String = {
@@ -48,7 +51,8 @@ class ElasticsearchConfig {
   }
 
   def getMaxKeyLength: Int = {
-    conf.getInt("limit.key.max-size")
+    val limit = conf.getInt("limit.key.max-size")
+    limit min MaxKeyLength
   }
 
   def isAuthEnabled: Boolean = {
@@ -58,4 +62,10 @@ class ElasticsearchConfig {
       case _: ConfigException.BadPath => false
     }
   }
+}
+
+object ElasticsearchConfig {
+
+  val MaxKeyLength = 512
+
 }

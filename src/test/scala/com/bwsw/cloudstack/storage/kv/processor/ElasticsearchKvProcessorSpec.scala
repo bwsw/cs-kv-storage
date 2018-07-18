@@ -163,7 +163,7 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
     describe("(set the key/value)") {
       def testSuccess(key: String, value: String, maxKeyLength: Int, maxValueLength: Int) = {
         val indexResponse = IndexResponse(key, index, DocumentType, 1, "created", forcedRefresh = false, null)
-        expectsMaxKeyValueLength(fakeEsConf, key.length, value.length)
+        expectsMaxKeyValueLength(fakeEsConf, maxKeyLength, maxValueLength)
         expectsIndexRequest(fakeClient).returning(getRequestSuccessFuture(indexResponse))
 
         elasticsearchKvProcessor.set(storage, key, value).map {
@@ -198,10 +198,6 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
 
       it("should set the value by the key if the value length is unlimited") {
         testSuccess(key, value, key.length, unlimitedLength)
-      }
-
-      it("should set the value by the key if the key length is unlimited") {
-        testSuccess(key, value, unlimitedLength, value.length)
       }
 
       it("should fail if execute method fails") {
@@ -297,10 +293,6 @@ class ElasticsearchKvProcessorSpec extends AsyncFunSpec with AsyncMockFactory {
 
       it("should set values by keys if the value length is unlimited") {
         testSuccess(keyValues, getMaxLength(keyValues.keys), unlimitedLength)
-      }
-
-      it("should set values by keys if the key length is unlimited") {
-        testSuccess(keyValues, unlimitedLength, getMaxLength(keyValues.values))
       }
 
       it("should not set too long values by keys") {

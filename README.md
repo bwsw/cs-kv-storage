@@ -52,8 +52,8 @@ The example of the configuration file can be found [here](/config/application.ex
 | elasticsearch.auth.password | Elasticsearch password for authentication. |
 | elasticsearch.scroll.page-size | Batch size to retrieve all results for key listing. |
 | elasticsearch.scroll.keep-alive | Timeout between batch requests to retrieve all results for key listing. |
-| elasticsearch.limit.value.max-size | Max length of the value. |
-| elasticsearch.limit.key.max-size | Max length of the key. |
+| elasticsearch.limit.value.max-size | Max length in bytes of the value in UTF-8; -1 if it is unlimited. |
+| elasticsearch.limit.key.max-size | Max length in bytes of the key in UTF-8; can not be more than 512 bytes. |
 | app.cache.max-size | Max size of the storage cache. |
 | app.cache.expiration-time | TTL for the storage cache items. |
 | app.history.flush-size | Size of batch requests to save a history of the storage operations. |
