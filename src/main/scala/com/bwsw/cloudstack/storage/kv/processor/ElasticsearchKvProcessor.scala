@@ -17,13 +17,15 @@
 
 package com.bwsw.cloudstack.storage.kv.processor
 
+import java.nio.charset.StandardCharsets
+
 import com.bwsw.cloudstack.storage.kv.configuration.ElasticsearchConfig
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, ConflictError, InternalError, NotFoundError, StorageError}
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch._
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.get.GetResponse
 import com.sksamuel.elastic4s.http.search.SearchHits
 import com.sksamuel.elastic4s.http.{ElasticDsl, HttpClient}
-import com.bwsw.cloudstack.storage.kv.util.elasticsearch._
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
@@ -185,12 +187,10 @@ class ElasticsearchKvProcessor(client: HttpClient, conf: ElasticsearchConfig) ex
       }
   }
 
-  private def isKeyValid(key: String): Boolean = {
-    key != null && !key.isEmpty && (conf.getMaxKeyLength == -1 || key.length <= conf.getMaxKeyLength)
-  }
+  private def isKeyValid(key: String): Boolean = key != null && !key.isEmpty && getLength(key) <= conf.getMaxKeyLength
 
   private def isValueValid(value: String): Boolean = {
-    value == null || conf.getMaxValueLength == -1 || value.length <= conf.getMaxValueLength
+    value == null || conf.getMaxValueLength == -1 || getLength(value) <= conf.getMaxValueLength
   }
 
   private def isKvValid(key: String, value: String): Boolean = isKeyValid(key) && isValueValid(value)
@@ -229,4 +229,6 @@ object ElasticsearchKvProcessor {
   }
 
   private def getIds(searchHits: SearchHits): List[String] = searchHits.hits.map(hit => hit.id).toList
+
+  private def getLength(value: String): Int = value.getBytes(StandardCharsets.UTF_8).length
 }

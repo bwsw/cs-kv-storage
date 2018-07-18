@@ -1,18 +1,16 @@
 {
 	"info": {
-		"_postman_id": "c9888eb2-c769-4d6c-9f9f-fcb95fe2eee8",
 		"name": "cs-kv-storage",
+		"_postman_id": "69b79478-6112-3bd6-0155-881bfc672beb",
 		"description": "E2E tests for cs-kv-storage",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
 			"name": "kv-storage",
-			"description": null,
 			"item": [
 				{
 					"name": "List keys",
-					"description": null,
 					"item": [
 						{
 							"name": "List a storage",
@@ -193,7 +191,6 @@
 				},
 				{
 					"name": "Get value",
-					"description": null,
 					"item": [
 						{
 							"name": "Get a value",
@@ -364,7 +361,6 @@
 				},
 				{
 					"name": "Get multiple values",
-					"description": null,
 					"item": [
 						{
 							"name": "Get values",
@@ -661,7 +657,6 @@
 				},
 				{
 					"name": "Set value",
-					"description": null,
 					"item": [
 						{
 							"name": "Set with wrong Content-Type",
@@ -845,13 +840,124 @@
 								}
 							},
 							"response": []
+						},
+						{
+							"name": "Set long value",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "b51f60b1-2fde-4cc5-a0c8-dbdc33e29a2e",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});"
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "546e693f-cf78-42ad-b416-ffdc2737ffc6",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "text/plain"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{{long_value}}"
+								},
+								"url": {
+									"raw": "{{url}}/set/{{editable_storage}}/{{some_key}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"set",
+										"{{editable_storage}}",
+										"{{some_key}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Set long key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "b51f60b1-2fde-4cc5-a0c8-dbdc33e29a2e",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});"
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "546e693f-cf78-42ad-b416-ffdc2737ffc6",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "text/plain"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "newValue"
+								},
+								"url": {
+									"raw": "{{url}}/set/{{editable_storage}}/{{long_key}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"set",
+										"{{editable_storage}}",
+										"{{long_key}}"
+									]
+								}
+							},
+							"response": []
 						}
 					],
 					"_postman_isSubFolder": true
 				},
 				{
 					"name": "Set multiple values",
-					"description": null,
 					"item": [
 						{
 							"name": "Set with wrong Content-Type",
@@ -1128,6 +1234,89 @@
 							"response": []
 						},
 						{
+							"name": "Set long value",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "b8c41231-e75c-4528-b098-15499f95561c",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Content-Type is application/json\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+											"});",
+											"",
+											"pm.test(\"Response body contains statuses of operations\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    var example = {",
+											"        \"key11\" : false,",
+											"        \"key12\" : true,",
+											"        \"key13\" : true,",
+											"        \"key14\" : true",
+											"    }",
+											"    pm.expect(jsonData).to.eql(example);",
+											"});",
+											"",
+											"const source = JSON.stringify({\"ids\": [\"key12\",\"key13\",\"key14\"]})",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"multieditable_storage\") + \"/_doc/_mget?source=\" + source + \"&source_content_type=application/json\",",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Documents are actually indexed\", function () {",
+											"            const result = res.json()[\"docs\"].map(function callback(c, i, a){",
+											"                return {",
+											"                    key: c[\"_id\"],",
+											"                    value: c[\"_source\"][\"value\"]",
+											"                };",
+											"            })",
+											"            const example = [",
+											"                {key: \"key12\", value: \"newValue2\"},",
+											"                {key: \"key13\", value: \"newValue3\"},",
+											"                {key: \"key14\", value: \"newValue4\"}];",
+											"    });",
+											"});",
+											"",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"multieditable_storage\") + \"/_doc/key11\",",
+											"        method: 'HEAD'},",
+											"    function (err, res) {",
+											"        pm.expect(res.status).to.eql(404);    ",
+											"});",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"key11\": \"{{long_value}}\",\n\t\"key12\": \"newValue2\",\n\t\"key13\": \"newValue3\",\n\t\"key14\": \"newValue4\"\n}"
+								},
+								"url": {
+									"raw": "{{url}}/set/{{multieditable_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"set",
+										"{{multieditable_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
 							"name": "Set in nonexistent storage",
 							"event": [
 								{
@@ -1172,13 +1361,95 @@
 								}
 							},
 							"response": []
+						},
+						{
+							"name": "Set long key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "a24e89f6-3db4-4b80-93b4-33ec05406400",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Content-Type is application/json\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\", \"application/json;charset=utf-8\");",
+											"});",
+											"",
+											"pm.test(\"Response body contains statuses of operations\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    var example = {",
+											"        [pm.variables.get(\"long_key\")] : false,",
+											"        \"key112\" : true,",
+											"        \"key113\" : true,",
+											"        \"key114\" : true",
+											"    }",
+											"    pm.expect(jsonData).to.eql(example);",
+											"});",
+											"",
+											"const source = JSON.stringify({\"ids\": [\"key112\",\"key113\",\"key114\"]})",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"multieditable_storage\") + \"/_doc/_mget?source=\" + source + \"&source_content_type=application/json\",",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Documents are actually indexed\", function () {",
+											"            const result = res.json()[\"docs\"].map(function callback(c, i, a){",
+											"                return {",
+											"                    key: c[\"_id\"],",
+											"                    value: c[\"_source\"][\"value\"]",
+											"                };",
+											"            })",
+											"            const example = [",
+											"                {key: \"key112\", value: \"newValue2\"},",
+											"                {key: \"key113\", value: \"newValue3\"},",
+											"                {key: \"key114\", value: \"newValue4\"}];",
+											"    });",
+											"});",
+											"",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"multieditable_storage\") + \"/_doc/\" +pm.variables.get(\"long_key\"),",
+											"        method: 'HEAD'},",
+											"    function (err, res) {",
+											"        pm.expect(res.status).to.eql(404);    ",
+											"});",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"{{long_key}}\": \"newValue1\",\n\t\"key112\": \"newValue2\",\n\t\"key113\": \"newValue3\",\n\t\"key114\": \"newValue4\"\n}"
+								},
+								"url": {
+									"raw": "{{url}}/set/{{multieditable_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"set",
+										"{{multieditable_storage}}"
+									]
+								}
+							},
+							"response": []
 						}
 					],
 					"_postman_isSubFolder": true
 				},
 				{
 					"name": "Delete value",
-					"description": null,
 					"item": [
 						{
 							"name": "Delete from nonexistent storage",
@@ -1349,7 +1620,6 @@
 				},
 				{
 					"name": "Delete multiple values",
-					"description": null,
 					"item": [
 						{
 							"name": "Delete with wrong Content-Type",
@@ -1697,7 +1967,6 @@
 				},
 				{
 					"name": "Clear storage",
-					"description": null,
 					"item": [
 						{
 							"name": "Clear storage",
@@ -1846,11 +2115,9 @@
 		},
 		{
 			"name": "kv-storage-manager",
-			"description": null,
 			"item": [
 				{
 					"name": "Set temporary storage ttl",
-					"description": null,
 					"item": [
 						{
 							"name": "Set TTL of nonexistent storage",
@@ -2119,7 +2386,6 @@
 				},
 				{
 					"name": "Delete temporary storage",
-					"description": null,
 					"item": [
 						{
 							"name": "Delete persistent storage",
@@ -2275,15 +2541,12 @@
 		},
 		{
 			"name": "kv-history",
-			"description": null,
 			"item": [
 				{
 					"name": "Search and list history",
-					"description": null,
 					"item": [
 						{
 							"name": "validation",
-							"description": null,
 							"item": [
 								{
 									"name": "Search with invalid operations",
@@ -3780,7 +4043,6 @@
 				},
 				{
 					"name": "List history",
-					"description": null,
 					"item": [
 						{
 							"name": "List history for subsequent request",
@@ -4142,7 +4404,6 @@
 		},
 		{
 			"name": "health",
-			"description": null,
 			"item": [
 				{
 					"name": "Check health",
@@ -4534,124 +4795,158 @@
 	],
 	"variable": [
 		{
-			"id": "da6dd540-7f95-4306-88c6-d33b57fa6a4b",
+			"id": "4ff9ca4c-e936-47aa-b0dc-56362f8aa970",
 			"key": "url",
 			"value": "http://app:8080",
-			"type": "string"
+			"type": "string",
+			"disabled": true
 		},
 		{
-			"id": "5332bc22-159e-48fa-b269-6873b5f87eb7",
+			"id": "85cf665e-3848-4fcc-8e66-7f1cae5589a5",
 			"key": "storage_uuid",
 			"value": "b3d1b2a6-bd5b-49d5-bd9e-86538fdc180d",
-			"type": "string"
+			"type": "string",
+			"disabled": true
 		},
 		{
-			"id": "31670846-1a02-47f2-a182-0013af755bae",
+			"id": "9a1a5568-f46d-4042-80ff-ddcd3cd036df",
 			"key": "es_url",
 			"value": "http://elasticsearch:9200",
-			"type": "string"
+			"type": "string",
+			"disabled": true
 		},
 		{
-			"id": "29551212-f4a8-4875-ad90-579237f7607e",
+			"id": "5640d057-0c8f-4f0c-9b5a-6cbaa3937a5f",
 			"key": "some_key",
 			"value": "key1",
-			"type": "string"
+			"type": "string",
+			"disabled": true
 		},
 		{
-			"id": "0412a306-b822-41c4-ab2c-bf1ed2fccef8",
-			"key": "some_value",
-			"value": "value1",
-			"type": "string"
-		},
-		{
-			"id": "9acfadc0-e0f1-44e2-be2e-170b0c74e3e2",
+			"id": "abe421db-1bfc-4785-902f-4810963ce04b",
 			"key": "empty_key",
 			"value": "empty_key",
-			"type": "string"
+			"type": "string",
+			"disabled": true
 		},
 		{
-			"id": "6e2e9bc4-5191-4317-965d-395e8b224bcf",
+			"id": "03307ae8-8c2c-4cbc-a3da-a21eb2243bb8",
+			"key": "long_key",
+			"value": "key123456789123456789",
+			"type": "text",
+			"disabled": true
+		},
+		{
+			"id": "c96161e8-d93d-49c7-90dc-b604b0c97f71",
+			"key": "some_value",
+			"value": "value1",
+			"type": "string",
+			"disabled": true
+		},
+		{
+			"id": "2103b845-c768-41f4-884b-65b2c4075e8f",
+			"key": "long_value",
+			"value": "value123456789123456789",
+			"type": "text",
+			"disabled": true
+		},
+		{
+			"id": "1e7debe1-9a7c-44f4-a70a-ebe3fbad00dc",
 			"key": "non_existent_storage",
 			"value": "nonexistent",
-			"type": "string"
+			"type": "string",
+			"disabled": true
 		},
 		{
-			"id": "c612bbbe-86dc-4446-a954-ce042316186a",
+			"id": "6bfb826a-6608-4aff-ab89-7948a15db239",
 			"key": "read_only_storage",
 			"value": "read-only",
-			"type": "string"
+			"type": "string",
+			"disabled": true
 		},
 		{
-			"id": "f91e82c9-355d-447c-82f3-d88da54753af",
+			"id": "34ca7b93-445f-44b5-a4c6-d0da460510ee",
 			"key": "editable_storage",
 			"value": "editable-single",
-			"type": "string"
+			"type": "string",
+			"disabled": true
 		},
 		{
-			"id": "4a96d955-2558-4b63-a7d0-1a88926aab7f",
+			"id": "8b270301-5b13-4ec0-b1a3-076e5c5d8fb9",
 			"key": "multieditable_storage",
 			"value": "editable-multiple",
-			"type": "string"
+			"type": "string",
+			"disabled": true
 		},
 		{
-			"id": "ee26f829-9518-4306-b567-177115ad854b",
+			"id": "d9ef7115-f8f5-4127-be59-84b8c4004ffa",
 			"key": "deletable_storage",
 			"value": "deletable-single",
-			"type": "string"
+			"type": "string",
+			"disabled": true
 		},
 		{
-			"id": "bf5d5f82-1705-40b4-a470-f6c01a004a62",
+			"id": "f38a1c73-42d6-4a9e-9bd4-93afab200eec",
 			"key": "multideletable_storage",
 			"value": "deletable-multiple",
-			"type": "string"
+			"type": "string",
+			"disabled": true
 		},
 		{
-			"id": "86856615-aaac-4d71-ad1a-df17be2d94ca",
+			"id": "b3de5d79-027f-486c-98c4-7a623d21361d",
 			"key": "cleanable_storage",
 			"value": "cleanable",
-			"type": "string"
+			"type": "string",
+			"disabled": true
 		},
 		{
-			"id": "11ff4e21-9479-4d8c-8465-c7ff6a8d8cd2",
+			"id": "b618889b-69a0-49b1-a2f9-6b79113b6d9d",
 			"key": "temp_storage",
 			"value": "temp",
-			"type": "string"
+			"type": "string",
+			"disabled": true
 		},
 		{
-			"id": "20672d2a-a816-4df6-b664-06c843bd1147",
+			"id": "011247f6-f755-4c0d-be94-78eb7490a2d8",
 			"key": "acc_storage",
 			"value": "account",
-			"type": "string"
+			"type": "string",
+			"disabled": true
 		},
 		{
-			"id": "7b54600c-8620-4fc5-ac6e-a738cac981c0",
+			"id": "6ca5ceff-0a4b-47e2-b28b-b3e32dc2ca63",
 			"key": "no_index_storage",
 			"value": "no-index",
-			"type": "string"
+			"type": "string",
+			"disabled": true
 		},
 		{
-			"id": "01b656d5-7b5a-4a4c-8a73-db4080f847cb",
+			"id": "457c5ead-4409-4859-b0de-e4f6d1985b84",
 			"key": "storage_registry",
 			"value": "storage-registry",
-			"type": "string"
+			"type": "string",
+			"disabled": true
 		},
 		{
-			"id": "e24754e6-1fe6-425e-b68f-e20ee09a1d36",
+			"id": "21451c34-03f8-4e96-a9f4-599d56187712",
 			"key": "storage_data_template",
 			"value": "storage-data",
-			"type": "string"
+			"type": "string",
+			"disabled": true
 		},
 		{
-			"id": "d3376450-405e-4557-802c-a1295f907c46",
+			"id": "a937b47b-3d5c-422d-b2f2-80b8a58b4d4c",
 			"key": "storage_history_template",
 			"value": "storage-history",
-			"type": "string"
+			"type": "string",
+			"disabled": true
 		},
 		{
-			"id": "304c4297-30df-4c14-b19f-d827bca13973",
+			"id": "b20cc0ff-fb61-4e46-99cd-6f0ae0d8eb9b",
 			"key": "no_history_storage",
 			"value": "no-history",
-			"type": "string"
+			"type": "string",
+			"disabled": true
 		}
 	]
 }
