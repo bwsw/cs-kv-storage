@@ -209,47 +209,6 @@ class BufferedHistoryKvActorSpec
 
         system.stop(bufferedHistoryKvActor)
       }
-
-      it("should flush all histories on shutdown") {
-        (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout).anyNumberOfTimes
-        (appConf.getFlushHistorySize _).expects().returning(historyListRetry.size).anyNumberOfTimes
-        (appConf.getHistoryRetryLimit _).expects().returning(1).anyNumberOfTimes
-
-        // prepare to fill retry buffer
-        val historyPostponed = Promise[Boolean]
-        expectHistoryProcessing(historyListRetry, Future(Some(historyListRetry)), historyPostponed)
-
-        // prepare to flush on shutdown
-        val historyFirstChunkProcessed = Promise[Boolean]
-        expectHistoryProcessing(
-          history :: historyListRetry.take(historyListRetry.size - 1).map(_.makeAttempt),
-          Future(None),
-          historyFirstChunkProcessed)
-
-        val historySecondChunkProcessed = Promise[Boolean]
-        expectHistoryProcessing(
-          List(historyListRetry.last.makeAttempt),
-          Future(None),
-          historySecondChunkProcessed)
-
-        val bufferedHistoryKvActor = system.actorOf(Props(new BufferedHistoryKvActor))
-        bufferedHistoryKvActor ! KvHistoryBulk(historyListRetry)
-
-        // fill retry buffer
-        eventually(timeout(scaled(flushTimeout * 0.9))) {
-          historyPostponed.isCompleted should be(true)
-        }
-
-        // fill buffer
-        bufferedHistoryKvActor ! history
-
-        system.stop(bufferedHistoryKvActor)
-
-        eventually(timeout(scaled(flushTimeout * 3))) {
-          historyFirstChunkProcessed.isCompleted should be(true)
-          historySecondChunkProcessed.isCompleted should be(true)
-        }
-      }
     }
   }
 
