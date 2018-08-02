@@ -18,9 +18,22 @@
 stages:
   - build
   - test
-  - test-release
-  - e2e
+  - package
   - release
+  - tag
+  - publish
+
+variables:
+  SBT_OPTS: "-Dsbt.global.base=sbt-cache/sbtboot -Dsbt.boot.directory=sbt-cache/boot -Dsbt.ivy.home=sbt-cache/ivy"
+  DOCKER_IMAGE: "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG"
+  DOCKER_IMAGE_LATEST: "$CI_REGISTRY_IMAGE:latest"
+  DOCKER_APP_PATH: "target/scala-*/cs-kv-storage-*-jar-with-dependencies.jar"
+
+cache:
+  paths:
+    - "sbt-cache/ivy/cache"
+    - "sbt-cache/boot"
+    - "sbt-cache/sbtboot"
 
 build:
   stage: build
@@ -37,42 +50,60 @@ test:
     - build-in-docker
     - cs-eco-builder
 
-test-release:
-  stage: test-release
-  before_script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_JOB_TOKEN $CI_REGISTRY
+assembly:
+  stage: package
   script:
-    - sbt -Ddocker.tag=$CI_COMMIT_REF_SLUG dockerBuildAndPush
+    - sbt assembly
+  artifacts:
+   name: "$CI_COMMIT_REF_SLUG"
+   paths:
+     - $DOCKER_APP_PATH
   tags:
     - build-in-docker
     - cs-eco-builder
 
-e2e:
-  stage: e2e
+release:
+  stage: release
+  cache: {}
   variables:
-    APP_DOCKER_TAG: "$CI_COMMIT_REF_SLUG"
     DOCKER_COMPOSE_FILE: "e2e/docker-compose.yml"
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_JOB_TOKEN $CI_REGISTRY
   script:
+    - docker build -t $DOCKER_IMAGE --build-arg APP_PATH=$DOCKER_APP_PATH .
     - docker-compose --file=$DOCKER_COMPOSE_FILE up -d --force-recreate --build app
     - docker-compose --file=$DOCKER_COMPOSE_FILE up --build initializer
     - docker-compose --file=$DOCKER_COMPOSE_FILE run newman run cs-kv-storage.postman_collection.json --reporters=cli
+    - docker push $DOCKER_IMAGE
   after_script:
     - docker-compose --file=$DOCKER_COMPOSE_FILE down --volumes
+  dependencies:
+    - assembly
   tags:
     - build-as-docker
     - cs-eco-builder
 
-release:
-  stage: release
+tag-master:
+  stage: tag
+  cache: {}
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_JOB_TOKEN $CI_REGISTRY
   script:
-    - sbt dockerBuildAndPush
+    - docker tag $DOCKER_IMAGE $DOCKER_IMAGE_LATEST
+    - docker push $DOCKER_IMAGE_LATEST
   only:
     - master
-    - develop
+  tags:
+    - build-as-docker
+    - cs-eco-builder
+
+publish-artifact:
+  stage: publish
+  script:
+    - sbt publish
+  only:
+    - master
+    - tags
   tags:
     - build-in-docker
     - cs-eco-builder

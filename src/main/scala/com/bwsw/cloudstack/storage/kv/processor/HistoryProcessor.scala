@@ -28,7 +28,7 @@ trait HistoryProcessor {
   /** Saves collection a historical records into dedicated storage
     *
     * @param histories a Collection of histories
-    * @return a [[Future]] with a boolean operation status for each key or error
+    * @return a [[scala.concurrent.Future]] with a boolean operation status for each key or error
     */
   def save(histories: List[KvHistory]): Future[Option[List[KvHistory]]]
 
@@ -43,7 +43,7 @@ trait HistoryProcessor {
     * @param page        the page of results
     * @param size        amount of results for one page/batch
     * @param scroll      time in ms to keep the search context open for subsequent scroll requests
-    * @return a [[Future]] with results or StorageError if some error occurs
+    * @return a [[scala.concurrent.Future]] with results or StorageError if some error occurs
     */
   def get(
       storageUuid: String,
@@ -60,7 +60,7 @@ trait HistoryProcessor {
     *
     * @param scrollId scroll id
     * @param timeout  time in ms to keep the search context open for subsequent scroll requests
-    * @return a [[Future]] with results or StorageError if some error occurs
+    * @return a [[scala.concurrent.Future]] with results or StorageError if some error occurs
     */
   def scroll(scrollId: String, timeout: Long): Future[Either[StorageError, ScrollSearchResult[History]]]
 }

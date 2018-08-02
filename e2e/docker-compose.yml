@@ -44,7 +44,7 @@ services:
     networks:
       - cs-kv-storage-e2e
   app:
-    image: "git.bw-sw.com:5000/cloudstack-ecosystem/cs-kv-storage:${APP_DOCKER_TAG}"
+    image: "${DOCKER_IMAGE}"
     depends_on:
       - elasticsearch
     volumes:

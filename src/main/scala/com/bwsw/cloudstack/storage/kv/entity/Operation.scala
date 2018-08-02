@@ -40,7 +40,7 @@ object Operation {
 
   /** Returns the operation by its string representation.
     *
-    * @throws IllegalArgumentException if the string ain't match any of operations
+    * @throws scala.IllegalArgumentException if the string ain't match any of operations
     */
   def parse(string: String): Operation = string match {
     case SetValue => Set
