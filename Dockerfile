@@ -8,8 +8,6 @@ EXPOSE 8080
 
 VOLUME ["/var/log/cs-kv-storage"]
 
-ADD $APP_PATH ./
-
-RUN mv cs-kv-storage*-jar-with-dependencies.jar cs-kv-storage.jar
+ADD ["$APP_PATH", "cs-kv-storage.jar"]
 
 ENTRYPOINT ["java", "-Dconfig.file=application.conf", "-jar", "cs-kv-storage.jar"]
