@@ -22,12 +22,18 @@ stages:
   - release
   - tag
   - publish
+  - mirror
+
+
 
 variables:
   SBT_OPTS: "-Dsbt.global.base=sbt-cache/sbtboot -Dsbt.boot.directory=sbt-cache/boot -Dsbt.ivy.home=sbt-cache/ivy"
   DOCKER_IMAGE: "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG"
   DOCKER_IMAGE_LATEST: "$CI_REGISTRY_IMAGE:latest"
   DOCKER_APP_PATH: "target/scala-*/cs-kv-storage-*-jar-with-dependencies.jar"
+  UPSTREAM_REPOSITORY: "git@github.com:bwsw/cs-kv-storage.git"
+  UPSTREAM_BRANCH: "master"
+
 
 cache:
   paths:
@@ -107,3 +113,27 @@ publish-artifact:
   tags:
     - build-in-docker
     - cs-eco-builder
+    
+    
+mirror-master:
+  stage: mirror
+  variables:
+    GIT_SUBMODULE_STRATEGY: none
+    GIT_STRATEGY: clone
+  cache: {}
+  only:
+    - master
+  script:
+    - mkdir -p ~/.ssh
+    - echo $GITHUB_MIRROR_PRIVATE | base64 -d > ~/.ssh/id_rsa
+    - echo $GITHUB_MIRROR_PUBLIC > ~/.ssh/id_rsa.pub
+    - ssh-keyscan -t rsa,dsa,ecdsa github.com >> ~/.ssh/known_hosts
+    - chmod -R go-rwx ~/.ssh
+    - git remote add mirror $UPSTREAM_REPOSITORY
+    - git remote show mirror
+    - git fetch mirror
+    - git push --progress mirror HEAD:$UPSTREAM_BRANCH
+  tags:
+    - build-in-docker
+    - cs-eco-builder
+
