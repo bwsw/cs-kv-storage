@@ -65,7 +65,11 @@ mainClass in assembly := Some("com.bwsw.cloudstack.storage.kv.app.JettyLauncher"
 enablePlugins(SbtTwirl)
 enablePlugins(ScalatraPlugin)
 
-credentials += Credentials(baseDirectory.value / ".ivy2" / ".credentials")
+credentials += Credentials(
+  "Sonatype Nexus Repository Manager",
+  "oss.sonatype.org",
+  sys.env.getOrElse("env.SONATYPE_NEXUS_LOGIN", ""),
+  sys.env.getOrElse("env.SONATYPE_NEXUS_PASSWORD", ""))
 pomIncludeRepository := { _ => false }
 licenses := Seq("Apache 2" -> url("http://www.apache.org/licenses/LICENSE-2.0"))
 homepage := Some(url("https://git.bw-sw.com/cloudstack-ecosystem/cs-kv-storage"))
