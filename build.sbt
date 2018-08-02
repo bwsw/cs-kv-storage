@@ -70,6 +70,7 @@ credentials += Credentials(
   "oss.sonatype.org",
   sys.env.getOrElse("env.SONATYPE_NEXUS_LOGIN", ""),
   sys.env.getOrElse("env.SONATYPE_NEXUS_PASSWORD", ""))
+updateOptions := updateOptions.value.withGigahorse(false)
 pomIncludeRepository := { _ => false }
 licenses := Seq("Apache 2" -> url("http://www.apache.org/licenses/LICENSE-2.0"))
 homepage := Some(url("https://git.bw-sw.com/cloudstack-ecosystem/cs-kv-storage"))
