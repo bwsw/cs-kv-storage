@@ -68,8 +68,8 @@ enablePlugins(ScalatraPlugin)
 credentials += Credentials(
   "Sonatype Nexus Repository Manager",
   "oss.sonatype.org",
-  sys.env.getOrElse("env.SONATYPE_NEXUS_LOGIN", ""),
-  sys.env.getOrElse("env.SONATYPE_NEXUS_PASSWORD", ""))
+  sys.props.getOrElse("sonatype.user", ""),
+  sys.props.getOrElse("sonatype.password", ""))
 updateOptions := updateOptions.value.withGigahorse(false)
 pomIncludeRepository := { _ => false }
 licenses := Seq("Apache 2" -> url("http://www.apache.org/licenses/LICENSE-2.0"))

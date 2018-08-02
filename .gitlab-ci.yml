@@ -100,7 +100,7 @@ tag-master:
 publish-artifact:
   stage: publish
   script:
-    - sbt publish
+    - sbt -Dsonatype.user=${SONATYPE_NEXUS_LOGIN} -Dsonatype.password=${SONATYPE_NEXUS_PASSWORD} publish
   only:
     - master
     - tags
