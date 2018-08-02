@@ -57,6 +57,9 @@ assembly:
    name: "$CI_COMMIT_REF_SLUG"
    paths:
      - $DOCKER_APP_PATH
+  tags:
+    - build-in-docker
+    - cs-eco-builder
 
 release:
   stage: release
