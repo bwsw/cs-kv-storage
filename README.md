@@ -66,7 +66,6 @@ The example of the configuration file can be found [here](/config/application.ex
 
 ## Application as jar file
 ```sh
-$ cd cs-kv-storage
 $ sbt assembly
 $ java -Dconfig.file=<config.path> -jar target/scala-2.12/cs-kv-storage-<version>-jar-with-dependencies.jar
 ```
@@ -74,12 +73,29 @@ where `<config.path>` and `<version>` should be replaced with actual values.
 
 ## Application as docker container
 
+This project provides two options to build docker images:
+
+using a default version
+
 ```sh
-$ cd cs-kv-storage
-$ sbt docker
-$ docker -p <port>:8080 -v <config.path>:/opt/cs-kv-storage/application.conf git.bw-sw.com:5000/cloudstack-ecosystem/cs-kv-storage:<version>
+$ docker build -t <tag> .
+$ docker -p <port>:8080 -v <config.path>:/opt/cs-kv-storage/application.conf <tag>
 ```
-where `<port>`, `<config.path>` and `<version>` should be replaced with actual values.
+where `<tag>`, `<port>` and `<config.path>` should be replaced with actual values
+
+using a ready jar
+
+```sh
+$ docker build -t <tag> --build-arg APP_PATH=<path to jar with dependencies> .
+$ docker -p <port>:8080 -v <config.path>:/opt/cs-kv-storage/application.conf <tag>
+```
+where `<tag>`, `<path to jar with dependencies>`, `<port>` and `<config.path>` should be replaced with actual values.
+
+`<path to jar with dependencies>` can be a path in a file system or URL, e.g.
+
+`https://oss.sonatype.org/service/local/artifact/maven/redirect?r=snapshots&g=com.bwsw&a=cs-kv-storage_2.12&c=jar-with-dependencies&v=1.0.1-SNAPSHOT`
+
+`target/scala-2.12/cs-kv-storage-1.0.1-SNAPSHOT-jar-with-dependencies.jar`
 
 # API
 
