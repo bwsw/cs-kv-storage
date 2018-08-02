@@ -21,7 +21,7 @@ cd "$(dirname "$0")"
 
 [ -z "$1" ] && echo "Application version is not specified" && exit 1
 
-export APP_DOCKER_TAG=$1
+export DOCKER_IMAGE=$1
 docker-compose up -d --force-recreate --build app
 docker-compose up --build initializer
 docker-compose run newman run cs-kv-storage.postman_collection.json --reporters=cli
