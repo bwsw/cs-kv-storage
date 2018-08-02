@@ -15,20 +15,24 @@
 // specific language governing permissions and limitations
 // under the License.
 
-val ScalatraVersion = "2.6.3"
-
-organization := "com.bwsw"
-
 name := "cs-kv-storage"
 
 version := "1.0.1-SNAPSHOT"
 
+organization := "com.bwsw"
+organizationName := "Bitworks Software, Ltd."
+organizationHomepage := Some(url("https://bitworks.software/"))
+
 scalaVersion := "2.12.6"
 
-resolvers += Classpaths.typesafeReleases
+scalacOptions in(Compile, doc) ++= Seq("-skip-packages", "akka")
+autoAPIMappings := true
 
 val elastic4sVersion = "6.2.8"
 val akkaVersion = "2.5.12"
+val ScalatraVersion = "2.6.3"
+
+resolvers += Classpaths.typesafeReleases
 
 libraryDependencies ++= Seq(
   "org.scalatra" %% "scalatra" % ScalatraVersion,
@@ -60,3 +64,37 @@ mainClass in assembly := Some("com.bwsw.cloudstack.storage.kv.app.JettyLauncher"
 
 enablePlugins(SbtTwirl)
 enablePlugins(ScalatraPlugin)
+
+credentials += Credentials(baseDirectory.value / ".ivy2" / ".credentials")
+pomIncludeRepository := { _ => false }
+licenses := Seq("Apache 2" -> url("http://www.apache.org/licenses/LICENSE-2.0"))
+homepage := Some(url("https://git.bw-sw.com/cloudstack-ecosystem/cs-kv-storage"))
+scmInfo := Some(
+  ScmInfo(
+    url("https://git.bw-sw.com/cloudstack-ecosystem/cs-kv-storage"),
+    "scm:git:https://git.bw-sw.com/cloudstack-ecosystem/cs-kv-storage.git",
+    "scm:git:git@git.bw-sw.com:2222/cloudstack-ecosystem/cs-kv-storage.git"
+  )
+)
+developers := List(
+  Developer(
+    "bitworks",
+    "Bitworks Software, Ltd.",
+    "bitworks@bw-sw.com",
+    url = url("http://bitworks.software/")
+  )
+)
+publishTo := {
+  val nexus = "https://oss.sonatype.org/"
+  if (isSnapshot.value)
+    Some("snapshots" at nexus + "content/repositories/snapshots")
+  else
+    Some("releases" at nexus + "service/local/staging/deploy/maven2")
+}
+
+artifact in(Compile, assembly) := {
+  val art = (artifact in(Compile, assembly)).value
+  art.withClassifier(Some("jar-with-dependencies"))
+}
+
+addArtifact(artifact in(Compile, assembly), assembly)

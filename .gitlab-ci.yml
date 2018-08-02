@@ -21,6 +21,7 @@ stages:
   - package
   - release
   - tag
+  - publish
 
 variables:
   SBT_OPTS: "-Dsbt.global.base=sbt-cache/sbtboot -Dsbt.boot.directory=sbt-cache/boot -Dsbt.ivy.home=sbt-cache/ivy"
@@ -96,4 +97,15 @@ tag-master:
     - master
   tags:
     - build-as-docker
+    - cs-eco-builder
+
+publish-artifact:
+  stage: publish
+  script:
+    - sbt publish
+  only:
+    - master
+    - tags
+  tags:
+    - build-in-docker
     - cs-eco-builder
