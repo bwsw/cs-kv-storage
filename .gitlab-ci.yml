@@ -91,8 +91,6 @@ tag-master:
   script:
     - docker tag $DOCKER_IMAGE $DOCKER_IMAGE_LATEST
     - docker push $DOCKER_IMAGE_LATEST
-  dependencies:
-    - assembly
   only:
     - master
   tags:
