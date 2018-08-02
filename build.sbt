@@ -84,6 +84,7 @@ developers := List(
     url = url("http://bitworks.software/")
   )
 )
+publishMavenStyle := true
 publishTo := {
   val nexus = "https://oss.sonatype.org/"
   if (isSnapshot.value)
