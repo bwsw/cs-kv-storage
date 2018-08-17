@@ -35,6 +35,10 @@ class AppConfig {
     conf.getString("cache.expiration-time")
   }
 
+  def getCacheUpdateTime: FiniteDuration = {
+    FiniteDuration(conf.getDuration("cache.update-time").toMillis, TimeUnit.MILLISECONDS)
+  }
+
   def getFlushHistorySize: Int = {
     conf.getInt("history.flush-size")
   }

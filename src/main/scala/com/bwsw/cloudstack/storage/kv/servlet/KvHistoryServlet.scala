@@ -21,8 +21,9 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.util.Timeout
 import com.bwsw.cloudstack.storage.kv.entity.{Operation, SortField, Sorting}
-import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, NotFoundError}
+import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, NotFoundError, UnauthorizedError}
 import com.bwsw.cloudstack.storage.kv.message.request.{KvHistoryGetRequest, KvHistoryScrollRequest}
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch.SecretKeyHeader
 import org.json4s.JsonAST._
 import org.json4s.{CustomSerializer, DefaultFormats, Formats, MappingException}
 import org.scalatra._
@@ -51,19 +52,25 @@ class KvHistoryServlet(
 
   get("/:storage_uuid") {
     new AsyncResult() {
-      val is: Future[_] = parse(params) match {
-        case Some(getHistoryRequest) =>
-          (historyRequestActor ? getHistoryRequest)
-            .map {
-              case Right(value) =>
-                contentType = formats("json")
-                value
-              case Left(_: NotFoundError) => NotFound("")
-              case Left(_: BadRequestError) => BadRequest("")
-              case _ => InternalServerError("")
-            }
-        case None => Future(BadRequest(""))
-      }
+      val is: Future[_] =
+        if (request.header(SecretKeyHeader).nonEmpty) {
+          parse(params, request.getHeader(SecretKeyHeader).toCharArray) match {
+            case Some(getHistoryRequest) =>
+              (historyRequestActor ? getHistoryRequest)
+                .map {
+                  case Right(value) =>
+                    contentType = formats("json")
+                    value
+                  case Left(_: NotFoundError) => NotFound("")
+                  case Left(_: BadRequestError) => BadRequest("")
+                  case Left(_: UnauthorizedError) => Unauthorized("")
+                  case _ => InternalServerError("")
+                }
+            case None => Future(BadRequest(""))
+          }
+        } else {
+          Future(Unauthorized(""))
+        }
     }
   }
 
@@ -97,7 +104,7 @@ class KvHistoryServlet(
   }
 
 
-  protected def parse(params: Params): Option[KvHistoryGetRequest] = {
+  protected def parse(params: Params, secretKey: Array[Char]): Option[KvHistoryGetRequest] = {
     try {
       val storage = params("storage_uuid")
       val keys = params.getOrElse("keys", "").split(",").filter(_.nonEmpty).toSet
@@ -118,6 +125,7 @@ class KvHistoryServlet(
         val pageIfScroll = if (scroll.isEmpty) page else None
         Some(KvHistoryGetRequest(
           storage,
+          secretKey,
           keys,
           operations,
           start,

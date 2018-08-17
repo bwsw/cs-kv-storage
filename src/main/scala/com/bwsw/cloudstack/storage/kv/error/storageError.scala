@@ -26,3 +26,5 @@ case class NotFoundError() extends StorageError
 case class ConflictError() extends StorageError
 
 case class BadRequestError() extends StorageError
+
+case class UnauthorizedError() extends StorageError

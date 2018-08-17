@@ -22,7 +22,7 @@ import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import com.bwsw.cloudstack.storage.kv.cache.StorageCache
 import com.bwsw.cloudstack.storage.kv.entity.Operation.{Clear, Delete, Set}
 import com.bwsw.cloudstack.storage.kv.entity.Storage
-import com.bwsw.cloudstack.storage.kv.error.{InternalError, NotFoundError}
+import com.bwsw.cloudstack.storage.kv.error.{InternalError, NotFoundError, UnauthorizedError}
 import com.bwsw.cloudstack.storage.kv.message._
 import com.bwsw.cloudstack.storage.kv.message.request._
 import com.bwsw.cloudstack.storage.kv.processor.KvProcessor
@@ -51,9 +51,15 @@ class HistoricalKvActorSpec
   private val someKey = "someKey"
   private val someValue = "someValue"
   private val storageUuid = "someStorage"
+  private val commonSecretKey = "secret".toCharArray
   private val keyValues = Map("key1" -> "value1", "key2" -> "value2", "key3" -> "value3")
-  private val storageKeep = Storage("someStorage", StorageType.Account, historyEnabled = true)
-  private val storageDiscard = Storage("someStorage", StorageType.Account, historyEnabled = false)
+  private val storageKeep = Storage("someStorage", StorageType.Account, historyEnabled = true, commonSecretKey)
+  private val storageDiscard = Storage("someStorage", StorageType.Account, historyEnabled = false, commonSecretKey)
+  private val storageSecret = Storage(
+    "someStorage",
+    StorageType.Account,
+    historyEnabled = false,
+    "anotherSecret".toCharArray)
   private val timeout = 1000.millis
   private val timestamp = System.currentTimeMillis()
   private val exception = new RuntimeException("test exception")
@@ -78,7 +84,7 @@ class HistoricalKvActorSpec
     describe("(KvGetRequest)") {
 
       def test(response: Any): Unit = {
-        historicalKvActor ! KvGetRequest(storageUuid, someKey)
+        historicalKvActor ! KvGetRequest(storageUuid, commonSecretKey, someKey)
         expectMsg(response)
         expectHistoryMessage(None)
       }
@@ -107,12 +113,17 @@ class HistoricalKvActorSpec
         (kvProcessor.get(_: String, _: String)).expects(storageUuid, someKey).returning(Future.failed(exception))
         test(Left(InternalError(exception.getMessage)))
       }
+
+      it("should return UnauthorizedError if secret key does not match") {
+        expectDifferentSecretKeyStorage
+        test(Left(UnauthorizedError()))
+      }
     }
 
     describe("(KvMultiGetRequest)") {
 
       def test(response: Any): Unit = {
-        historicalKvActor ! KvMultiGetRequest(storageUuid, keyValues.keys)
+        historicalKvActor ! KvMultiGetRequest(storageUuid, commonSecretKey, keyValues.keys)
         expectMsg(response)
         expectHistoryMessage(None)
       }
@@ -142,13 +153,18 @@ class HistoricalKvActorSpec
           .returning(Future.failed(exception))
         test(Left(InternalError(exception.getMessage)))
       }
+
+      it("should return UnauthorizedError if secret key does not match") {
+        expectDifferentSecretKeyStorage
+        test(Left(UnauthorizedError()))
+      }
     }
 
     describe("(KvSetRequest)") {
 
       def test(response: Any, history: Option[KvHistory]): Unit = {
         (clock.currentTimeMillis _).expects().returning(timestamp)
-        historicalKvActor ! KvSetRequest(storageUuid, someKey, someValue)
+        historicalKvActor ! KvSetRequest(storageUuid, commonSecretKey, someKey, someValue)
         expectMsg(response)
         expectHistoryMessage(history)
       }
@@ -187,13 +203,18 @@ class HistoricalKvActorSpec
           .returning(Future.failed(exception))
         test(Left(InternalError(exception.getMessage)), None)
       }
+
+      it("should return UnauthorizedError if secret key does not match") {
+        expectDifferentSecretKeyStorage
+        test(Left(UnauthorizedError()), None)
+      }
     }
 
     describe("(KvMultiSetRequest)") {
 
       def test(response: Any, history: Option[KvHistoryBulk]): Unit = {
         (clock.currentTimeMillis _).expects().returning(timestamp)
-        historicalKvActor ! KvMultiSetRequest(storageUuid, keyValues)
+        historicalKvActor ! KvMultiSetRequest(storageUuid, commonSecretKey, keyValues)
         expectMsg(response)
         expectHistoryMessage(history)
       }
@@ -202,8 +223,10 @@ class HistoricalKvActorSpec
         expectHistoryEnabledStorage
         val answer = Right(keyValues.map(kv => kv._1 -> true))
         (kvProcessor.set(_: String, _: Map[String, String])).expects(storageUuid, keyValues).returning(Future(answer))
-        test(answer, Some(KvHistoryBulk(keyValues
-          .map { case (key, value) => KvHistory(storageUuid, key, value, timestamp, Set) })))
+        test(
+          answer, Some(KvHistoryBulk(keyValues.map { case (key, value) =>
+            KvHistory(storageUuid, key, value, timestamp, Set)
+          })))
       }
 
       it("should process a request and skip history logging") {
@@ -231,13 +254,18 @@ class HistoricalKvActorSpec
           .returning(Future.failed(exception))
         test(Left(InternalError(exception.getMessage)), None)
       }
+
+      it("should return UnauthorizedError if secret key does not match") {
+        expectDifferentSecretKeyStorage
+        test(Left(UnauthorizedError()), None)
+      }
     }
 
     describe("(KvDeleteRequest)") {
 
       def test(response: Any, history: Option[KvHistory]): Unit = {
         (clock.currentTimeMillis _).expects().returning(timestamp)
-        historicalKvActor ! KvDeleteRequest(storageUuid, someKey)
+        historicalKvActor ! KvDeleteRequest(storageUuid, commonSecretKey, someKey)
         expectMsg(response)
         expectHistoryMessage(history)
       }
@@ -273,13 +301,18 @@ class HistoricalKvActorSpec
         (kvProcessor.delete(_: String, _: String)).expects(storageUuid, someKey).returning(Future.failed(exception))
         test(Left(InternalError(exception.getMessage)), None)
       }
+
+      it("should return UnauthorizedError if secret key does not match") {
+        expectDifferentSecretKeyStorage
+        test(Left(UnauthorizedError()), None)
+      }
     }
 
     describe("(KvMultiDeleteRequest)") {
 
       def test(response: Any, history: Option[KvHistoryBulk]): Unit = {
         (clock.currentTimeMillis _).expects().returning(timestamp)
-        historicalKvActor ! KvMultiDeleteRequest(storageUuid, keyValues.keys)
+        historicalKvActor ! KvMultiDeleteRequest(storageUuid, commonSecretKey, keyValues.keys)
         expectMsg(response)
         expectHistoryMessage(history)
       }
@@ -289,8 +322,9 @@ class HistoricalKvActorSpec
         val answer = Right(keyValues.map(kv => kv._1 -> true))
         (kvProcessor.delete(_: String, _: Iterable[String])).expects(storageUuid, keyValues.keys)
           .returning(Future(answer))
-        test(answer, Some(KvHistoryBulk(keyValues
-          .map { case (key, _) => KvHistory(storageUuid, key, null, timestamp, Delete) })))
+        test(
+          answer, Some(KvHistoryBulk(keyValues
+                                       .map { case (key, _) => KvHistory(storageUuid, key, null, timestamp, Delete) })))
       }
 
       it("should process a request and skip history logging") {
@@ -319,12 +353,17 @@ class HistoricalKvActorSpec
           .returning(Future.failed(exception))
         test(Left(InternalError(exception.getMessage)), None)
       }
+
+      it("should return UnauthorizedError if secret key does not match") {
+        expectDifferentSecretKeyStorage
+        test(Left(UnauthorizedError()), None)
+      }
     }
 
     describe("(KvListRequest)") {
 
       def test(response: Any): Unit = {
-        historicalKvActor ! KvListRequest(storageUuid)
+        historicalKvActor ! KvListRequest(storageUuid, commonSecretKey)
         expectMsg(response)
         expectHistoryMessage(None)
       }
@@ -353,13 +392,18 @@ class HistoricalKvActorSpec
         (kvProcessor.list _).expects(storageUuid).returning(Future.failed(exception))
         test(Left(InternalError(exception.getMessage)))
       }
+
+      it("should return UnauthorizedError if secret key does not match") {
+        expectDifferentSecretKeyStorage
+        test(Left(UnauthorizedError()))
+      }
     }
 
     describe("(KvClearRequest)") {
 
       def test(response: Any, history: Option[KvHistory]): Unit = {
         (clock.currentTimeMillis _).expects().returning(timestamp)
-        historicalKvActor ! KvClearRequest(storageUuid)
+        historicalKvActor ! KvClearRequest(storageUuid, commonSecretKey)
         expectMsg(response)
         expectHistoryMessage(history)
       }
@@ -395,6 +439,11 @@ class HistoricalKvActorSpec
         (kvProcessor.clear _).expects(storageUuid).returning(Future.failed(exception))
         test(Left(InternalError(exception.getMessage)), None)
       }
+
+      it("should return UnauthorizedError if secret key does not match") {
+        expectDifferentSecretKeyStorage
+        test(Left(UnauthorizedError()), None)
+      }
     }
   }
 
@@ -429,4 +478,7 @@ class HistoricalKvActorSpec
     (storageCache.get _).expects(storageUuid).returning(Future(Some(storageDiscard)))
   }
 
+  private def expectDifferentSecretKeyStorage = {
+    (storageCache.get _).expects(storageUuid).returning(Future(Some(storageSecret)))
+  }
 }

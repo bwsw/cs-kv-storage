@@ -22,7 +22,7 @@ import akka.pattern.pipe
 import com.bwsw.cloudstack.storage.kv.cache.StorageCache
 import com.bwsw.cloudstack.storage.kv.entity.Operation.{Clear, Delete, Set}
 import com.bwsw.cloudstack.storage.kv.entity.{Operation, Storage}
-import com.bwsw.cloudstack.storage.kv.error.{InternalError, NotFoundError, StorageError}
+import com.bwsw.cloudstack.storage.kv.error.{InternalError, NotFoundError, StorageError, UnauthorizedError}
 import com.bwsw.cloudstack.storage.kv.message._
 import com.bwsw.cloudstack.storage.kv.message.request._
 import com.bwsw.cloudstack.storage.kv.message.response._
@@ -114,7 +114,11 @@ class HistoricalKvActor(implicit inj: Injector)
 
   protected def process[S <: KvRequest](r: S, producer: (S, Storage) => Future[KvResponse]): Future[KvResponse] = {
     storageCache.get(r.storage).flatMap {
-      case Some(storage) => producer.apply(r, storage)
+      case Some(storage) =>
+        if (r.secretKey.sameElements(storage.secretKey))
+          producer.apply(r, storage)
+        else
+          Future(KvErrorResponse(UnauthorizedError()))
       case None => Future(KvErrorResponse(NotFoundError()))
     }.pipeTo(self)(sender())
   }

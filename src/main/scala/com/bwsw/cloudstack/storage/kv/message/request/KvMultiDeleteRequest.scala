@@ -17,4 +17,14 @@
 
 package com.bwsw.cloudstack.storage.kv.message.request
 
-case class KvMultiDeleteRequest(storage: String, keys: Iterable[String]) extends KvRequest
+case class KvMultiDeleteRequest(storage: String, secretKey: Array[Char], keys: Iterable[String]) extends KvRequest {
+  /** @inheritdoc */
+  override def equals(o: scala.Any): Boolean = o match {
+    case request: KvMultiDeleteRequest =>
+      request.storage == this.storage &&
+        request.keys == this.keys &&
+        (request.secretKey == null && this.secretKey == null || request.secretKey != null && this
+          .secretKey != null && request.secretKey.sameElements(this.secretKey))
+    case _ => false
+  }
+}

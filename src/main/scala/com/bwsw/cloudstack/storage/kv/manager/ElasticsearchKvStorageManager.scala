@@ -18,11 +18,12 @@
 package com.bwsw.cloudstack.storage.kv.manager
 
 import com.bwsw.cloudstack.storage.kv.cache.StorageCache
-import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, NotFoundError, StorageError}
+import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError, StorageError,
+  UnauthorizedError}
 import com.bwsw.cloudstack.storage.kv.util.elasticsearch.RegistryFields._
 import com.bwsw.cloudstack.storage.kv.util.elasticsearch.ScriptOperations._
 import com.bwsw.cloudstack.storage.kv.util.elasticsearch.StorageType.Temporary
-import com.bwsw.cloudstack.storage.kv.util.elasticsearch.{DocumentType, RegistryIndex, getError}
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch.{DocumentType, RegistryIndex, StorageType, getError}
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.{HttpClient, RequestSuccess}
 import org.slf4j.LoggerFactory
@@ -39,36 +40,58 @@ class ElasticsearchKvStorageManager(client: HttpClient, cache: StorageCache) ext
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  def updateTempStorageTtl(storage: String, ttl: Long): Future[Either[StorageError, Unit]] = {
+  def updateTempStorageTtl(
+      storageUuid: String,
+      secretKey: Array[Char],
+      ttl: Long): Future[Either[StorageError, Unit]] = {
     process(
-      storage,
+      storageUuid,
+      secretKey,
       s"if (ctx._source.$Type == '$Temporary') { ctx._source.$ExpirationTimestamp = ctx._source" +
         s".$ExpirationTimestamp - ctx._source.$Ttl + $ttl; ctx._source.$Ttl = $ttl } else { ctx.op='$NoOp' }",
       delete = false)
   }
 
-  def deleteTempStorage(storage: String): Future[Either[StorageError, Unit]] = {
+  def deleteTempStorage(storageUuid: String, secretKey: Array[Char]): Future[Either[StorageError, Unit]] = {
     process(
-      storage,
+      storageUuid,
+      secretKey,
       s"if (ctx._source.$Type == '$Temporary') { ctx._source.$Deleted = true } else { ctx.op='$NoOp' }",
       delete = true)
   }
 
-  private def process(storage: String, scriptCode: String, delete: Boolean) = {
-    client.execute(update(storage) in RegistryIndex / DocumentType script scriptCode).map {
-      case Left(failure) => failure.status match {
-        case 404 => Left(NotFoundError())
-        case _ =>
-          logger.error("Elasticsearch update request failure: {}", failure.error)
-          Left(getError(failure))
-      }
-      case Right(RequestSuccess(_, _, _, updateRequest)) => updateRequest.result match {
-        case Updated =>
-          if (delete)
-            cache.delete(storage)
-          Right(())
-        case NoOp => Left(BadRequestError())
-      }
+  private def process(storageUuid: String, secretKey: Array[Char], scriptCode: String, delete: Boolean) = {
+    cache.get(storageUuid).flatMap {
+      case Some(storage) =>
+        if (secretKey.sameElements(storage.secretKey))
+          if (storage.storageType == StorageType.Temporary)
+            client.execute(update(storageUuid) in RegistryIndex / DocumentType script scriptCode).map
+            {//TODO: refactor without using script
+              case Left(failure) => failure.status match {
+                case 404 =>
+                  cache.delete(storageUuid)
+                  Left(NotFoundError())
+                case _ =>
+                  logger.error("Elasticsearch update request failure: {}", failure.error)
+                  Left(getError(failure))
+              }
+              case Right(RequestSuccess(_, _, _, updateRequest)) => updateRequest.result match {
+                case Updated =>
+                  if (delete)
+                    cache.delete(storageUuid)
+                  Right(())
+                case NoOp => Left(BadRequestError())
+              }
+            }
+          else
+            Future(Left(BadRequestError()))
+        else
+          Future(Left(UnauthorizedError()))
+      case None =>
+        Future(Left(NotFoundError()))
+    }.recover { case ex =>
+      logger.error(ex.getMessage, ex.getCause)
+      Left(InternalError(ex.getMessage))
     }
   }
 }

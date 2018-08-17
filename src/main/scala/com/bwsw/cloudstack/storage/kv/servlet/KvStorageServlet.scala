@@ -20,9 +20,10 @@ package com.bwsw.cloudstack.storage.kv.servlet
 import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.util.Timeout
-import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, ConflictError, NotFoundError}
+import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, ConflictError, NotFoundError, UnauthorizedError}
 import com.bwsw.cloudstack.storage.kv.message.request.KvMultiGetRequest
 import com.bwsw.cloudstack.storage.kv.processor.KvProcessor
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch.SecretKeyHeader
 import org.json4s.JsonAST.JArray
 import org.json4s.{DefaultFormats, Formats, JObject, MappingException}
 import org.scalatra._
@@ -44,148 +45,201 @@ class KvStorageServlet(system: ActorSystem, requestTimeout: FiniteDuration, kvPr
 
   get("/get/:storage_uuid/:key") {
     new AsyncResult() {
-      val is: Future[_] = (kvActor ? KvGetRequest(params("storage_uuid"), params("key")))
-        .map {
-          case Right(value) =>
-            contentType = formats("txt")
-            value
-          case Left(_: NotFoundError) => NotFound("")
-          case _ => InternalServerError()
-        }
+      val is: Future[_] =
+        if (request.header(SecretKeyHeader).nonEmpty)
+          (kvActor ? KvGetRequest(
+            params("storage_uuid"),
+            request.getHeader(SecretKeyHeader).toCharArray,
+            params("key")))
+            .map {
+              case Right(value) =>
+                contentType = formats("txt")
+                value
+              case Left(_: NotFoundError) => NotFound("")
+              case Left(_: UnauthorizedError) => Unauthorized("")
+              case _ => InternalServerError()
+            }
+        else
+          Future(Unauthorized(""))
     }
   }
 
   post("/get/:storage_uuid") {
     new AsyncResult() {
       val is: Future[_] =
-        if (request.getHeader("Content-Type") == formats("json"))
-          parsedBody match {
-            case json: JArray =>
-              try {
-                val result = kvActor ? KvMultiGetRequest(params("storage_uuid"), json.extract[List[String]])
-                result.map {
-                  case Right(value) =>
-                    contentType = formats("json")
-                    value
-                  case Left(_: NotFoundError) => NotFound("")
-                  case _ => InternalServerError()
+        if (request.header(SecretKeyHeader).nonEmpty)
+          if (request.getHeader("Content-Type") == formats("json"))
+            parsedBody match {
+              case json: JArray =>
+                try {
+                  val result = kvActor ? KvMultiGetRequest(
+                    params("storage_uuid"),
+                    request.getHeader(SecretKeyHeader).toCharArray,
+                    json.extract[List[String]])
+                  result.map {
+                    case Right(value) =>
+                      contentType = formats("json")
+                      value
+                    case Left(_: NotFoundError) => NotFound("")
+                    case Left(_: UnauthorizedError) => Unauthorized("")
+                    case _ => InternalServerError()
+                  }
+                } catch {
+                  case ma: MappingException => Future(BadRequest())
                 }
-              } catch {
-                case ma: MappingException => Future(BadRequest())
-              }
-            case _ => Future(BadRequest())
-          }
+              case _ => Future(BadRequest())
+            }
+          else
+            Future(BadRequest())
         else
-          Future(BadRequest())
+          Future(Unauthorized(""))
+
     }
   }
 
   put("/set/:storage_uuid/:key") {
     new AsyncResult() {
       val is: Future[_] =
-        if (request.getHeader("Content-Type") == formats("txt")) {
-          val result = kvActor ? KvSetRequest(params("storage_uuid"), params("key"), request.body)
-          result.map {
-            case Right(_) => Ok()
-            case Left(_: BadRequestError) => BadRequest()
-            case Left(_: NotFoundError) => NotFound("")
-            case _ => InternalServerError()
+        if (request.header(SecretKeyHeader).nonEmpty)
+          if (request.getHeader("Content-Type") == formats("txt")) {
+            val result = kvActor ? KvSetRequest(
+              params("storage_uuid"),
+              request.getHeader(SecretKeyHeader).toCharArray,
+              params("key"), request.body)
+            result.map {
+              case Right(_) => Ok()
+              case Left(_: BadRequestError) => BadRequest()
+              case Left(_: NotFoundError) => NotFound("")
+              case Left(_: UnauthorizedError) => Unauthorized("")
+              case _ => InternalServerError()
+            }
           }
-        }
+          else
+            Future(BadRequest())
         else
-          Future(BadRequest())
+          Future(Unauthorized(""))
+
     }
   }
 
   put("/set/:storage_uuid") {
     new AsyncResult() {
       val is: Future[_] =
-        if (request.getHeader("Content-Type") == formats("json"))
-          parsedBody match {
-            case json: JObject =>
-              try {
-                val result = kvActor ? KvMultiSetRequest(params("storage_uuid"), json.extract[Map[String, String]])
-                result.map {
-                  case Right(value) =>
-                    contentType = formats("json")
-                    value
-                  case Left(_: NotFoundError) => NotFound("")
-                  case _ => InternalServerError()
+        if (request.header(SecretKeyHeader).nonEmpty)
+          if (request.getHeader("Content-Type") == formats("json"))
+            parsedBody match {
+              case json: JObject =>
+                try {
+                  val result = kvActor ? KvMultiSetRequest(
+                    params("storage_uuid"),
+                    request.getHeader(SecretKeyHeader).toCharArray,
+                    json.extract[Map[String, String]])
+                  result.map {
+                    case Right(value) =>
+                      contentType = formats("json")
+                      value
+                    case Left(_: NotFoundError) => NotFound("")
+                    case Left(_: UnauthorizedError) => Unauthorized("")
+                    case _ => InternalServerError()
+                  }
+                } catch {
+                  case e: MappingException => Future(BadRequest())
                 }
-              } catch {
-                case e: MappingException => Future(BadRequest())
-              }
-            case _ => Future(BadRequest())
-          }
+              case _ => Future(BadRequest())
+            }
+          else
+            Future(BadRequest())
         else
-          Future(BadRequest())
+          Future(Unauthorized(""))
     }
   }
 
   delete("/delete/:storage_uuid/:key") {
     new AsyncResult() {
-      val is: Future[_] = {
-        val result = kvActor ? KvDeleteRequest(params("storage_uuid"), params("key"))
-        result.map {
-          case Right(_) => Ok()
-          case Left(_: NotFoundError) => NotFound("")
-          case _ => InternalServerError()
+      val is: Future[_] =
+        if (request.header(SecretKeyHeader).nonEmpty) {
+          val result = kvActor ? KvDeleteRequest(
+            params("storage_uuid"),
+            request.getHeader(SecretKeyHeader).toCharArray,
+            params("key"))
+          result.map {
+            case Right(_) => Ok()
+            case Left(_: NotFoundError) => NotFound("")
+            case Left(_: UnauthorizedError) => Unauthorized("")
+            case _ => InternalServerError()
+          }
         }
-      }
+        else
+          Future(Unauthorized(""))
     }
   }
 
   post("/delete/:storage_uuid") {
     new AsyncResult() {
       val is: Future[_] =
-        if (request.getHeader("Content-Type") == formats("json"))
-          parsedBody match {
-            case json: JArray =>
-              try {
-                val result = kvActor ? KvMultiDeleteRequest(params("storage_uuid"), json.extract[List[String]])
-                result.map {
-                  case Right(value) =>
-                    contentType = formats("json")
-                    value
-                  case Left(_: NotFoundError) => NotFound("")
-                  case _ => InternalServerError()
+        if (request.header(SecretKeyHeader).nonEmpty)
+          if (request.getHeader("Content-Type") == formats("json"))
+            parsedBody match {
+              case json: JArray =>
+                try {
+                  val result = kvActor ? KvMultiDeleteRequest(
+                    params("storage_uuid"),
+                    request.getHeader(SecretKeyHeader).toCharArray,
+                    json.extract[List[String]])
+                  result.map {
+                    case Right(value) =>
+                      contentType = formats("json")
+                      value
+                    case Left(_: NotFoundError) => NotFound("")
+                    case Left(_: UnauthorizedError) => Unauthorized("")
+                    case _ => InternalServerError()
+                  }
+                } catch {
+                  case e: MappingException => Future(BadRequest())
                 }
-              } catch {
-                case e: MappingException => Future(BadRequest())
-              }
-            case _ => Future(BadRequest())
-          }
+              case _ => Future(BadRequest())
+            }
+          else
+            Future(BadRequest())
         else
-          Future(BadRequest())
+          Future(Unauthorized(""))
     }
   }
 
   get("/list/:storage_uuid") {
     new AsyncResult() {
-      val is: Future[_] = {
-        val result = kvActor ? KvListRequest(params("storage_uuid"))
-        result.map {
-          case Right(value) =>
-            contentType = formats("json")
-            value
-          case Left(_: NotFoundError) => NotFound("")
-          case _ => InternalServerError()
+      val is: Future[_] =
+        if (request.header(SecretKeyHeader).nonEmpty) {
+          val result = kvActor ? KvListRequest(params("storage_uuid"), request.getHeader(SecretKeyHeader).toCharArray)
+          result.map {
+            case Right(value) =>
+              contentType = formats("json")
+              value
+            case Left(_: NotFoundError) => NotFound("")
+            case Left(_: UnauthorizedError) => Unauthorized("")
+            case _ => InternalServerError()
+          }
         }
-      }
+        else
+          Future(Unauthorized(""))
     }
   }
 
   post("/clear/:storage_uuid") {
     new AsyncResult() {
-      val is: Future[_] = {
-        val result = kvActor ? KvClearRequest(params("storage_uuid"))
-        result.map {
-          case Right(_) => Ok()
-          case Left(_: NotFoundError) => NotFound("")
-          case Left(_: ConflictError) => Conflict()
-          case _ => InternalServerError()
+      val is: Future[_] =
+        if (request.header(SecretKeyHeader).nonEmpty) {
+          val result = kvActor ? KvClearRequest(params("storage_uuid"), request.getHeader(SecretKeyHeader).toCharArray)
+          result.map {
+            case Right(_) => Ok()
+            case Left(_: NotFoundError) => NotFound("")
+            case Left(_: ConflictError) => Conflict("")
+            case Left(_: UnauthorizedError) => Unauthorized("")
+            case _ => InternalServerError()
+          }
         }
-      }
+        else
+          Future(Unauthorized(""))
     }
   }
 

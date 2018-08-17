@@ -18,8 +18,9 @@
 package com.bwsw.cloudstack.storage.kv.servlet
 
 import akka.actor.ActorSystem
-import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, NotFoundError}
+import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, NotFoundError, UnauthorizedError}
 import com.bwsw.cloudstack.storage.kv.manager.KvStorageManager
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch.SecretKeyHeader
 import org.scalatra._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -32,36 +33,48 @@ class KvStorageManagerServlet(system: ActorSystem, manager: KvStorageManager)
 
   put("/:storage_uuid") {
     new AsyncResult() {
-      val is: Future[_] = {
-        val ttl = params.get("ttl")
-        if (ttl.nonEmpty)
-          try {
-            manager.updateTempStorageTtl(params("storage_uuid"), ttl.get.toLong)
-              .map {
-                case Right(_) => Ok()
-                case Left(_: BadRequestError) => BadRequest()
-                case Left(_: NotFoundError) => NotFound("")
-                case _ => InternalServerError()
-              }
-          } catch {
-            case e: NumberFormatException => Future(BadRequest())
-          }
-        else
-          Future(BadRequest())
-      }
+      val is: Future[_] =
+        if (request.header(SecretKeyHeader).nonEmpty) {
+          val ttl = params.get("ttl")
+          if (ttl.nonEmpty)
+            try {
+              manager.updateTempStorageTtl(
+                params("storage_uuid"),
+                request.getHeader(SecretKeyHeader).toCharArray,
+                ttl.get.toLong)
+                .map {
+                  case Right(_) => Ok()
+                  case Left(_: BadRequestError) => BadRequest()
+                  case Left(_: NotFoundError) => NotFound("")
+                  case Left(_: UnauthorizedError) => Unauthorized("")
+                  case _ => InternalServerError()
+                }
+            } catch {
+              case e: NumberFormatException => Future(BadRequest())
+            }
+          else
+            Future(BadRequest())
+        } else {
+          Future(Unauthorized(""))
+        }
     }
   }
 
   delete("/:storage_uuid") {
     new AsyncResult() {
       val is: Future[_] =
-        manager.deleteTempStorage(params("storage_uuid"))
-          .map {
-            case Right(_) => Ok()
-            case Left(_: BadRequestError) => BadRequest()
-            case Left(_: NotFoundError) => NotFound("")
-            case _ => InternalServerError()
-          }
+        if (request.header(SecretKeyHeader).nonEmpty) {
+          manager.deleteTempStorage(params("storage_uuid"), request.getHeader(SecretKeyHeader).toCharArray)
+            .map {
+              case Right(_) => Ok()
+              case Left(_: BadRequestError) => BadRequest()
+              case Left(_: NotFoundError) => NotFound("")
+              case Left(_: UnauthorizedError) => Unauthorized("")
+              case _ => InternalServerError()
+            }
+        } else {
+          Future(Unauthorized(""))
+        }
     }
   }
 }

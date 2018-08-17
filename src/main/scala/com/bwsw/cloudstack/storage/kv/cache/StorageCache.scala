@@ -23,9 +23,9 @@ import scala.concurrent.Future
 
 /** Provides access to storages data **/
 trait StorageCache {
-  def isHistoryEnabled(storageUuid: String): Future[Option[Boolean]]
-
   def get(storageUuid: String): Future[Option[Storage]]
+
+  def updateAll(values: Map[String, Option[Storage]]): Unit
 
   def delete(storageUuid: String): Unit
 }

@@ -30,12 +30,12 @@ trait KvStorageManager {
     * @param ttl     TTL
     * @return an empty [[scala.concurrent.Future]] or a [[scala.concurrent.Future]] with an error
     */
-  def updateTempStorageTtl(storage: String, ttl: Long): Future[Either[StorageError, Unit]]
+  def updateTempStorageTtl(storage: String, secretKey: Array[Char], ttl: Long): Future[Either[StorageError, Unit]]
 
   /** Deletes the given temporary storage.
     *
     * @param storage the storage UUID
     * @return an empty [[scala.concurrent.Future]] or a [[scala.concurrent.Future]] with an error
     */
-  def deleteTempStorage(storage: String): Future[Either[StorageError, Unit]]
+  def deleteTempStorage(storage: String, secretKey: Array[Char]): Future[Either[StorageError, Unit]]
 }

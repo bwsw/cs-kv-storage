@@ -17,4 +17,14 @@
 
 package com.bwsw.cloudstack.storage.kv.message.request
 
-case class KvClearRequest(storage: String) extends KvRequest
+case class KvClearRequest(storage: String, secretKey: Array[Char]) extends KvRequest {
+  /** @inheritdoc */
+  override def equals(o: scala.Any): Boolean = o match {
+    case request: KvClearRequest =>
+      request.storage == this.storage &&
+        (request.secretKey == null && this.secretKey == null || request.secretKey != null && this
+          .secretKey != null && request.secretKey.sameElements(this.secretKey))
+    case _ => false
+  }
+}
+

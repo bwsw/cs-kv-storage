@@ -17,4 +17,15 @@
 
 package com.bwsw.cloudstack.storage.kv.message.request
 
-case class KvSetRequest(storage: String, key: String, value: String) extends KvRequest
+case class KvSetRequest(storage: String, secretKey: Array[Char], key: String, value: String) extends KvRequest {
+  /** @inheritdoc */
+  override def equals(o: scala.Any): Boolean = o match {
+    case request: KvSetRequest =>
+      request.storage == this.storage &&
+        request.key == this.key &&
+        request.value == this.value &&
+        (request.secretKey == null && this.secretKey == null || request.secretKey != null && this
+          .secretKey != null && request.secretKey.sameElements(this.secretKey))
+    case _ => false
+  }
+}

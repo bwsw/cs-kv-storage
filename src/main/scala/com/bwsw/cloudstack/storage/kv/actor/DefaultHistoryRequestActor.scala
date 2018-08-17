@@ -20,10 +20,11 @@ package com.bwsw.cloudstack.storage.kv.actor
 import akka.actor.Status
 import akka.pattern.pipe
 import com.bwsw.cloudstack.storage.kv.cache.StorageCache
-import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError}
+import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError, UnauthorizedError}
 import com.bwsw.cloudstack.storage.kv.message.request.{KvHistoryGetRequest, KvHistoryScrollRequest}
 import com.bwsw.cloudstack.storage.kv.message.response.KvHistoryResponse
 import com.bwsw.cloudstack.storage.kv.processor.HistoryProcessor
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch.StorageType.Temporary
 import scaldi.Injector
 import scaldi.akka.AkkaInjectable.inject
 
@@ -41,20 +42,26 @@ class DefaultHistoryRequestActor(implicit inj: Injector)
 
   override def receive: Receive = {
     case request: KvHistoryGetRequest =>
-      storageCache.isHistoryEnabled(request.storageUuid).flatMap {
-        case Some(true) =>
-          historyProcessor.get(
-            request.storageUuid,
-            request.keys,
-            request.operations,
-            request.start,
-            request.end,
-            request.sort,
-            request.page,
-            request.size,
-            request.scroll)
-        case Some(false) =>
-          Future(Left(BadRequestError()))
+      storageCache.get(request.storageUuid).flatMap {
+        case Some(storage) =>
+          if (request.secretKey.sameElements(storage.secretKey)) {
+            if (storage.historyEnabled && storage.storageType != Temporary) {
+              historyProcessor.get(
+                request.storageUuid,
+                request.keys,
+                request.operations,
+                request.start,
+                request.end,
+                request.sort,
+                request.page,
+                request.size,
+                request.scroll)
+            } else {
+              Future(Left(BadRequestError()))
+            }
+          } else {
+            Future(Left(UnauthorizedError()))
+          }
         case None =>
           Future(Left(NotFoundError()))
       }.map(result => KvHistoryResponse(result)).pipeTo(self)(sender())
