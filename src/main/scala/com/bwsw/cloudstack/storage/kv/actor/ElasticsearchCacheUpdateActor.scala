@@ -51,8 +51,8 @@ class ElasticsearchCacheUpdateActor(implicit inj: Injector)
       }.map {
         case Left(failure) =>
           log.info("Elasticsearch storage update request failure: {}", failure.error)
+          cache.invalidateAll()
           lastUpdateTimestamp = clock.currentTimeMillis
-        //TODO: handle failure
         case Right(success) =>
           updateValues(success.result.hits)
           if (success.result.scrollId.nonEmpty)
@@ -70,8 +70,9 @@ class ElasticsearchCacheUpdateActor(implicit inj: Injector)
     client.execute(searchScroll(scrollId).keepAlive(keepAlive))
       .flatMap {
         case Left(failure) =>
-          Future(log.info("Elasticsearch scroll request failure: {}", failure.error))
-        //TODO: handle failure
+          log.info("Elasticsearch scroll request failure: {}", failure.error)
+          cache.invalidateAll()
+          Future()
         case Right(success) =>
           if (success.result.hits.hits.length == 0) {
             client.execute {
@@ -106,6 +107,13 @@ class ElasticsearchCacheUpdateActor(implicit inj: Injector)
     }.toMap
     cache.updateAll(map)
   }
+
+  private def getValue[T](source: Map[String, Any], key: String): T = source.get(key) match {
+    case Some(s) => s.asInstanceOf[T]
+    case None =>
+      cache.invalidateAll()
+      throw new RuntimeException("Invalid result")
+  }
 }
 
 object ElasticsearchCacheUpdateActor {
@@ -113,9 +121,4 @@ object ElasticsearchCacheUpdateActor {
   private case object UpdateTimer
 
   private case object UpdateTimeout
-
-  private def getValue[T](source: Map[String, Any], key: String): T = source.get(key) match {
-    case Some(s) => s.asInstanceOf[T]
-    case None => throw new RuntimeException("Invalid result") //TODO: handle failure
-  }
 }

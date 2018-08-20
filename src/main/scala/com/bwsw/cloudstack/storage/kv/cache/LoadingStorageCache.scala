@@ -38,6 +38,10 @@ class LoadingStorageCache(conf: AppConfig, loader: StorageLoader) extends Storag
     cache.get(storageUuid)
   }
 
+  def invalidateAll(): Unit = {
+    cache.synchronous.invalidateAll()
+  }
+
   def updateAll(values: Map[String, Option[Storage]]): Unit = {
     values.foreach { case(key, value) =>
       cache.getIfPresent(key) match {

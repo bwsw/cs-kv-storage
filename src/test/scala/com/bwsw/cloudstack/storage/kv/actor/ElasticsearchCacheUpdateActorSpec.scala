@@ -152,6 +152,98 @@ class ElasticsearchCacheUpdateActorSpec
         }
         system.stop(elasticsearchCacheUpdateActor)
       }
+
+      it("should invalidate cache if update failed") {
+        (appConfig.getCacheUpdateTime _).expects().returning(updateTimeout)
+        val initTimestamp = Promise[Boolean]
+        (clock.currentTimeMillis _).expects().onCall { () =>
+          initTimestamp.success(true)
+          timestamp
+        }
+        val elasticsearchCacheUpdateActor = system.actorOf(Props(new ElasticsearchCacheUpdateActor))
+        eventually(timeout(scaled(updateTimeout * 1.4))) {
+          initTimestamp.isCompleted should be(true)
+        }
+        val updateTimestamp = Promise[Boolean]
+        (elasticsearchConfig.getScrollKeepAlive _).expects().returning(scrollKeepAlive)
+        (elasticsearchConfig.getScrollPageSize _).expects().returning(scrollPageSize)
+        expectSearch(search(RegistryIndex).query(rangeQuery(RegistryFields.LastUpdated).gte(timestamp))
+                       .size(scrollPageSize)
+                       .scroll(scrollKeepAlive)).returning(getRequestFailureFuture(500))
+        (storageCache.invalidateAll _).expects()
+        (clock.currentTimeMillis _).expects().onCall { () =>
+          updateTimestamp.success(true)
+          timestamp
+        }
+        eventually(timeout(scaled(updateTimeout * 1.4))) {
+          updateTimestamp.isCompleted should be(true)
+        }
+        system.stop(elasticsearchCacheUpdateActor)
+      }
+
+      it("should invalidate cache if update failed on scroll") {
+        (appConfig.getCacheUpdateTime _).expects().returning(updateTimeout)
+        val initTimestamp = Promise[Boolean]
+        (clock.currentTimeMillis _).expects().onCall { () =>
+          initTimestamp.success(true)
+          timestamp
+        }
+        val elasticsearchCacheUpdateActor = system.actorOf(Props(new ElasticsearchCacheUpdateActor))
+        eventually(timeout(scaled(updateTimeout * 1.4))) {
+          initTimestamp.isCompleted should be(true)
+        }
+        val updateTimestamp = Promise[Boolean]
+        (elasticsearchConfig.getScrollKeepAlive _).expects().returning(scrollKeepAlive)
+        (elasticsearchConfig.getScrollPageSize _).expects().returning(scrollPageSize)
+        expectSearch(search(RegistryIndex).query(rangeQuery(RegistryFields.LastUpdated).gte(timestamp))
+                       .size(scrollPageSize)
+                       .scroll(scrollKeepAlive))
+          .returning(getRequestSuccessFuture(getSearchResponse(Map(storage1.uuid -> storage1Map), 2, scrollId)))
+        (storageCache.updateAll _).expects(Map(storage1.uuid -> Some(storage1)))
+
+        (storageCache.invalidateAll _).expects()
+        val scrollDefinition = searchScroll(scrollId.get, scrollKeepAlive)
+        expectScroll(scrollDefinition)
+          .returning(getRequestFailureFuture(500))
+        (clock.currentTimeMillis _).expects().onCall { () =>
+          updateTimestamp.success(true)
+          timestamp
+        }
+        eventually(timeout(scaled(updateTimeout * 1.4))) {
+          updateTimestamp.isCompleted should be(true)
+        }
+        system.stop(elasticsearchCacheUpdateActor)
+      }
+
+      it("should invalidate cache if response is invalid") {
+        (appConfig.getCacheUpdateTime _).expects().returning(updateTimeout)
+        val initTimestamp = Promise[Boolean]
+        (clock.currentTimeMillis _).expects().onCall { () =>
+          initTimestamp.success(true)
+          timestamp
+        }
+        val elasticsearchCacheUpdateActor = system.actorOf(Props(new ElasticsearchCacheUpdateActor))
+        eventually(timeout(scaled(updateTimeout * 1.4))) {
+          initTimestamp.isCompleted should be(true)
+        }
+
+        val invalidation = Promise[Boolean]
+        (elasticsearchConfig.getScrollKeepAlive _).expects().returning(scrollKeepAlive)
+        (elasticsearchConfig.getScrollPageSize _).expects().returning(scrollPageSize)
+        expectSearch(search(RegistryIndex).query(rangeQuery(RegistryFields.LastUpdated).gte(timestamp))
+                       .size(scrollPageSize)
+                       .scroll(scrollKeepAlive))
+          .returning(getRequestSuccessFuture(getSearchResponse(
+            Map(storage1.uuid -> Map()), 1)))
+        (storageCache.invalidateAll _).expects().onCall {
+          _ => invalidation.success(true)
+        }
+        eventually(timeout(scaled(updateTimeout * 1.4))) {
+          invalidation.isCompleted should be(true)
+        }
+
+        system.stop(elasticsearchCacheUpdateActor)
+      }
     }
 
   }

@@ -25,6 +25,8 @@ import scala.concurrent.Future
 trait StorageCache {
   def get(storageUuid: String): Future[Option[Storage]]
 
+  def invalidateAll(): Unit
+
   def updateAll(values: Map[String, Option[Storage]]): Unit
 
   def delete(storageUuid: String): Unit
