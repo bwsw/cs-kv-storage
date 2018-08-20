@@ -1,18 +1,21 @@
 {
 	"info": {
+		"_postman_id": "f41060ce-c3a7-47ab-a2d1-f5550c2b30dd",
 		"name": "cs-kv-storage",
-		"_postman_id": "69b79478-6112-3bd6-0155-881bfc672beb",
 		"description": "E2E tests for cs-kv-storage",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
+			"_postman_id": "c7d1c0e9-0b87-4b2a-a40c-80843e204d85",
 			"name": "kv-storage",
 			"item": [
 				{
+					"_postman_id": "c59c5f20-aa61-42ba-b5f3-9bd503fc9e85",
 					"name": "List keys",
 					"item": [
 						{
+							"_postman_id": "aaa07966-62c8-41fa-82e2-001b7d685604",
 							"name": "List a storage",
 							"event": [
 								{
@@ -40,6 +43,98 @@
 							],
 							"request": {
 								"method": "GET",
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/list/{{read_only_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"list",
+										"{{read_only_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"_postman_id": "0e19df49-771e-481c-82bb-3598cff8912e",
+							"name": "List with wrong Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "dd438ae3-c029-47c9-9da1-b6d7f6bf2a7f",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function() {",
+											"  pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{wrong_secret}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/list/{{read_only_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"list",
+										"{{read_only_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"_postman_id": "d7807841-13ed-431b-900c-2b27ed8e5f71",
+							"name": "List without Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "6fac08d4-9812-4f85-8e9f-798b08418ebd",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function() {",
+											"  pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
 								"header": [],
 								"body": {
 									"mode": "raw",
@@ -59,6 +154,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "29935aa5-78fe-4875-a9fb-0aaa67f64a01",
 							"name": "List an empty storage",
 							"event": [
 								{
@@ -96,7 +192,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -115,6 +216,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "a7e1b5f1-253c-4706-aa84-82af1d56f218",
 							"name": "List nonexistent storage",
 							"event": [
 								{
@@ -146,7 +248,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -190,9 +297,11 @@
 					"_postman_isSubFolder": true
 				},
 				{
+					"_postman_id": "8ebc7599-0cda-452d-8f23-6d88a45f3bdb",
 					"name": "Get value",
 					"item": [
 						{
+							"_postman_id": "7aa86c3e-48e4-4162-b708-ff25573b5764",
 							"name": "Get a value",
 							"event": [
 								{
@@ -220,6 +329,102 @@
 							],
 							"request": {
 								"method": "GET",
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/get/{{read_only_storage}}/{{some_key}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"get",
+										"{{read_only_storage}}",
+										"{{some_key}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"_postman_id": "3d826bcb-4ebc-46b9-97ba-20709266a11d",
+							"name": "Get with wrong Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "f9ae26d6-5cd0-4706-b01a-9aa56649325c",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function() {",
+											"  pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{wrong_secret}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/get/{{read_only_storage}}/{{some_key}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"get",
+										"{{read_only_storage}}",
+										"{{some_key}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"_postman_id": "3329b5e1-8876-46f4-b35d-af148dcf44f6",
+							"name": "Get without Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "6d945e25-21bc-415e-bc00-995cef8acb39",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function() {",
+											"  pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
 								"header": [],
 								"body": {
 									"mode": "raw",
@@ -240,6 +445,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "44886ef3-41f0-47df-a331-90d1927ba950",
 							"name": "Get nonexistent value",
 							"event": [
 								{
@@ -263,7 +469,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -283,6 +494,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "b7f9aa08-50be-4875-a591-7aee0c98795d",
 							"name": "Get from nonexistent storage",
 							"event": [
 								{
@@ -315,7 +527,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -360,10 +577,12 @@
 					"_postman_isSubFolder": true
 				},
 				{
+					"_postman_id": "33b74288-03be-4648-a49e-2031ceaf5ecc",
 					"name": "Get multiple values",
 					"item": [
 						{
-							"name": "Get values",
+							"_postman_id": "d0453064-12fe-4be3-9c65-931834de82b0",
+							"name": "Get multiple values",
 							"event": [
 								{
 									"listen": "test",
@@ -398,6 +617,10 @@
 									{
 										"key": "Content-Type",
 										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -418,6 +641,105 @@
 							"response": []
 						},
 						{
+							"_postman_id": "15b7fb29-909f-4009-a6bf-91d89359443b",
+							"name": "Get with wrong Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "26ff9642-16d1-405c-99a4-a806e1cb00a6",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{wrong_secret}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "[\"key1\", \"key2\", \"key3\"]"
+								},
+								"url": {
+									"raw": "{{url}}/get/{{read_only_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"get",
+										"{{read_only_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"_postman_id": "0de73c03-96de-4d29-9bfe-9c2cdba5440c",
+							"name": "Get without Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "26ff9642-16d1-405c-99a4-a806e1cb00a6",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "[\"key1\", \"key2\", \"key3\"]"
+								},
+								"url": {
+									"raw": "{{url}}/get/{{read_only_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"get",
+										"{{read_only_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"_postman_id": "e62b16df-3e0f-49d0-9877-b863b0591b38",
 							"name": "Get from nonexistent storage",
 							"event": [
 								{
@@ -444,6 +766,10 @@
 									{
 										"key": "Content-Type",
 										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -464,6 +790,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "0a461636-433e-48b4-a6b0-18d5ce069ecb",
 							"name": "Get with wrong Content-Type",
 							"event": [
 								{
@@ -486,7 +813,12 @@
 							],
 							"request": {
 								"method": "POST",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": "[\"key1\", \"key2\", \"key3\"]"
@@ -505,6 +837,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "a48facba-36f5-417c-927b-32287cec1d6e",
 							"name": "Get with bad json",
 							"event": [
 								{
@@ -531,6 +864,10 @@
 									{
 										"key": "Content-Type",
 										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -551,6 +888,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "5e9deff4-607e-49be-b668-1a849ebff1ab",
 							"name": "Get with wrong body format",
 							"event": [
 								{
@@ -577,6 +915,10 @@
 									{
 										"key": "Content-Type",
 										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -597,6 +939,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "2566581f-c382-4040-a9dd-2f8e9b6485fd",
 							"name": "Get nonexistent value",
 							"event": [
 								{
@@ -633,6 +976,10 @@
 									{
 										"key": "Content-Type",
 										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -656,9 +1003,147 @@
 					"_postman_isSubFolder": true
 				},
 				{
+					"_postman_id": "32d84679-16ac-4fee-ae13-e0df8a33f653",
 					"name": "Set value",
 					"item": [
 						{
+							"_postman_id": "132da978-a069-42cc-904d-7bc6fb3fddf6",
+							"name": "Set with wrong Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "01cd35f7-fe03-4508-ae87-2f9747b41992",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"editable_storage\") + \"/_doc/\" + pm.variables.get(\"some_key\"),",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Document is not changed\", function () {",
+											"        pm.expect(res.json()._source.value).to.eql(pm.variables.get(\"some_value\"));",
+											"    });",
+											"});"
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "546e693f-cf78-42ad-b416-ffdc2737ffc6",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "text/plain"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{wrong_secret}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "newValue"
+								},
+								"url": {
+									"raw": "{{url}}/set/{{editable_storage}}/{{some_key}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"set",
+										"{{editable_storage}}",
+										"{{some_key}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"_postman_id": "2cc62afa-9522-4273-9088-547c8deecedf",
+							"name": "Set without Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "01cd35f7-fe03-4508-ae87-2f9747b41992",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"editable_storage\") + \"/_doc/\" + pm.variables.get(\"some_key\"),",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Document is not changed\", function () {",
+											"        pm.expect(res.json()._source.value).to.eql(pm.variables.get(\"some_value\"));",
+											"    });",
+											"});"
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "546e693f-cf78-42ad-b416-ffdc2737ffc6",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "text/plain"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "newValue"
+								},
+								"url": {
+									"raw": "{{url}}/set/{{editable_storage}}/{{some_key}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"set",
+										"{{editable_storage}}",
+										"{{some_key}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"_postman_id": "69693c4a-bed0-4ce9-b4ea-de68007cbd70",
 							"name": "Set with wrong Content-Type",
 							"event": [
 								{
@@ -703,6 +1188,10 @@
 									{
 										"key": "Content-Type",
 										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -724,6 +1213,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "939ce1a2-d5ad-4855-9514-a298cf22855c",
 							"name": "Set value",
 							"event": [
 								{
@@ -764,6 +1254,10 @@
 									{
 										"key": "Content-Type",
 										"value": "text/plain"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -785,6 +1279,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "8b1094dc-57a5-413e-9961-cfcf22911e18",
 							"name": "Set in nonexistent storage",
 							"event": [
 								{
@@ -821,6 +1316,10 @@
 									{
 										"key": "Content-Type",
 										"value": "text/plain"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -842,6 +1341,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "a569e033-ae7f-4bc4-a154-6b3b7007b4ac",
 							"name": "Set long value",
 							"event": [
 								{
@@ -877,6 +1377,10 @@
 									{
 										"key": "Content-Type",
 										"value": "text/plain"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -898,6 +1402,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "1cf55749-0466-4431-84e0-8a9b9b838b64",
 							"name": "Set long key",
 							"event": [
 								{
@@ -933,6 +1438,10 @@
 									{
 										"key": "Content-Type",
 										"value": "text/plain"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "secret"
 									}
 								],
 								"body": {
@@ -957,9 +1466,149 @@
 					"_postman_isSubFolder": true
 				},
 				{
+					"_postman_id": "6213c30a-926a-459d-a1f0-ac8b4f949c13",
 					"name": "Set multiple values",
 					"item": [
 						{
+							"_postman_id": "522d1bdf-8892-4e31-91f5-aa39f8dd64eb",
+							"name": "Set with wrong Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "d1ef7dd3-ad10-45d5-a4b2-b4053af94f25",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"const source = JSON.stringify({\"ids\": [\"key1\",\"key2\",\"key3\",\"key4\"]})",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"multieditable_storage\") + \"/_doc/_mget?source=\" + source + \"&source_content_type=application/json\",",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Documents are not changed\", function () {",
+											"            const result = res.json()[\"docs\"].map(function callback(c, i, a){",
+											"                return {",
+											"                    key: c._id,",
+											"                    value: c._source.value",
+											"                };",
+											"            })",
+											"            const example = [",
+											"                {key: \"key1\", value: \"value1\"},",
+											"                {key: \"key2\", value: \"value2\"},",
+											"                {key: \"key3\", value: \"value3\"},",
+											"                {key: \"key4\", value: \"value4\"}];",
+											"            pm.expect(result).to.eql(example);",
+											"    });",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{wrong_secret}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"key1\": \"newValue1\",\n\t\"key2\": \"newValue2\",\n\t\"key3\": \"newValue3\",\n\t\"key4\": \"newValue4\"\n}"
+								},
+								"url": {
+									"raw": "{{url}}/set/{{multieditable_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"set",
+										"{{multieditable_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"_postman_id": "88421c03-8543-40cd-b361-65a1f96855fa",
+							"name": "Set without Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "d1ef7dd3-ad10-45d5-a4b2-b4053af94f25",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"const source = JSON.stringify({\"ids\": [\"key1\",\"key2\",\"key3\",\"key4\"]})",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"multieditable_storage\") + \"/_doc/_mget?source=\" + source + \"&source_content_type=application/json\",",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Documents are not changed\", function () {",
+											"            const result = res.json()[\"docs\"].map(function callback(c, i, a){",
+											"                return {",
+											"                    key: c._id,",
+											"                    value: c._source.value",
+											"                };",
+											"            })",
+											"            const example = [",
+											"                {key: \"key1\", value: \"value1\"},",
+											"                {key: \"key2\", value: \"value2\"},",
+											"                {key: \"key3\", value: \"value3\"},",
+											"                {key: \"key4\", value: \"value4\"}];",
+											"            pm.expect(result).to.eql(example);",
+											"    });",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"key1\": \"newValue1\",\n\t\"key2\": \"newValue2\",\n\t\"key3\": \"newValue3\",\n\t\"key4\": \"newValue4\"\n}"
+								},
+								"url": {
+									"raw": "{{url}}/set/{{multieditable_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"set",
+										"{{multieditable_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"_postman_id": "b92547df-c229-47c5-855c-74aa203171b9",
 							"name": "Set with wrong Content-Type",
 							"event": [
 								{
@@ -1006,6 +1655,10 @@
 									{
 										"key": "Content-Type",
 										"value": "text/plain"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -1026,6 +1679,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "f2a80852-4022-4737-a4e1-f5632b0d5560",
 							"name": "Set with bad json",
 							"event": [
 								{
@@ -1072,6 +1726,10 @@
 									{
 										"key": "Content-Type",
 										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -1092,6 +1750,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "6a841cdf-8a30-48fa-ac8d-23262685260d",
 							"name": "Set with wrong body format",
 							"event": [
 								{
@@ -1138,6 +1797,10 @@
 									{
 										"key": "Content-Type",
 										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -1158,6 +1821,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "dcef6930-8081-4eee-ada3-287114c58a2c",
 							"name": "Set values",
 							"event": [
 								{
@@ -1214,6 +1878,10 @@
 									{
 										"key": "Content-Type",
 										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -1234,6 +1902,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "da33ccf5-f875-4e41-8e11-24bf064a3b4c",
 							"name": "Set long value",
 							"event": [
 								{
@@ -1297,6 +1966,10 @@
 									{
 										"key": "Content-Type",
 										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -1317,6 +1990,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "3f884bb1-00a1-4c4a-9ebf-bdfba46e76cb",
 							"name": "Set in nonexistent storage",
 							"event": [
 								{
@@ -1343,6 +2017,10 @@
 									{
 										"key": "Content-Type",
 										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -1363,6 +2041,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "b96a9dea-b0a9-4a51-99cc-d1fcb82439e9",
 							"name": "Set long key",
 							"event": [
 								{
@@ -1426,6 +2105,10 @@
 									{
 										"key": "Content-Type",
 										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -1449,9 +2132,120 @@
 					"_postman_isSubFolder": true
 				},
 				{
+					"_postman_id": "59ba4aaa-343d-4018-977e-807651a3ba63",
 					"name": "Delete value",
 					"item": [
 						{
+							"_postman_id": "489fa9bb-ffe2-4c3c-bdea-7a543b0d1881",
+							"name": "Delete with wrong Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "75fbdd51-e33e-4a33-9550-084330b8ec8e",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});"
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "530b5c22-7ca1-49dd-955e-ff22d92f122d",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{wrong_secret}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/delete/{{deletable_storage}}/{{some_key}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"delete",
+										"{{deletable_storage}}",
+										"{{some_key}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"_postman_id": "7aa87af7-c963-4fb4-94ff-a823ff49d46f",
+							"name": "Delete without Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "75fbdd51-e33e-4a33-9550-084330b8ec8e",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});"
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "530b5c22-7ca1-49dd-955e-ff22d92f122d",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/delete/{{deletable_storage}}/{{some_key}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"delete",
+										"{{deletable_storage}}",
+										"{{some_key}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"_postman_id": "a9ef4e2b-f32a-46b3-9bf7-59641829d2ae",
 							"name": "Delete from nonexistent storage",
 							"event": [
 								{
@@ -1483,7 +2277,12 @@
 							],
 							"request": {
 								"method": "DELETE",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -1503,6 +2302,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "639a2e96-5fb6-411a-95f8-ede364f27df7",
 							"name": "Delete value",
 							"event": [
 								{
@@ -1545,7 +2345,12 @@
 							],
 							"request": {
 								"method": "DELETE",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -1565,6 +2370,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "14e9d2b3-e412-46ac-ac41-4b793b38628a",
 							"name": "Delete nonexistent value",
 							"event": [
 								{
@@ -1596,7 +2402,12 @@
 							],
 							"request": {
 								"method": "DELETE",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -1619,9 +2430,133 @@
 					"_postman_isSubFolder": true
 				},
 				{
+					"_postman_id": "db23bfb0-7be7-4a25-b99b-f71c0791986f",
 					"name": "Delete multiple values",
 					"item": [
 						{
+							"_postman_id": "1075176d-966d-4d91-a72f-ec6effe026c1",
+							"name": "Delete with wrong Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "821e3da5-8cba-4728-8c36-1e31cd223e9a",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"const source = JSON.stringify({\"ids\": [\"key1\",\"key2\",\"key3\"]})",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"multideletable_storage\") + \"/_doc/_mget?source=\" + source + \"&source_content_type=application/json\",",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Documents are not deleted\", function () {",
+											"            const result = res.json().docs.every(function callback(c){",
+											"                return c.found;",
+											"            });",
+											"            pm.expect(result).to.eql(true);",
+											"        });",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{wrong_secret}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "[\"key1\", \"key2\", \"key3\"]"
+								},
+								"url": {
+									"raw": "{{url}}/delete/{{multideletable_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"delete",
+										"{{multideletable_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"_postman_id": "aee59041-cc71-4733-9018-e9fd8b66bdc1",
+							"name": "Delete without Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "821e3da5-8cba-4728-8c36-1e31cd223e9a",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"const source = JSON.stringify({\"ids\": [\"key1\",\"key2\",\"key3\"]})",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"multideletable_storage\") + \"/_doc/_mget?source=\" + source + \"&source_content_type=application/json\",",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Documents are not deleted\", function () {",
+											"            const result = res.json().docs.every(function callback(c){",
+											"                return c.found;",
+											"            });",
+											"            pm.expect(result).to.eql(true);",
+											"        });",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "[\"key1\", \"key2\", \"key3\"]"
+								},
+								"url": {
+									"raw": "{{url}}/delete/{{multideletable_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"delete",
+										"{{multideletable_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"_postman_id": "3b65ddf6-6e44-404c-b832-1700f62afd2c",
 							"name": "Delete with wrong Content-Type",
 							"event": [
 								{
@@ -1660,6 +2595,10 @@
 									{
 										"key": "Content-Type",
 										"value": "text/plain"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -1680,6 +2619,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "25077dee-8be3-4488-8a5a-25846fcd75ea",
 							"name": "Delete with bad json",
 							"event": [
 								{
@@ -1718,6 +2658,10 @@
 									{
 										"key": "Content-Type",
 										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -1738,6 +2682,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "ec41b691-e8f5-4917-99a0-6ca87d0cb091",
 							"name": "Delete with wrong body format",
 							"event": [
 								{
@@ -1776,6 +2721,10 @@
 									{
 										"key": "Content-Type",
 										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -1796,6 +2745,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "b7ea258a-aa6e-461b-92e8-c665dc5de001",
 							"name": "Delete values",
 							"event": [
 								{
@@ -1844,6 +2794,10 @@
 									{
 										"key": "Content-Type",
 										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -1864,6 +2818,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "907424c4-9d1d-4190-ad9d-635686c5c53e",
 							"name": "Delete from nonexistent storage",
 							"event": [
 								{
@@ -1889,6 +2844,10 @@
 									{
 										"key": "Content-Type",
 										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -1909,6 +2868,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "cf5dbf06-2af5-4d91-bde5-b5c50ec3103b",
 							"name": "Delete nonexistent value",
 							"event": [
 								{
@@ -1943,6 +2903,10 @@
 									{
 										"key": "Content-Type",
 										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -1966,9 +2930,11 @@
 					"_postman_isSubFolder": true
 				},
 				{
+					"_postman_id": "3b0ec30b-1ddf-491c-821c-fd081801b120",
 					"name": "Clear storage",
 					"item": [
 						{
+							"_postman_id": "75e68396-14e2-4368-8869-a1081cea59db",
 							"name": "Clear storage",
 							"event": [
 								{
@@ -2018,6 +2984,118 @@
 							],
 							"request": {
 								"method": "POST",
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/clear/{{cleanable_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"clear",
+										"{{cleanable_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"_postman_id": "66bf9d49-e05d-4573-b22c-02e3efb8212c",
+							"name": "Clear with wrong Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "8d8168cf-96ae-4e50-a076-b6ac541ff002",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});"
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "3f04a838-3537-4dd5-83cd-e97ba1a13787",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{wrong_secret}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/clear/{{cleanable_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"clear",
+										"{{cleanable_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"_postman_id": "397b8e1a-a0b8-4d78-b149-9c58f5a7a100",
+							"name": "Clear without Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "8d8168cf-96ae-4e50-a076-b6ac541ff002",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});"
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "3f04a838-3537-4dd5-83cd-e97ba1a13787",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
 								"header": [],
 								"body": {
 									"mode": "raw",
@@ -2037,6 +3115,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "896e711d-209f-4d71-9fc8-5c60f14ca8dc",
 							"name": "Clear nonexistent storage",
 							"event": [
 								{
@@ -2068,7 +3147,12 @@
 							],
 							"request": {
 								"method": "POST",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -2114,12 +3198,15 @@
 			]
 		},
 		{
+			"_postman_id": "f21612b5-56c1-4014-b7b1-44d73dc3250f",
 			"name": "kv-storage-manager",
 			"item": [
 				{
+					"_postman_id": "048dd197-8937-4934-8f6b-794f7900cf97",
 					"name": "Set temporary storage ttl",
 					"item": [
 						{
+							"_postman_id": "91164e50-9286-4789-b0b2-d01e8538fc99",
 							"name": "Set TTL of nonexistent storage",
 							"event": [
 								{
@@ -2142,7 +3229,12 @@
 							],
 							"request": {
 								"method": "PUT",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -2167,6 +3259,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "6432913e-6bed-4370-89b8-d9db54fad659",
 							"name": "Set TTL of persistent storage",
 							"event": [
 								{
@@ -2197,7 +3290,12 @@
 							],
 							"request": {
 								"method": "PUT",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -2222,6 +3320,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "a4d89b03-8597-4cd9-aba3-55dfb1bfe417",
 							"name": "Set bad TTL",
 							"event": [
 								{
@@ -2252,7 +3351,12 @@
 							],
 							"request": {
 								"method": "PUT",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -2277,6 +3381,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "2e4bbaee-730d-4fa6-a341-9a0da2d65ba3",
 							"name": "Set without TTL specified",
 							"event": [
 								{
@@ -2307,7 +3412,12 @@
 							],
 							"request": {
 								"method": "PUT",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -2326,6 +3436,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "43dd3d86-be40-412c-880c-1a6fdb596df6",
 							"name": "Set temporary storage ttl",
 							"event": [
 								{
@@ -2357,7 +3468,12 @@
 							],
 							"request": {
 								"method": "PUT",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -2385,9 +3501,11 @@
 					"_postman_isSubFolder": true
 				},
 				{
+					"_postman_id": "dc49c2ac-8a20-413e-8bb2-1ef4a89aec2a",
 					"name": "Delete temporary storage",
 					"item": [
 						{
+							"_postman_id": "c96a2935-a592-4911-8dd3-765598cb476d",
 							"name": "Delete persistent storage",
 							"event": [
 								{
@@ -2422,7 +3540,12 @@
 							],
 							"request": {
 								"method": "DELETE",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -2441,6 +3564,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "00aeea50-4884-4360-b349-cab5c6b78c5a",
 							"name": "Delete nonexistent storage",
 							"event": [
 								{
@@ -2462,7 +3586,12 @@
 							],
 							"request": {
 								"method": "DELETE",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -2481,6 +3610,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "1a4bdbeb-4431-42eb-b9f2-3b1f5fa5f109",
 							"name": "Delete temporary storage",
 							"event": [
 								{
@@ -2516,7 +3646,12 @@
 							],
 							"request": {
 								"method": "DELETE",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -2540,15 +3675,72 @@
 			]
 		},
 		{
+			"_postman_id": "d847b464-54f2-442d-9b76-9131167cfdeb",
 			"name": "kv-history",
 			"item": [
 				{
+					"_postman_id": "d9b82be9-ad79-4735-8296-a33459897179",
 					"name": "Search and list history",
 					"item": [
 						{
+							"_postman_id": "51ffa677-f799-4281-87b3-227ac8b2c61c",
 							"name": "validation",
 							"item": [
 								{
+									"_postman_id": "9ee2ee76-bf71-4679-902a-f19b54b14837",
+									"name": "Search without Secret-Key",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "f028cc27-f634-4e20-a368-f3bc8d9fd2df",
+												"type": "text/javascript",
+												"exec": [
+													"pm.test(\"Status code is 401\", function() {",
+													"  pm.response.to.have.status(401);",
+													"});",
+													"",
+													"pm.test(\"Body is empty\", function () {",
+													"    pm.response.to.have.body(\"\");",
+													"});",
+													"",
+													""
+												]
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{url}}/history/{{read_only_storage}}?size=2&page=3",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"history",
+												"{{read_only_storage}}"
+											],
+											"query": [
+												{
+													"key": "size",
+													"value": "2"
+												},
+												{
+													"key": "page",
+													"value": "3"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"_postman_id": "d5139f87-5adf-49dc-bc44-ab246ec00406",
 									"name": "Search with invalid operations",
 									"event": [
 										{
@@ -2572,7 +3764,12 @@
 									],
 									"request": {
 										"method": "GET",
-										"header": [],
+										"header": [
+											{
+												"key": "Secret-Key",
+												"value": "{{secret}}"
+											}
+										],
 										"body": {
 											"mode": "raw",
 											"raw": ""
@@ -2597,6 +3794,7 @@
 									"response": []
 								},
 								{
+									"_postman_id": "a0d52dbd-a487-4190-9120-5480e434bd9a",
 									"name": "Search with invalid start",
 									"event": [
 										{
@@ -2620,7 +3818,12 @@
 									],
 									"request": {
 										"method": "GET",
-										"header": [],
+										"header": [
+											{
+												"key": "Secret-Key",
+												"value": "{{secret}}"
+											}
+										],
 										"body": {
 											"mode": "raw",
 											"raw": ""
@@ -2645,6 +3848,7 @@
 									"response": []
 								},
 								{
+									"_postman_id": "a99bb7e8-b1eb-4fa7-beb6-9af00a65ba11",
 									"name": "Search with negative start",
 									"event": [
 										{
@@ -2668,7 +3872,12 @@
 									],
 									"request": {
 										"method": "GET",
-										"header": [],
+										"header": [
+											{
+												"key": "Secret-Key",
+												"value": "{{secret}}"
+											}
+										],
 										"body": {
 											"mode": "raw",
 											"raw": ""
@@ -2693,6 +3902,7 @@
 									"response": []
 								},
 								{
+									"_postman_id": "b6405144-df73-4856-8a4d-1acf10aadeb5",
 									"name": "Search with invalid end",
 									"event": [
 										{
@@ -2716,7 +3926,12 @@
 									],
 									"request": {
 										"method": "GET",
-										"header": [],
+										"header": [
+											{
+												"key": "Secret-Key",
+												"value": "{{secret}}"
+											}
+										],
 										"body": {
 											"mode": "raw",
 											"raw": ""
@@ -2741,6 +3956,7 @@
 									"response": []
 								},
 								{
+									"_postman_id": "19b9c98f-a1a3-4922-a447-f9ff18d6d2b5",
 									"name": "Search with negative end",
 									"event": [
 										{
@@ -2764,7 +3980,12 @@
 									],
 									"request": {
 										"method": "GET",
-										"header": [],
+										"header": [
+											{
+												"key": "Secret-Key",
+												"value": "{{secret}}"
+											}
+										],
 										"body": {
 											"mode": "raw",
 											"raw": ""
@@ -2789,6 +4010,7 @@
 									"response": []
 								},
 								{
+									"_postman_id": "c965cd38-6c48-4f1b-a832-f88fe768237a",
 									"name": "Search with start > end",
 									"event": [
 										{
@@ -2812,7 +4034,12 @@
 									],
 									"request": {
 										"method": "GET",
-										"header": [],
+										"header": [
+											{
+												"key": "Secret-Key",
+												"value": "{{secret}}"
+											}
+										],
 										"body": {
 											"mode": "raw",
 											"raw": ""
@@ -2841,6 +4068,7 @@
 									"response": []
 								},
 								{
+									"_postman_id": "0a5bdb59-379e-4169-b09f-188ed7d299bf",
 									"name": "Search with invalid size",
 									"event": [
 										{
@@ -2864,7 +4092,12 @@
 									],
 									"request": {
 										"method": "GET",
-										"header": [],
+										"header": [
+											{
+												"key": "Secret-Key",
+												"value": "{{secret}}"
+											}
+										],
 										"body": {
 											"mode": "raw",
 											"raw": ""
@@ -2889,6 +4122,7 @@
 									"response": []
 								},
 								{
+									"_postman_id": "a45ea696-9bec-49c7-8a3b-263e3e1714f1",
 									"name": "Search with negative size",
 									"event": [
 										{
@@ -2912,7 +4146,12 @@
 									],
 									"request": {
 										"method": "GET",
-										"header": [],
+										"header": [
+											{
+												"key": "Secret-Key",
+												"value": "{{secret}}"
+											}
+										],
 										"body": {
 											"mode": "raw",
 											"raw": ""
@@ -2937,6 +4176,7 @@
 									"response": []
 								},
 								{
+									"_postman_id": "7cf67f94-6234-4c37-ac17-a91b95981731",
 									"name": "Search with invalid page",
 									"event": [
 										{
@@ -2960,7 +4200,12 @@
 									],
 									"request": {
 										"method": "GET",
-										"header": [],
+										"header": [
+											{
+												"key": "Secret-Key",
+												"value": "{{secret}}"
+											}
+										],
 										"body": {
 											"mode": "raw",
 											"raw": ""
@@ -2985,6 +4230,7 @@
 									"response": []
 								},
 								{
+									"_postman_id": "4d79376f-5c86-42dd-b2d6-14f47261e035",
 									"name": "Search with negative page",
 									"event": [
 										{
@@ -3008,7 +4254,12 @@
 									],
 									"request": {
 										"method": "GET",
-										"header": [],
+										"header": [
+											{
+												"key": "Secret-Key",
+												"value": "{{secret}}"
+											}
+										],
 										"body": {
 											"mode": "raw",
 											"raw": ""
@@ -3033,6 +4284,7 @@
 									"response": []
 								},
 								{
+									"_postman_id": "e1771188-e3e6-4a5f-a082-e2099f42cffb",
 									"name": "Search with invalid scroll",
 									"event": [
 										{
@@ -3056,7 +4308,12 @@
 									],
 									"request": {
 										"method": "GET",
-										"header": [],
+										"header": [
+											{
+												"key": "Secret-Key",
+												"value": "{{secret}}"
+											}
+										],
 										"body": {
 											"mode": "raw",
 											"raw": ""
@@ -3081,6 +4338,7 @@
 									"response": []
 								},
 								{
+									"_postman_id": "f3d6b136-778f-4b8f-a788-ba293df388ea",
 									"name": "Search with negative scroll",
 									"event": [
 										{
@@ -3104,7 +4362,12 @@
 									],
 									"request": {
 										"method": "GET",
-										"header": [],
+										"header": [
+											{
+												"key": "Secret-Key",
+												"value": "{{secret}}"
+											}
+										],
 										"body": {
 											"mode": "raw",
 											"raw": ""
@@ -3129,6 +4392,7 @@
 									"response": []
 								},
 								{
+									"_postman_id": "62445352-9a46-4f0a-bd9b-639f17aefbc0",
 									"name": "Search with invalid sort",
 									"event": [
 										{
@@ -3152,7 +4416,12 @@
 									],
 									"request": {
 										"method": "GET",
-										"header": [],
+										"header": [
+											{
+												"key": "Secret-Key",
+												"value": "{{secret}}"
+											}
+										],
 										"body": {
 											"mode": "raw",
 											"raw": ""
@@ -3177,6 +4446,7 @@
 									"response": []
 								},
 								{
+									"_postman_id": "dad67157-35de-4267-9ec6-3d947b1672c2",
 									"name": "Search with opposite sort options",
 									"event": [
 										{
@@ -3200,7 +4470,12 @@
 									],
 									"request": {
 										"method": "GET",
-										"header": [],
+										"header": [
+											{
+												"key": "Secret-Key",
+												"value": "{{secret}}"
+											}
+										],
 										"body": {
 											"mode": "raw",
 											"raw": ""
@@ -3228,6 +4503,7 @@
 							"_postman_isSubFolder": true
 						},
 						{
+							"_postman_id": "9231cb3d-e972-4dd9-9520-8ba4162a2028",
 							"name": "Search with keys",
 							"event": [
 								{
@@ -3255,7 +4531,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -3280,6 +4561,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "0e713a51-186c-4892-b4ab-c028988f6fe4",
 							"name": "Search with duplicated keys",
 							"event": [
 								{
@@ -3307,7 +4589,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -3332,6 +4619,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "20d53a70-ef10-4a07-abe9-0b2c52c30cfe",
 							"name": "Search with start",
 							"event": [
 								{
@@ -3359,7 +4647,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -3384,6 +4677,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "f15a4894-ca0f-4d57-906e-e5576f4d5d8a",
 							"name": "Search with end",
 							"event": [
 								{
@@ -3411,7 +4705,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -3436,6 +4735,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "739ea224-faf8-4cd6-a8fa-5fda127f090d",
 							"name": "Search with sorts",
 							"event": [
 								{
@@ -3476,7 +4776,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -3501,6 +4806,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "ee32e588-d48a-4023-82fb-17098e205c31",
 							"name": "Search with duplicated sorts",
 							"event": [
 								{
@@ -3541,7 +4847,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -3566,6 +4877,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "28e3d30f-39f0-4de0-8507-932258a7b36d",
 							"name": "Search with sort in descending order",
 							"event": [
 								{
@@ -3606,7 +4918,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -3631,6 +4948,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "0b20f044-df9e-4a53-9cd4-4bb17d926bba",
 							"name": "Search with operations",
 							"event": [
 								{
@@ -3658,7 +4976,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -3683,6 +5006,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "bc52eefa-f15f-4329-9089-78b83ad96ac1",
 							"name": "Search with duplicated operations",
 							"event": [
 								{
@@ -3710,7 +5034,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -3735,6 +5064,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "b022990a-0e6d-45f6-8b35-0ed8ff4cd402",
 							"name": "Search with page and size",
 							"event": [
 								{
@@ -3764,7 +5094,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -3793,6 +5128,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "02829120-228b-467a-b255-30f516a820fe",
 							"name": "Search with scroll and size",
 							"event": [
 								{
@@ -3822,7 +5158,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -3851,6 +5192,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "5f4a0861-17e1-48e2-b530-54fcbcbef69d",
 							"name": "Search with page and scroll",
 							"event": [
 								{
@@ -3880,7 +5222,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -3913,6 +5260,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "ea5be564-8ae3-40d8-8591-f85c0cd1da8c",
 							"name": "Search in storage that does not support history",
 							"event": [
 								{
@@ -3936,7 +5284,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -3955,6 +5308,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "65117272-1fa1-4ed0-ad58-fcbd4dc64176",
 							"name": "Search in storage that does not have history storage",
 							"event": [
 								{
@@ -3978,7 +5332,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -3997,6 +5356,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "b610aed9-1f26-4150-aaa9-f3bbeee30745",
 							"name": "Search in nonexistent storage",
 							"event": [
 								{
@@ -4020,7 +5380,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -4037,14 +5402,74 @@
 								}
 							},
 							"response": []
+						},
+						{
+							"_postman_id": "2ba0a7eb-a32a-418f-8c21-ffe7fad3e4c5",
+							"name": "Search with wrong Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "f92736c8-9097-4a4d-be7f-fec1a82dd3b1",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function() {",
+											"  pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{wrong_secret}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/history/{{read_only_storage}}?scroll=30000&size=3",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"history",
+										"{{read_only_storage}}"
+									],
+									"query": [
+										{
+											"key": "scroll",
+											"value": "30000"
+										},
+										{
+											"key": "size",
+											"value": "3"
+										}
+									]
+								}
+							},
+							"response": []
 						}
 					],
 					"_postman_isSubFolder": true
 				},
 				{
+					"_postman_id": "5f3663c6-b96d-413e-8676-31ffb9410ee6",
 					"name": "List history",
 					"item": [
 						{
+							"_postman_id": "b7a48e80-c583-4352-9e54-1cd78ca2e8f6",
 							"name": "List history for subsequent request",
 							"event": [
 								{
@@ -4081,12 +5506,13 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "b6634035-57df-4cce-b603-b9d975442a53",
+										"id": "2f25f6b6-7a29-4e7f-a005-273b3a007239",
 										"type": "text/javascript",
 										"exec": [
 											"pm.sendRequest({",
 											"        url: pm.variables.get(\"url\") + \"/history/\" + pm.variables.get(\"read_only_storage\") + \"?scroll=30000&size=3&sort=key\",",
-											"        method: 'GET'",
+											"        method: 'GET',",
+											"        header: 'Secret-Key:secret'",
 											"},",
 											"    function (err, res) {",
 											"        pm.environment.set(\"scrollId\", res.json().scrollId);",
@@ -4121,6 +5547,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "7f8f32e7-930a-48da-b54c-3a23acfe6a23",
 							"name": "List history with wrong Content-Type",
 							"event": [
 								{
@@ -4182,6 +5609,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "7c6d06ed-0827-4691-a70c-97b085a04346",
 							"name": "List history with invalid json",
 							"event": [
 								{
@@ -4236,6 +5664,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "c2c43ac6-ddf0-4dba-9333-dcb00eb3f7ae",
 							"name": "List history with invalid timeout",
 							"event": [
 								{
@@ -4290,6 +5719,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "de386823-3ff5-4775-8f24-4db9ff122e4a",
 							"name": "List history with invalid scroll id",
 							"event": [
 								{
@@ -4344,6 +5774,7 @@
 							"response": []
 						},
 						{
+							"_postman_id": "f75cd040-e087-4bba-b2f5-efb3a7115259",
 							"name": "List history with expired/nonexistent scroll id",
 							"event": [
 								{
@@ -4403,9 +5834,11 @@
 			]
 		},
 		{
+			"_postman_id": "4758e914-1de0-406e-8d71-df15549065ac",
 			"name": "health",
 			"item": [
 				{
+					"_postman_id": "45a15a4a-a217-4bc7-b3d1-884f7771cd96",
 					"name": "Check health",
 					"event": [
 						{
@@ -4445,6 +5878,7 @@
 					"response": []
 				},
 				{
+					"_postman_id": "1a59aadb-2e44-4612-837c-9b90e5a574f2",
 					"name": "Check health detailed",
 					"event": [
 						{
@@ -4514,6 +5948,7 @@
 					"response": []
 				},
 				{
+					"_postman_id": "c3c3e030-5912-4ad1-bdc5-8b71ee99f6e4",
 					"name": "Unhealthy registry",
 					"event": [
 						{
@@ -4599,6 +6034,7 @@
 					"response": []
 				},
 				{
+					"_postman_id": "e839424e-1a6f-4bda-87bd-fb60b825a8ae",
 					"name": "Unhealthy registry and storage template",
 					"event": [
 						{
@@ -4684,6 +6120,7 @@
 					"response": []
 				},
 				{
+					"_postman_id": "8903083c-2c96-40ee-adc7-7f20fc1e224e",
 					"name": "Fully unhealthy",
 					"event": [
 						{
@@ -4795,158 +6232,148 @@
 	],
 	"variable": [
 		{
-			"id": "4ff9ca4c-e936-47aa-b0dc-56362f8aa970",
+			"id": "aee5b738-840f-42e5-b244-da36a3232128",
 			"key": "url",
 			"value": "http://app:8080",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "85cf665e-3848-4fcc-8e66-7f1cae5589a5",
+			"id": "5af459bd-1122-4f2e-89f9-4f4a8b529913",
 			"key": "storage_uuid",
 			"value": "b3d1b2a6-bd5b-49d5-bd9e-86538fdc180d",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "9a1a5568-f46d-4042-80ff-ddcd3cd036df",
+			"id": "a4790982-39be-4df7-9379-cfcee2966246",
 			"key": "es_url",
 			"value": "http://elasticsearch:9200",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "5640d057-0c8f-4f0c-9b5a-6cbaa3937a5f",
+			"id": "d058395a-f481-40fe-a9e1-9c055d47d542",
 			"key": "some_key",
 			"value": "key1",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "abe421db-1bfc-4785-902f-4810963ce04b",
+			"id": "8653d7cf-395c-4dd5-841a-d0654b87112f",
 			"key": "empty_key",
 			"value": "empty_key",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "03307ae8-8c2c-4cbc-a3da-a21eb2243bb8",
+			"id": "be100f48-5b94-4417-970d-74b8a35ce53c",
 			"key": "long_key",
 			"value": "key123456789123456789",
-			"type": "text",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "c96161e8-d93d-49c7-90dc-b604b0c97f71",
+			"id": "51ef7315-55c1-4174-8725-c896a2d05948",
 			"key": "some_value",
 			"value": "value1",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "2103b845-c768-41f4-884b-65b2c4075e8f",
+			"id": "b45ff80e-b61e-4ae2-8540-ecdeda27e281",
 			"key": "long_value",
 			"value": "value123456789123456789",
-			"type": "text",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "1e7debe1-9a7c-44f4-a70a-ebe3fbad00dc",
+			"id": "186c75b2-5ed1-49ab-a215-cfb37aa2dbcd",
 			"key": "non_existent_storage",
 			"value": "nonexistent",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "6bfb826a-6608-4aff-ab89-7948a15db239",
+			"id": "a9139e22-d64c-4f8c-87bb-63fd1eda270f",
 			"key": "read_only_storage",
 			"value": "read-only",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "34ca7b93-445f-44b5-a4c6-d0da460510ee",
+			"id": "0283322e-3c8e-49f9-a3ae-1054ac3a4762",
 			"key": "editable_storage",
 			"value": "editable-single",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "8b270301-5b13-4ec0-b1a3-076e5c5d8fb9",
+			"id": "1a33ea6b-82d7-48f7-824b-3c58fa7a85b4",
 			"key": "multieditable_storage",
 			"value": "editable-multiple",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "d9ef7115-f8f5-4127-be59-84b8c4004ffa",
+			"id": "78ebb23b-5db5-4b58-a91e-5b23c6673839",
 			"key": "deletable_storage",
 			"value": "deletable-single",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "f38a1c73-42d6-4a9e-9bd4-93afab200eec",
+			"id": "1826d1c4-f05c-4853-a8b9-2540df301cae",
 			"key": "multideletable_storage",
 			"value": "deletable-multiple",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "b3de5d79-027f-486c-98c4-7a623d21361d",
+			"id": "24de665b-fbd6-4c9c-987d-6ae1c415ba1b",
 			"key": "cleanable_storage",
 			"value": "cleanable",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "b618889b-69a0-49b1-a2f9-6b79113b6d9d",
+			"id": "8de4de84-f9c5-475d-8710-d80059b0eb84",
 			"key": "temp_storage",
 			"value": "temp",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "011247f6-f755-4c0d-be94-78eb7490a2d8",
+			"id": "1707b39a-8a1f-4355-8b96-edf298fe8b22",
 			"key": "acc_storage",
 			"value": "account",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "6ca5ceff-0a4b-47e2-b28b-b3e32dc2ca63",
+			"id": "85fcc8f9-ced7-4626-b843-a77b22456b8e",
 			"key": "no_index_storage",
 			"value": "no-index",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "457c5ead-4409-4859-b0de-e4f6d1985b84",
+			"id": "eb0f9d6a-24c8-43d8-8176-e2f5a2f97987",
 			"key": "storage_registry",
 			"value": "storage-registry",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "21451c34-03f8-4e96-a9f4-599d56187712",
+			"id": "1fbfd585-a38d-4550-b02b-d69c9c4da802",
 			"key": "storage_data_template",
 			"value": "storage-data",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "a937b47b-3d5c-422d-b2f2-80b8a58b4d4c",
+			"id": "6bb71e07-dec7-4e0b-84f0-1f7c7c741318",
 			"key": "storage_history_template",
 			"value": "storage-history",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "b20cc0ff-fb61-4e46-99cd-6f0ae0d8eb9b",
+			"id": "594a8f4c-7a6f-4edb-ac3a-f16bee147db8",
 			"key": "no_history_storage",
 			"value": "no-history",
-			"type": "string",
-			"disabled": true
+			"type": "string"
+		},
+		{
+			"id": "540b321b-f0b4-4c56-9cfe-caa779df972b",
+			"key": "secret",
+			"value": "secret",
+			"type": "string"
+		},
+		{
+			"id": "4d0ea958-46b3-4b83-b4e9-0d773b7ab465",
+			"key": "wrong_secret",
+			"value": "wrong",
+			"type": "string"
 		}
 	]
 }

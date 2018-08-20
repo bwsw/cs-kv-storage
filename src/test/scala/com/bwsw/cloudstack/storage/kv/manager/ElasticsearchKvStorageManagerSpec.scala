@@ -105,6 +105,7 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
       it("should return InternalError if the request fails") {
         expectExistingStorage
         expectUpdateRequest.returning(getRequestFailureFuture(500))
+
         manager.updateTempStorageTtl(storageUuid, secretKey, ttl).map {
           case Left(_: InternalError) => succeed
           case _ => fail
@@ -202,9 +203,8 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
       _: ExecutionContext))
       .expects(
         update(storageUuid) in RegistryIndex / DocumentType script
-          s"if (ctx._source.$Type == '$Temporary') " +
-            s"{ ctx._source.$ExpirationTimestamp = ctx._source.$ExpirationTimestamp - ctx._source.$Ttl + " +
-            s"$ttl; ctx._source.$Ttl = $ttl } else { ctx.op='$NoOp' }",
+          s"ctx._source.$ExpirationTimestamp = ctx._source" +
+            s".$ExpirationTimestamp - ctx._source.$Ttl + $ttl; ctx._source.$Ttl = $ttl",
         UpdateHttpExecutable,
         *)
   }
@@ -214,9 +214,7 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
       _: HttpExecutable[UpdateDefinition, UpdateResponse],
       _: ExecutionContext))
       .expects(
-        update(storageUuid) in RegistryIndex / DocumentType script
-          s"if (ctx._source.$Type == '$Temporary') " +
-            s"{ ctx._source.$Deleted = true } else { ctx.op='$NoOp' }",
+        update(storageUuid) in RegistryIndex / DocumentType doc Deleted -> true,
         UpdateHttpExecutable,
         *)
   }

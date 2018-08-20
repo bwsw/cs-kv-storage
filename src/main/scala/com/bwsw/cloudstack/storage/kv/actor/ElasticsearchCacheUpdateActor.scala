@@ -12,6 +12,8 @@ import com.sksamuel.elastic4s.http.search.SearchHits
 import scaldi.Injector
 import scaldi.akka.AkkaInjectable.inject
 
+import scala.concurrent.Future
+
 class ElasticsearchCacheUpdateActor(implicit inj: Injector)
   extends CacheUpdateActor
   with Timers
@@ -49,27 +51,36 @@ class ElasticsearchCacheUpdateActor(implicit inj: Injector)
       }.map {
         case Left(failure) =>
           log.info("Elasticsearch storage update request failure: {}", failure.error)
+          lastUpdateTimestamp = clock.currentTimeMillis
         //TODO: handle failure
         case Right(success) =>
-          if (success.result.scrollId.nonEmpty)
-            scrollAll(success.result.scrollId.get, keepAlive)
           updateValues(success.result.hits)
+          if (success.result.scrollId.nonEmpty)
+            scrollAll(success.result.scrollId.get, keepAlive).onComplete(_ =>
+              lastUpdateTimestamp = clock.currentTimeMillis)
+          else
+            lastUpdateTimestamp = clock.currentTimeMillis
       }
     }
   }
 
   private def scrollAll(
       scrollId: String,
-      keepAlive: String): Unit = {
+      keepAlive: String): Future[Unit] = {
     client.execute(searchScroll(scrollId).keepAlive(keepAlive))
-      .map {
+      .flatMap {
         case Left(failure) =>
-          log.info("Elasticsearch scroll request failure: {}", failure.error)
+          Future(log.info("Elasticsearch scroll request failure: {}", failure.error))
         //TODO: handle failure
         case Right(success) =>
           if (success.result.hits.hits.length == 0) {
             client.execute {
               clearScroll(success.result.scrollId.get)
+            }.map {
+              case Left(failure) =>
+                log.info("Elasticsearch clear scroll request failure: {}", failure.error)
+                Future()
+              case _ =>
             }
           } else {
             updateValues(success.result.hits)
@@ -78,20 +89,23 @@ class ElasticsearchCacheUpdateActor(implicit inj: Injector)
       }
   }
 
-  private def updateValues(searchHits: SearchHits): Unit = cache.updateAll(searchHits.hits.map {
-    hit =>
-      val id = hit.id
-      val source = hit.sourceAsMap
-      if (!getValue[Boolean](source, RegistryFields.Deleted)) {
-        id -> Some(Storage(
-          id,
-          getValue(source, RegistryFields.Type),
-          getValue(source, RegistryFields.HistoryEnabled),
-          getValue[String](source, RegistryFields.SecretKey).toCharArray))
-      } else {
-        id -> None
-      }
-  }.toMap)
+  private def updateValues(searchHits: SearchHits): Unit = {
+    val map = searchHits.hits.map {
+      hit =>
+        val id = hit.id
+        val source = hit.sourceAsMap
+        if (!getValue[Boolean](source, RegistryFields.Deleted)) {
+          id -> Some(Storage(
+            id,
+            getValue(source, RegistryFields.Type),
+            getValue(source, RegistryFields.HistoryEnabled),
+            getValue[String](source, RegistryFields.SecretKey).toCharArray))
+        } else {
+          id -> None
+        }
+    }.toMap
+    cache.updateAll(map)
+  }
 }
 
 object ElasticsearchCacheUpdateActor {

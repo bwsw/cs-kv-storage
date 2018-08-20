@@ -26,6 +26,7 @@ import com.bwsw.cloudstack.storage.kv.util.elasticsearch.StorageType.Temporary
 import com.bwsw.cloudstack.storage.kv.util.elasticsearch.{DocumentType, RegistryIndex, StorageType, getError}
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.{HttpClient, RequestSuccess}
+import com.sksamuel.elastic4s.update.UpdateDefinition
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
@@ -44,29 +45,35 @@ class ElasticsearchKvStorageManager(client: HttpClient, cache: StorageCache) ext
       storageUuid: String,
       secretKey: Array[Char],
       ttl: Long): Future[Either[StorageError, Unit]] = {
+    val scriptCode = s"ctx._source.$ExpirationTimestamp = ctx._source" +
+      s".$ExpirationTimestamp - ctx._source.$Ttl + $ttl; ctx._source.$Ttl = $ttl"
+    val updateDefinition = update(storageUuid) in RegistryIndex / DocumentType script scriptCode
     process(
       storageUuid,
       secretKey,
-      s"if (ctx._source.$Type == '$Temporary') { ctx._source.$ExpirationTimestamp = ctx._source" +
-        s".$ExpirationTimestamp - ctx._source.$Ttl + $ttl; ctx._source.$Ttl = $ttl } else { ctx.op='$NoOp' }",
+      updateDefinition,
       delete = false)
   }
 
   def deleteTempStorage(storageUuid: String, secretKey: Array[Char]): Future[Either[StorageError, Unit]] = {
+    val updateDefinition = update(storageUuid) in RegistryIndex / DocumentType doc Deleted -> true
     process(
       storageUuid,
       secretKey,
-      s"if (ctx._source.$Type == '$Temporary') { ctx._source.$Deleted = true } else { ctx.op='$NoOp' }",
+      updateDefinition,
       delete = true)
   }
 
-  private def process(storageUuid: String, secretKey: Array[Char], scriptCode: String, delete: Boolean) = {
+  private def process(
+      storageUuid: String,
+      secretKey: Array[Char],
+      updateDefinition: UpdateDefinition,
+      delete: Boolean) = {
     cache.get(storageUuid).flatMap {
       case Some(storage) =>
         if (secretKey.sameElements(storage.secretKey))
           if (storage.storageType == StorageType.Temporary)
-            client.execute(update(storageUuid) in RegistryIndex / DocumentType script scriptCode).map
-            {//TODO: refactor without using script
+            client.execute(updateDefinition).map {
               case Left(failure) => failure.status match {
                 case 404 =>
                   cache.delete(storageUuid)
