@@ -4,25 +4,21 @@ import akka.actor.{ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit}
 import com.bwsw.cloudstack.storage.kv.cache.StorageCache
 import com.bwsw.cloudstack.storage.kv.configuration.{AppConfig, ElasticsearchConfig}
-import com.bwsw.cloudstack.storage.kv.entity.{History, Storage}
-import com.bwsw.cloudstack.storage.kv.message.KvHistory
+import com.bwsw.cloudstack.storage.kv.entity.Storage
 import com.bwsw.cloudstack.storage.kv.util.Clock
-import com.bwsw.cloudstack.storage.kv.util.elasticsearch.{
-  DocumentType, HistoryFields, RegistryFields, RegistryIndex,
-  StorageType
-}
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch.{DocumentType, RegistryFields, RegistryIndex, StorageType}
+import com.bwsw.cloudstack.storage.kv.util.test._
 import com.sksamuel.elastic4s.http.ElasticDsl.{rangeQuery, search, _}
-import com.sksamuel.elastic4s.http.{HttpClient, HttpExecutable, Shards}
 import com.sksamuel.elastic4s.http.search.{ClearScrollResponse, SearchHit, SearchHits, SearchResponse}
+import com.sksamuel.elastic4s.http.{HttpClient, HttpExecutable, Shards}
 import com.sksamuel.elastic4s.searches.{ClearScrollDefinition, SearchDefinition, SearchScrollDefinition}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.Eventually
 import org.scalatest.{BeforeAndAfterAll, FunSpecLike, Matchers}
 import scaldi.{Injector, Module}
-import com.bwsw.cloudstack.storage.kv.util.test._
 
-import scala.concurrent.{ExecutionContext, Promise}
 import scala.concurrent.duration._
+import scala.concurrent.{ExecutionContext, Promise}
 
 class ElasticsearchCacheUpdateActorSpec
   extends TestKit(ActorSystem("cs-kv-storage"))
@@ -83,7 +79,7 @@ class ElasticsearchCacheUpdateActorSpec
           timestamp
         }
         val elasticsearchCacheUpdateActor = system.actorOf(Props(new ElasticsearchCacheUpdateActor))
-        eventually(timeout(scaled(updateTimeout * 1.4))) {
+        eventually(timeout(scaled(updateTimeout * 1.9))) {
           promise.isCompleted should be(true)
         }
         system.stop(elasticsearchCacheUpdateActor)

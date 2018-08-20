@@ -22,7 +22,6 @@ import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, Not
   UnauthorizedError}
 import com.bwsw.cloudstack.storage.kv.util.elasticsearch.RegistryFields._
 import com.bwsw.cloudstack.storage.kv.util.elasticsearch.ScriptOperations._
-import com.bwsw.cloudstack.storage.kv.util.elasticsearch.StorageType.Temporary
 import com.bwsw.cloudstack.storage.kv.util.elasticsearch.{DocumentType, RegistryIndex, StorageType, getError}
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.{HttpClient, RequestSuccess}

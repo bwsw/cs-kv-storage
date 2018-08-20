@@ -21,8 +21,7 @@ import com.bwsw.cloudstack.storage.kv.cache.StorageCache
 import com.bwsw.cloudstack.storage.kv.entity.Storage
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError, UnauthorizedError}
 import com.bwsw.cloudstack.storage.kv.util.elasticsearch.RegistryFields._
-import com.bwsw.cloudstack.storage.kv.util.elasticsearch.ScriptOperations.{NoOp, Updated}
-import com.bwsw.cloudstack.storage.kv.util.elasticsearch.StorageType.Temporary
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch.ScriptOperations.Updated
 import com.bwsw.cloudstack.storage.kv.util.elasticsearch.{DocumentType, RegistryIndex, StorageType}
 import com.bwsw.cloudstack.storage.kv.util.test.{getRequestFailureFuture, getRequestSuccessFuture}
 import com.sksamuel.elastic4s.http.ElasticDsl._
