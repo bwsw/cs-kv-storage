@@ -40,7 +40,7 @@ class KvHistoryServletSuite extends ScalatraSuite with FunSpecLike with MockFact
   private val historyRequestActor = TestActorRef(new MockActor())
 
   private val storageUuid = "id"
-  private val secretKey = "secret".toCharArray
+  private val secretKey = "secret"
   private val someKey = "someKey"
   private val someValue = "someValue"
   private val timestamp = System.currentTimeMillis()

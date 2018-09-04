@@ -1,21 +1,18 @@
 {
 	"info": {
-		"_postman_id": "f41060ce-c3a7-47ab-a2d1-f5550c2b30dd",
+		"_postman_id": "cb9805c5-cd29-4acf-81df-54f86c241154",
 		"name": "cs-kv-storage",
 		"description": "E2E tests for cs-kv-storage",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
-			"_postman_id": "c7d1c0e9-0b87-4b2a-a40c-80843e204d85",
 			"name": "kv-storage",
 			"item": [
 				{
-					"_postman_id": "c59c5f20-aa61-42ba-b5f3-9bd503fc9e85",
 					"name": "List keys",
 					"item": [
 						{
-							"_postman_id": "aaa07966-62c8-41fa-82e2-001b7d685604",
 							"name": "List a storage",
 							"event": [
 								{
@@ -67,7 +64,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "0e19df49-771e-481c-82bb-3598cff8912e",
 							"name": "List with wrong Secret-Key",
 							"event": [
 								{
@@ -113,7 +109,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "d7807841-13ed-431b-900c-2b27ed8e5f71",
 							"name": "List without Secret-Key",
 							"event": [
 								{
@@ -154,7 +149,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "29935aa5-78fe-4875-a9fb-0aaa67f64a01",
 							"name": "List an empty storage",
 							"event": [
 								{
@@ -216,7 +210,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "a7e1b5f1-253c-4706-aa84-82af1d56f218",
 							"name": "List nonexistent storage",
 							"event": [
 								{
@@ -297,11 +290,9 @@
 					"_postman_isSubFolder": true
 				},
 				{
-					"_postman_id": "8ebc7599-0cda-452d-8f23-6d88a45f3bdb",
 					"name": "Get value",
 					"item": [
 						{
-							"_postman_id": "7aa86c3e-48e4-4162-b708-ff25573b5764",
 							"name": "Get a value",
 							"event": [
 								{
@@ -354,7 +345,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "3d826bcb-4ebc-46b9-97ba-20709266a11d",
 							"name": "Get with wrong Secret-Key",
 							"event": [
 								{
@@ -402,7 +392,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "3329b5e1-8876-46f4-b35d-af148dcf44f6",
 							"name": "Get without Secret-Key",
 							"event": [
 								{
@@ -445,7 +434,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "44886ef3-41f0-47df-a331-90d1927ba950",
 							"name": "Get nonexistent value",
 							"event": [
 								{
@@ -494,7 +482,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "b7f9aa08-50be-4875-a591-7aee0c98795d",
 							"name": "Get from nonexistent storage",
 							"event": [
 								{
@@ -577,11 +564,9 @@
 					"_postman_isSubFolder": true
 				},
 				{
-					"_postman_id": "33b74288-03be-4648-a49e-2031ceaf5ecc",
 					"name": "Get multiple values",
 					"item": [
 						{
-							"_postman_id": "d0453064-12fe-4be3-9c65-931834de82b0",
 							"name": "Get multiple values",
 							"event": [
 								{
@@ -641,7 +626,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "15b7fb29-909f-4009-a6bf-91d89359443b",
 							"name": "Get with wrong Secret-Key",
 							"event": [
 								{
@@ -692,7 +676,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "0de73c03-96de-4d29-9bfe-9c2cdba5440c",
 							"name": "Get without Secret-Key",
 							"event": [
 								{
@@ -739,7 +722,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "e62b16df-3e0f-49d0-9877-b863b0591b38",
 							"name": "Get from nonexistent storage",
 							"event": [
 								{
@@ -790,7 +772,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "0a461636-433e-48b4-a6b0-18d5ce069ecb",
 							"name": "Get with wrong Content-Type",
 							"event": [
 								{
@@ -837,7 +818,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "a48facba-36f5-417c-927b-32287cec1d6e",
 							"name": "Get with bad json",
 							"event": [
 								{
@@ -888,7 +868,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "5e9deff4-607e-49be-b668-1a849ebff1ab",
 							"name": "Get with wrong body format",
 							"event": [
 								{
@@ -939,7 +918,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "2566581f-c382-4040-a9dd-2f8e9b6485fd",
 							"name": "Get nonexistent value",
 							"event": [
 								{
@@ -1003,11 +981,9 @@
 					"_postman_isSubFolder": true
 				},
 				{
-					"_postman_id": "32d84679-16ac-4fee-ae13-e0df8a33f653",
 					"name": "Set value",
 					"item": [
 						{
-							"_postman_id": "132da978-a069-42cc-904d-7bc6fb3fddf6",
 							"name": "Set with wrong Secret-Key",
 							"event": [
 								{
@@ -1077,7 +1053,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "2cc62afa-9522-4273-9088-547c8deecedf",
 							"name": "Set without Secret-Key",
 							"event": [
 								{
@@ -1143,7 +1118,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "69693c4a-bed0-4ce9-b4ea-de68007cbd70",
 							"name": "Set with wrong Content-Type",
 							"event": [
 								{
@@ -1213,7 +1187,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "939ce1a2-d5ad-4855-9514-a298cf22855c",
 							"name": "Set value",
 							"event": [
 								{
@@ -1279,7 +1252,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "8b1094dc-57a5-413e-9961-cfcf22911e18",
 							"name": "Set in nonexistent storage",
 							"event": [
 								{
@@ -1341,7 +1313,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "a569e033-ae7f-4bc4-a154-6b3b7007b4ac",
 							"name": "Set long value",
 							"event": [
 								{
@@ -1402,7 +1373,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "1cf55749-0466-4431-84e0-8a9b9b838b64",
 							"name": "Set long key",
 							"event": [
 								{
@@ -1466,11 +1436,9 @@
 					"_postman_isSubFolder": true
 				},
 				{
-					"_postman_id": "6213c30a-926a-459d-a1f0-ac8b4f949c13",
 					"name": "Set multiple values",
 					"item": [
 						{
-							"_postman_id": "522d1bdf-8892-4e31-91f5-aa39f8dd64eb",
 							"name": "Set with wrong Secret-Key",
 							"event": [
 								{
@@ -1541,7 +1509,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "88421c03-8543-40cd-b361-65a1f96855fa",
 							"name": "Set without Secret-Key",
 							"event": [
 								{
@@ -1608,7 +1575,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "b92547df-c229-47c5-855c-74aa203171b9",
 							"name": "Set with wrong Content-Type",
 							"event": [
 								{
@@ -1679,7 +1645,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "f2a80852-4022-4737-a4e1-f5632b0d5560",
 							"name": "Set with bad json",
 							"event": [
 								{
@@ -1750,7 +1715,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "6a841cdf-8a30-48fa-ac8d-23262685260d",
 							"name": "Set with wrong body format",
 							"event": [
 								{
@@ -1821,7 +1785,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "dcef6930-8081-4eee-ada3-287114c58a2c",
 							"name": "Set values",
 							"event": [
 								{
@@ -1902,7 +1865,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "da33ccf5-f875-4e41-8e11-24bf064a3b4c",
 							"name": "Set long value",
 							"event": [
 								{
@@ -1990,7 +1952,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "3f884bb1-00a1-4c4a-9ebf-bdfba46e76cb",
 							"name": "Set in nonexistent storage",
 							"event": [
 								{
@@ -2041,7 +2002,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "b96a9dea-b0a9-4a51-99cc-d1fcb82439e9",
 							"name": "Set long key",
 							"event": [
 								{
@@ -2132,17 +2092,15 @@
 					"_postman_isSubFolder": true
 				},
 				{
-					"_postman_id": "59ba4aaa-343d-4018-977e-807651a3ba63",
 					"name": "Delete value",
 					"item": [
 						{
-							"_postman_id": "489fa9bb-ffe2-4c3c-bdea-7a543b0d1881",
 							"name": "Delete with wrong Secret-Key",
 							"event": [
 								{
 									"listen": "test",
 									"script": {
-										"id": "75fbdd51-e33e-4a33-9550-084330b8ec8e",
+										"id": "de26911e-b68f-4b96-9c30-daeb487b2ce2",
 										"type": "text/javascript",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
@@ -2151,7 +2109,17 @@
 											"",
 											"pm.test(\"Body is empty\", function () {",
 											"    pm.response.to.have.body(\"\");",
-											"});"
+											"});",
+											"",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"deletable_storage\") + \"/_doc/\" + pm.variables.get(\"some_key\"),",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Document is actually deleted\", function () {",
+											"            pm.expect(res.json().found).to.eql(true);",
+											"        });",
+											"    }",
+											");"
 										]
 									}
 								},
@@ -2193,13 +2161,12 @@
 							"response": []
 						},
 						{
-							"_postman_id": "7aa87af7-c963-4fb4-94ff-a823ff49d46f",
 							"name": "Delete without Secret-Key",
 							"event": [
 								{
 									"listen": "test",
 									"script": {
-										"id": "75fbdd51-e33e-4a33-9550-084330b8ec8e",
+										"id": "c3662831-b567-49e4-9958-428fc1a6975c",
 										"type": "text/javascript",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
@@ -2208,7 +2175,17 @@
 											"",
 											"pm.test(\"Body is empty\", function () {",
 											"    pm.response.to.have.body(\"\");",
-											"});"
+											"});",
+											"",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"deletable_storage\") + \"/_doc/\" + pm.variables.get(\"some_key\"),",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Document is actually deleted\", function () {",
+											"            pm.expect(res.json().found).to.eql(true);",
+											"        });",
+											"    }",
+											");"
 										]
 									}
 								},
@@ -2245,7 +2222,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "a9ef4e2b-f32a-46b3-9bf7-59641829d2ae",
 							"name": "Delete from nonexistent storage",
 							"event": [
 								{
@@ -2302,7 +2278,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "639a2e96-5fb6-411a-95f8-ede364f27df7",
 							"name": "Delete value",
 							"event": [
 								{
@@ -2370,7 +2345,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "14e9d2b3-e412-46ac-ac41-4b793b38628a",
 							"name": "Delete nonexistent value",
 							"event": [
 								{
@@ -2430,11 +2404,9 @@
 					"_postman_isSubFolder": true
 				},
 				{
-					"_postman_id": "db23bfb0-7be7-4a25-b99b-f71c0791986f",
 					"name": "Delete multiple values",
 					"item": [
 						{
-							"_postman_id": "1075176d-966d-4d91-a72f-ec6effe026c1",
 							"name": "Delete with wrong Secret-Key",
 							"event": [
 								{
@@ -2497,7 +2469,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "aee59041-cc71-4733-9018-e9fd8b66bdc1",
 							"name": "Delete without Secret-Key",
 							"event": [
 								{
@@ -2556,7 +2527,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "3b65ddf6-6e44-404c-b832-1700f62afd2c",
 							"name": "Delete with wrong Content-Type",
 							"event": [
 								{
@@ -2619,7 +2589,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "25077dee-8be3-4488-8a5a-25846fcd75ea",
 							"name": "Delete with bad json",
 							"event": [
 								{
@@ -2682,7 +2651,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "ec41b691-e8f5-4917-99a0-6ca87d0cb091",
 							"name": "Delete with wrong body format",
 							"event": [
 								{
@@ -2745,7 +2713,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "b7ea258a-aa6e-461b-92e8-c665dc5de001",
 							"name": "Delete values",
 							"event": [
 								{
@@ -2818,7 +2785,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "907424c4-9d1d-4190-ad9d-635686c5c53e",
 							"name": "Delete from nonexistent storage",
 							"event": [
 								{
@@ -2868,7 +2834,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "cf5dbf06-2af5-4d91-bde5-b5c50ec3103b",
 							"name": "Delete nonexistent value",
 							"event": [
 								{
@@ -2930,11 +2895,140 @@
 					"_postman_isSubFolder": true
 				},
 				{
-					"_postman_id": "3b0ec30b-1ddf-491c-821c-fd081801b120",
 					"name": "Clear storage",
 					"item": [
 						{
-							"_postman_id": "75e68396-14e2-4368-8869-a1081cea59db",
+							"name": "Clear with wrong Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "18925691-b9e4-43af-8ff1-b9b52e17ae26",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"const source = JSON.stringify({\"ids\": [\"key1\",\"key2\",\"key3\",\"key4\",\"key5\"]})",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"cleanable_storage\") + \"/_doc/_mget?source=\" + source + \"&source_content_type=application/json\",",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Documents are not deleted\", function () {",
+											"            const result = res.json().docs.every(function callback(c){",
+											"                return c.found;",
+											"            });",
+											"            pm.expect(result).to.eql(true);",
+											"        });",
+											"});"
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "3f04a838-3537-4dd5-83cd-e97ba1a13787",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{wrong_secret}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/clear/{{cleanable_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"clear",
+										"{{cleanable_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Clear without Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "eedabbe0-acbf-483a-860d-fc6fbf1d72ac",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"const source = JSON.stringify({\"ids\": [\"key1\",\"key2\",\"key3\",\"key4\",\"key5\"]})",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"cleanable_storage\") + \"/_doc/_mget?source=\" + source + \"&source_content_type=application/json\",",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Documents are not deleted\", function () {",
+											"            const result = res.json().docs.every(function callback(c){",
+											"                return c.found;",
+											"            });",
+											"            pm.expect(result).to.eql(true);",
+											"        });",
+											"});"
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "3f04a838-3537-4dd5-83cd-e97ba1a13787",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/clear/{{cleanable_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"clear",
+										"{{cleanable_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
 							"name": "Clear storage",
 							"event": [
 								{
@@ -3008,114 +3102,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "66bf9d49-e05d-4573-b22c-02e3efb8212c",
-							"name": "Clear with wrong Secret-Key",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "8d8168cf-96ae-4e50-a076-b6ac541ff002",
-										"type": "text/javascript",
-										"exec": [
-											"pm.test(\"Status code is 401\", function () {",
-											"    pm.response.to.have.status(401);",
-											"});",
-											"",
-											"pm.test(\"Body is empty\", function () {",
-											"    pm.response.to.have.body(\"\");",
-											"});"
-										]
-									}
-								},
-								{
-									"listen": "prerequest",
-									"script": {
-										"id": "3f04a838-3537-4dd5-83cd-e97ba1a13787",
-										"type": "text/javascript",
-										"exec": [
-											""
-										]
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Secret-Key",
-										"value": "{{wrong_secret}}"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": ""
-								},
-								"url": {
-									"raw": "{{url}}/clear/{{cleanable_storage}}",
-									"host": [
-										"{{url}}"
-									],
-									"path": [
-										"clear",
-										"{{cleanable_storage}}"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"_postman_id": "397b8e1a-a0b8-4d78-b149-9c58f5a7a100",
-							"name": "Clear without Secret-Key",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "8d8168cf-96ae-4e50-a076-b6ac541ff002",
-										"type": "text/javascript",
-										"exec": [
-											"pm.test(\"Status code is 401\", function () {",
-											"    pm.response.to.have.status(401);",
-											"});",
-											"",
-											"pm.test(\"Body is empty\", function () {",
-											"    pm.response.to.have.body(\"\");",
-											"});"
-										]
-									}
-								},
-								{
-									"listen": "prerequest",
-									"script": {
-										"id": "3f04a838-3537-4dd5-83cd-e97ba1a13787",
-										"type": "text/javascript",
-										"exec": [
-											""
-										]
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": ""
-								},
-								"url": {
-									"raw": "{{url}}/clear/{{cleanable_storage}}",
-									"host": [
-										"{{url}}"
-									],
-									"path": [
-										"clear",
-										"{{cleanable_storage}}"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"_postman_id": "896e711d-209f-4d71-9fc8-5c60f14ca8dc",
 							"name": "Clear nonexistent storage",
 							"event": [
 								{
@@ -3198,15 +3184,127 @@
 			]
 		},
 		{
-			"_postman_id": "f21612b5-56c1-4014-b7b1-44d73dc3250f",
 			"name": "kv-storage-manager",
 			"item": [
 				{
-					"_postman_id": "048dd197-8937-4934-8f6b-794f7900cf97",
 					"name": "Set temporary storage ttl",
 					"item": [
 						{
-							"_postman_id": "91164e50-9286-4789-b0b2-d01e8538fc99",
+							"name": "Set with wrong Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "62d7b29e-0ce3-47f0-8304-bac664566f59",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"})",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/storage-registry/_doc/\" + pm.variables.get(\"temp_storage\"),",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"TTL is not changed\", function () {",
+											"            pm.expect(res.json()._source.ttl).to.eql(10000);",
+											"    });",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{wrong_secret}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/storage/{{temp_storage}}?ttl=565656",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"storage",
+										"{{temp_storage}}"
+									],
+									"query": [
+										{
+											"key": "ttl",
+											"value": "565656"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Set without Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "387b4653-f5ba-4747-a5e7-2b954cdfb46f",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"})",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/storage-registry/_doc/\" + pm.variables.get(\"temp_storage\"),",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"TTL is not changed\", function () {",
+											"            pm.expect(res.json()._source.ttl).to.eql(10000);",
+											"    });",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/storage/{{temp_storage}}?ttl=565656",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"storage",
+										"{{temp_storage}}"
+									],
+									"query": [
+										{
+											"key": "ttl",
+											"value": "565656"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
 							"name": "Set TTL of nonexistent storage",
 							"event": [
 								{
@@ -3259,7 +3357,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "6432913e-6bed-4370-89b8-d9db54fad659",
 							"name": "Set TTL of persistent storage",
 							"event": [
 								{
@@ -3320,7 +3417,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "a4d89b03-8597-4cd9-aba3-55dfb1bfe417",
 							"name": "Set bad TTL",
 							"event": [
 								{
@@ -3381,7 +3477,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "2e4bbaee-730d-4fa6-a341-9a0da2d65ba3",
 							"name": "Set without TTL specified",
 							"event": [
 								{
@@ -3436,13 +3531,12 @@
 							"response": []
 						},
 						{
-							"_postman_id": "43dd3d86-be40-412c-880c-1a6fdb596df6",
 							"name": "Set temporary storage ttl",
 							"event": [
 								{
 									"listen": "test",
 									"script": {
-										"id": "29760974-f725-40bb-b399-367d69190275",
+										"id": "0d7b92ab-fa51-48d8-a393-e950a669ac10",
 										"type": "text/javascript",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
@@ -3460,6 +3554,7 @@
 											"        pm.test(\"TTL and expiration timestamp actually changed\", function () {",
 											"            pm.expect(res.json()._source.ttl).to.eql(565656);",
 											"            pm.expect(res.json()._source.expiration_timestamp).to.eql(1565656);",
+											"            pm.expect(res.json()._source.last_updated).not.to.eql(0);",
 											"    });",
 											"});"
 										]
@@ -3501,11 +3596,120 @@
 					"_postman_isSubFolder": true
 				},
 				{
-					"_postman_id": "dc49c2ac-8a20-413e-8bb2-1ef4a89aec2a",
 					"name": "Delete temporary storage",
 					"item": [
 						{
-							"_postman_id": "c96a2935-a592-4911-8dd3-765598cb476d",
+							"name": "Delete with wrong Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "06415630-4d33-4ed6-8819-52cfe5645aca",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/storage-registry/_doc/\" + pm.variables.get(\"acc_storage\"),",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Storage is not deleted\", function () {",
+											"            pm.expect(res).to.have.property('code', 200);",
+											"            pm.expect(res).to.have.property('status', 'OK');",
+											"            pm.expect(res.json()._source.deleted).to.eql(false);",
+											"        });",
+											"",
+											"    }",
+											");"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{wrong_secret}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/storage/{{temp_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"storage",
+										"{{temp_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete without Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "bfc97efa-6610-4a85-92fe-2881d88bdb3d",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/storage-registry/_doc/\" + pm.variables.get(\"acc_storage\"),",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Storage is not deleted\", function () {",
+											"            pm.expect(res).to.have.property('code', 200);",
+											"            pm.expect(res).to.have.property('status', 'OK');",
+											"            pm.expect(res.json()._source.deleted).to.eql(false);",
+											"        });",
+											"",
+											"    }",
+											");"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/storage/{{temp_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"storage",
+										"{{temp_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
 							"name": "Delete persistent storage",
 							"event": [
 								{
@@ -3564,7 +3768,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "00aeea50-4884-4360-b349-cab5c6b78c5a",
 							"name": "Delete nonexistent storage",
 							"event": [
 								{
@@ -3610,13 +3813,12 @@
 							"response": []
 						},
 						{
-							"_postman_id": "1a4bdbeb-4431-42eb-b9f2-3b1f5fa5f109",
 							"name": "Delete temporary storage",
 							"event": [
 								{
 									"listen": "test",
 									"script": {
-										"id": "122029a7-7015-4c37-9bd6-4f92b620fef8",
+										"id": "e3acffed-9504-4475-942d-8df377c4ee1a",
 										"type": "text/javascript",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
@@ -3636,6 +3838,7 @@
 											"            pm.expect(res).to.have.property('code', 200);",
 											"            pm.expect(res).to.have.property('status', 'OK');",
 											"            pm.expect(res.json()._source.deleted).to.eql(true);",
+											"            pm.expect(res.json()._source.last_updated).not.to.eql(0);",
 											"        });",
 											"    }",
 											");",
@@ -3675,19 +3878,15 @@
 			]
 		},
 		{
-			"_postman_id": "d847b464-54f2-442d-9b76-9131167cfdeb",
 			"name": "kv-history",
 			"item": [
 				{
-					"_postman_id": "d9b82be9-ad79-4735-8296-a33459897179",
 					"name": "Search and list history",
 					"item": [
 						{
-							"_postman_id": "51ffa677-f799-4281-87b3-227ac8b2c61c",
-							"name": "validation",
+							"name": "authentication",
 							"item": [
 								{
-									"_postman_id": "9ee2ee76-bf71-4679-902a-f19b54b14837",
 									"name": "Search without Secret-Key",
 									"event": [
 										{
@@ -3740,7 +3939,69 @@
 									"response": []
 								},
 								{
-									"_postman_id": "d5139f87-5adf-49dc-bc44-ab246ec00406",
+									"name": "Search with wrong Secret-Key",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "f92736c8-9097-4a4d-be7f-fec1a82dd3b1",
+												"type": "text/javascript",
+												"exec": [
+													"pm.test(\"Status code is 401\", function() {",
+													"  pm.response.to.have.status(401);",
+													"});",
+													"",
+													"pm.test(\"Body is empty\", function () {",
+													"    pm.response.to.have.body(\"\");",
+													"});",
+													"",
+													""
+												]
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Secret-Key",
+												"value": "{{wrong_secret}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{url}}/history/{{read_only_storage}}?scroll=30000&size=3",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"history",
+												"{{read_only_storage}}"
+											],
+											"query": [
+												{
+													"key": "scroll",
+													"value": "30000"
+												},
+												{
+													"key": "size",
+													"value": "3"
+												}
+											]
+										}
+									},
+									"response": []
+								}
+							],
+							"_postman_isSubFolder": true
+						},
+						{
+							"name": "validation",
+							"item": [
+								{
 									"name": "Search with invalid operations",
 									"event": [
 										{
@@ -3794,7 +4055,6 @@
 									"response": []
 								},
 								{
-									"_postman_id": "a0d52dbd-a487-4190-9120-5480e434bd9a",
 									"name": "Search with invalid start",
 									"event": [
 										{
@@ -3848,7 +4108,6 @@
 									"response": []
 								},
 								{
-									"_postman_id": "a99bb7e8-b1eb-4fa7-beb6-9af00a65ba11",
 									"name": "Search with negative start",
 									"event": [
 										{
@@ -3902,7 +4161,6 @@
 									"response": []
 								},
 								{
-									"_postman_id": "b6405144-df73-4856-8a4d-1acf10aadeb5",
 									"name": "Search with invalid end",
 									"event": [
 										{
@@ -3956,7 +4214,6 @@
 									"response": []
 								},
 								{
-									"_postman_id": "19b9c98f-a1a3-4922-a447-f9ff18d6d2b5",
 									"name": "Search with negative end",
 									"event": [
 										{
@@ -4010,7 +4267,6 @@
 									"response": []
 								},
 								{
-									"_postman_id": "c965cd38-6c48-4f1b-a832-f88fe768237a",
 									"name": "Search with start > end",
 									"event": [
 										{
@@ -4068,7 +4324,6 @@
 									"response": []
 								},
 								{
-									"_postman_id": "0a5bdb59-379e-4169-b09f-188ed7d299bf",
 									"name": "Search with invalid size",
 									"event": [
 										{
@@ -4122,7 +4377,6 @@
 									"response": []
 								},
 								{
-									"_postman_id": "a45ea696-9bec-49c7-8a3b-263e3e1714f1",
 									"name": "Search with negative size",
 									"event": [
 										{
@@ -4176,7 +4430,6 @@
 									"response": []
 								},
 								{
-									"_postman_id": "7cf67f94-6234-4c37-ac17-a91b95981731",
 									"name": "Search with invalid page",
 									"event": [
 										{
@@ -4230,7 +4483,6 @@
 									"response": []
 								},
 								{
-									"_postman_id": "4d79376f-5c86-42dd-b2d6-14f47261e035",
 									"name": "Search with negative page",
 									"event": [
 										{
@@ -4284,7 +4536,6 @@
 									"response": []
 								},
 								{
-									"_postman_id": "e1771188-e3e6-4a5f-a082-e2099f42cffb",
 									"name": "Search with invalid scroll",
 									"event": [
 										{
@@ -4338,7 +4589,6 @@
 									"response": []
 								},
 								{
-									"_postman_id": "f3d6b136-778f-4b8f-a788-ba293df388ea",
 									"name": "Search with negative scroll",
 									"event": [
 										{
@@ -4392,7 +4642,6 @@
 									"response": []
 								},
 								{
-									"_postman_id": "62445352-9a46-4f0a-bd9b-639f17aefbc0",
 									"name": "Search with invalid sort",
 									"event": [
 										{
@@ -4446,7 +4695,6 @@
 									"response": []
 								},
 								{
-									"_postman_id": "dad67157-35de-4267-9ec6-3d947b1672c2",
 									"name": "Search with opposite sort options",
 									"event": [
 										{
@@ -4503,7 +4751,6 @@
 							"_postman_isSubFolder": true
 						},
 						{
-							"_postman_id": "9231cb3d-e972-4dd9-9520-8ba4162a2028",
 							"name": "Search with keys",
 							"event": [
 								{
@@ -4561,7 +4808,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "0e713a51-186c-4892-b4ab-c028988f6fe4",
 							"name": "Search with duplicated keys",
 							"event": [
 								{
@@ -4619,7 +4865,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "20d53a70-ef10-4a07-abe9-0b2c52c30cfe",
 							"name": "Search with start",
 							"event": [
 								{
@@ -4677,7 +4922,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "f15a4894-ca0f-4d57-906e-e5576f4d5d8a",
 							"name": "Search with end",
 							"event": [
 								{
@@ -4735,7 +4979,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "739ea224-faf8-4cd6-a8fa-5fda127f090d",
 							"name": "Search with sorts",
 							"event": [
 								{
@@ -4806,7 +5049,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "ee32e588-d48a-4023-82fb-17098e205c31",
 							"name": "Search with duplicated sorts",
 							"event": [
 								{
@@ -4877,7 +5119,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "28e3d30f-39f0-4de0-8507-932258a7b36d",
 							"name": "Search with sort in descending order",
 							"event": [
 								{
@@ -4948,7 +5189,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "0b20f044-df9e-4a53-9cd4-4bb17d926bba",
 							"name": "Search with operations",
 							"event": [
 								{
@@ -5006,7 +5246,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "bc52eefa-f15f-4329-9089-78b83ad96ac1",
 							"name": "Search with duplicated operations",
 							"event": [
 								{
@@ -5064,7 +5303,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "b022990a-0e6d-45f6-8b35-0ed8ff4cd402",
 							"name": "Search with page and size",
 							"event": [
 								{
@@ -5128,7 +5366,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "02829120-228b-467a-b255-30f516a820fe",
 							"name": "Search with scroll and size",
 							"event": [
 								{
@@ -5192,7 +5429,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "5f4a0861-17e1-48e2-b530-54fcbcbef69d",
 							"name": "Search with page and scroll",
 							"event": [
 								{
@@ -5260,7 +5496,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "ea5be564-8ae3-40d8-8591-f85c0cd1da8c",
 							"name": "Search in storage that does not support history",
 							"event": [
 								{
@@ -5308,7 +5543,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "65117272-1fa1-4ed0-ad58-fcbd4dc64176",
 							"name": "Search in storage that does not have history storage",
 							"event": [
 								{
@@ -5356,7 +5590,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "b610aed9-1f26-4150-aaa9-f3bbeee30745",
 							"name": "Search in nonexistent storage",
 							"event": [
 								{
@@ -5402,74 +5635,14 @@
 								}
 							},
 							"response": []
-						},
-						{
-							"_postman_id": "2ba0a7eb-a32a-418f-8c21-ffe7fad3e4c5",
-							"name": "Search with wrong Secret-Key",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "f92736c8-9097-4a4d-be7f-fec1a82dd3b1",
-										"type": "text/javascript",
-										"exec": [
-											"pm.test(\"Status code is 401\", function() {",
-											"  pm.response.to.have.status(401);",
-											"});",
-											"",
-											"pm.test(\"Body is empty\", function () {",
-											"    pm.response.to.have.body(\"\");",
-											"});",
-											"",
-											""
-										]
-									}
-								}
-							],
-							"request": {
-								"method": "GET",
-								"header": [
-									{
-										"key": "Secret-Key",
-										"value": "{{wrong_secret}}"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": ""
-								},
-								"url": {
-									"raw": "{{url}}/history/{{read_only_storage}}?scroll=30000&size=3",
-									"host": [
-										"{{url}}"
-									],
-									"path": [
-										"history",
-										"{{read_only_storage}}"
-									],
-									"query": [
-										{
-											"key": "scroll",
-											"value": "30000"
-										},
-										{
-											"key": "size",
-											"value": "3"
-										}
-									]
-								}
-							},
-							"response": []
 						}
 					],
 					"_postman_isSubFolder": true
 				},
 				{
-					"_postman_id": "5f3663c6-b96d-413e-8676-31ffb9410ee6",
 					"name": "List history",
 					"item": [
 						{
-							"_postman_id": "b7a48e80-c583-4352-9e54-1cd78ca2e8f6",
 							"name": "List history for subsequent request",
 							"event": [
 								{
@@ -5547,7 +5720,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "7f8f32e7-930a-48da-b54c-3a23acfe6a23",
 							"name": "List history with wrong Content-Type",
 							"event": [
 								{
@@ -5609,7 +5781,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "7c6d06ed-0827-4691-a70c-97b085a04346",
 							"name": "List history with invalid json",
 							"event": [
 								{
@@ -5664,7 +5835,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "c2c43ac6-ddf0-4dba-9333-dcb00eb3f7ae",
 							"name": "List history with invalid timeout",
 							"event": [
 								{
@@ -5719,7 +5889,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "de386823-3ff5-4775-8f24-4db9ff122e4a",
 							"name": "List history with invalid scroll id",
 							"event": [
 								{
@@ -5774,7 +5943,6 @@
 							"response": []
 						},
 						{
-							"_postman_id": "f75cd040-e087-4bba-b2f5-efb3a7115259",
 							"name": "List history with expired/nonexistent scroll id",
 							"event": [
 								{
@@ -5834,11 +6002,9 @@
 			]
 		},
 		{
-			"_postman_id": "4758e914-1de0-406e-8d71-df15549065ac",
 			"name": "health",
 			"item": [
 				{
-					"_postman_id": "45a15a4a-a217-4bc7-b3d1-884f7771cd96",
 					"name": "Check health",
 					"event": [
 						{
@@ -5878,7 +6044,6 @@
 					"response": []
 				},
 				{
-					"_postman_id": "1a59aadb-2e44-4612-837c-9b90e5a574f2",
 					"name": "Check health detailed",
 					"event": [
 						{
@@ -5948,7 +6113,6 @@
 					"response": []
 				},
 				{
-					"_postman_id": "c3c3e030-5912-4ad1-bdc5-8b71ee99f6e4",
 					"name": "Unhealthy registry",
 					"event": [
 						{
@@ -6034,7 +6198,6 @@
 					"response": []
 				},
 				{
-					"_postman_id": "e839424e-1a6f-4bda-87bd-fb60b825a8ae",
 					"name": "Unhealthy registry and storage template",
 					"event": [
 						{
@@ -6120,7 +6283,6 @@
 					"response": []
 				},
 				{
-					"_postman_id": "8903083c-2c96-40ee-adc7-7f20fc1e224e",
 					"name": "Fully unhealthy",
 					"event": [
 						{

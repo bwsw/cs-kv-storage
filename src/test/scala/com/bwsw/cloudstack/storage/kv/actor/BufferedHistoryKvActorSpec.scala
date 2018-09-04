@@ -45,7 +45,7 @@ class BufferedHistoryKvActorSpec
 
   private val historyProcessor = mock[HistoryProcessor]
   private val appConf = mock[AppConfig]
-  private val storage = Storage("someStorage", StorageType.Account, historyEnabled = true, "secret".toCharArray)
+  private val storage = Storage("someStorage", StorageType.Account, historyEnabled = true, "secret")
   private val someKey = "someKey"
   private val someValue = "someValue"
   private val timestamp = System.currentTimeMillis()

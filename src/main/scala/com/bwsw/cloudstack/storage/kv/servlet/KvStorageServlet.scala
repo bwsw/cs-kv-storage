@@ -49,7 +49,7 @@ class KvStorageServlet(system: ActorSystem, requestTimeout: FiniteDuration, kvPr
         if (request.header(SecretKeyHeader).nonEmpty)
           (kvActor ? KvGetRequest(
             params("storage_uuid"),
-            request.getHeader(SecretKeyHeader).toCharArray,
+            request.getHeader(SecretKeyHeader),
             params("key")))
             .map {
               case Right(value) =>
@@ -74,7 +74,7 @@ class KvStorageServlet(system: ActorSystem, requestTimeout: FiniteDuration, kvPr
                 try {
                   val result = kvActor ? KvMultiGetRequest(
                     params("storage_uuid"),
-                    request.getHeader(SecretKeyHeader).toCharArray,
+                    request.getHeader(SecretKeyHeader),
                     json.extract[List[String]])
                   result.map {
                     case Right(value) =>
@@ -104,7 +104,7 @@ class KvStorageServlet(system: ActorSystem, requestTimeout: FiniteDuration, kvPr
           if (request.getHeader("Content-Type") == formats("txt")) {
             val result = kvActor ? KvSetRequest(
               params("storage_uuid"),
-              request.getHeader(SecretKeyHeader).toCharArray,
+              request.getHeader(SecretKeyHeader),
               params("key"), request.body)
             result.map {
               case Right(_) => Ok()
@@ -132,7 +132,7 @@ class KvStorageServlet(system: ActorSystem, requestTimeout: FiniteDuration, kvPr
                 try {
                   val result = kvActor ? KvMultiSetRequest(
                     params("storage_uuid"),
-                    request.getHeader(SecretKeyHeader).toCharArray,
+                    request.getHeader(SecretKeyHeader),
                     json.extract[Map[String, String]])
                   result.map {
                     case Right(value) =>
@@ -160,7 +160,7 @@ class KvStorageServlet(system: ActorSystem, requestTimeout: FiniteDuration, kvPr
         if (request.header(SecretKeyHeader).nonEmpty) {
           val result = kvActor ? KvDeleteRequest(
             params("storage_uuid"),
-            request.getHeader(SecretKeyHeader).toCharArray,
+            request.getHeader(SecretKeyHeader),
             params("key"))
           result.map {
             case Right(_) => Ok()
@@ -184,7 +184,7 @@ class KvStorageServlet(system: ActorSystem, requestTimeout: FiniteDuration, kvPr
                 try {
                   val result = kvActor ? KvMultiDeleteRequest(
                     params("storage_uuid"),
-                    request.getHeader(SecretKeyHeader).toCharArray,
+                    request.getHeader(SecretKeyHeader),
                     json.extract[List[String]])
                   result.map {
                     case Right(value) =>
@@ -210,7 +210,7 @@ class KvStorageServlet(system: ActorSystem, requestTimeout: FiniteDuration, kvPr
     new AsyncResult() {
       val is: Future[_] =
         if (request.header(SecretKeyHeader).nonEmpty) {
-          val result = kvActor ? KvListRequest(params("storage_uuid"), request.getHeader(SecretKeyHeader).toCharArray)
+          val result = kvActor ? KvListRequest(params("storage_uuid"), request.getHeader(SecretKeyHeader))
           result.map {
             case Right(value) =>
               contentType = formats("json")
@@ -229,7 +229,7 @@ class KvStorageServlet(system: ActorSystem, requestTimeout: FiniteDuration, kvPr
     new AsyncResult() {
       val is: Future[_] =
         if (request.header(SecretKeyHeader).nonEmpty) {
-          val result = kvActor ? KvClearRequest(params("storage_uuid"), request.getHeader(SecretKeyHeader).toCharArray)
+          val result = kvActor ? KvClearRequest(params("storage_uuid"), request.getHeader(SecretKeyHeader))
           result.map {
             case Right(_) => Ok()
             case Left(_: NotFoundError) => NotFound("")

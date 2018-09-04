@@ -20,7 +20,6 @@ package com.bwsw.cloudstack.storage.kv.actor
 import akka.actor.Timers
 import com.bwsw.cloudstack.storage.kv.cache.StorageCache
 import com.bwsw.cloudstack.storage.kv.configuration.{AppConfig, ElasticsearchConfig}
-import com.bwsw.cloudstack.storage.kv.entity.Storage
 import com.bwsw.cloudstack.storage.kv.util.Clock
 import com.bwsw.cloudstack.storage.kv.util.elasticsearch.{RegistryFields, RegistryIndex}
 import com.sksamuel.elastic4s.http.ElasticDsl.{clearScroll, searchScroll, _}
@@ -61,7 +60,7 @@ class ElasticsearchCacheUpdateActor(implicit inj: Injector)
     val keepAlive = elasticsearchConfig.getScrollKeepAlive
     client.execute {
       search(RegistryIndex).query(rangeQuery(RegistryFields.LastUpdated)
-        .gte(lastUpdateTimestamp - appConfig.getRequestTimeout.toMillis))
+                                    .gte(lastUpdateTimestamp - appConfig.getRequestTimeout.toMillis))
         .size(elasticsearchConfig.getScrollPageSize)
         .scroll(keepAlive)
         .fetchSource(false)
@@ -74,7 +73,7 @@ class ElasticsearchCacheUpdateActor(implicit inj: Injector)
         updateValues(success.result.hits)
         if (success.result.scrollId.nonEmpty)
           scrollAll(success.result.scrollId.get, keepAlive).onComplete(_ =>
-            lastUpdateTimestamp = updateStartTimestamp)
+                                                                         lastUpdateTimestamp = updateStartTimestamp)
         else
           lastUpdateTimestamp = updateStartTimestamp
     }
@@ -123,4 +122,5 @@ object ElasticsearchCacheUpdateActor {
   private case object UpdateTimer
 
   private case object UpdateTimeout
+
 }

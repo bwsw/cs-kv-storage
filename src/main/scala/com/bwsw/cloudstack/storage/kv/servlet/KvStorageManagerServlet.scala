@@ -18,7 +18,7 @@
 package com.bwsw.cloudstack.storage.kv.servlet
 
 import akka.actor.ActorSystem
-import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, NotFoundError, UnauthorizedError}
+import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError, UnauthorizedError}
 import com.bwsw.cloudstack.storage.kv.manager.KvStorageManager
 import com.bwsw.cloudstack.storage.kv.util.elasticsearch.SecretKeyHeader
 import org.scalatra._
@@ -40,7 +40,7 @@ class KvStorageManagerServlet(system: ActorSystem, manager: KvStorageManager)
             try {
               manager.updateTempStorageTtl(
                 params("storage_uuid"),
-                request.getHeader(SecretKeyHeader).toCharArray,
+                request.getHeader(SecretKeyHeader),
                 ttl.get.toLong)
                 .map {
                   case Right(_) => Ok()
@@ -64,7 +64,7 @@ class KvStorageManagerServlet(system: ActorSystem, manager: KvStorageManager)
     new AsyncResult() {
       val is: Future[_] =
         if (request.header(SecretKeyHeader).nonEmpty) {
-          manager.deleteTempStorage(params("storage_uuid"), request.getHeader(SecretKeyHeader).toCharArray)
+          manager.deleteTempStorage(params("storage_uuid"), request.getHeader(SecretKeyHeader))
             .map {
               case Right(_) => Ok()
               case Left(_: BadRequestError) => BadRequest()

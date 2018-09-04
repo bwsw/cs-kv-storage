@@ -51,7 +51,7 @@ class HistoricalKvActorSpec
   private val someKey = "someKey"
   private val someValue = "someValue"
   private val storageUuid = "someStorage"
-  private val commonSecretKey = "secret".toCharArray
+  private val commonSecretKey = "secret"
   private val keyValues = Map("key1" -> "value1", "key2" -> "value2", "key3" -> "value3")
   private val storageKeep = Storage("someStorage", StorageType.Account, historyEnabled = true, commonSecretKey)
   private val storageDiscard = Storage("someStorage", StorageType.Account, historyEnabled = false, commonSecretKey)
@@ -59,7 +59,7 @@ class HistoricalKvActorSpec
     "someStorage",
     StorageType.Account,
     historyEnabled = false,
-    "anotherSecret".toCharArray)
+    "anotherSecret")
   private val timeout = 1000.millis
   private val timestamp = System.currentTimeMillis()
   private val exception = new RuntimeException("test exception")

@@ -21,7 +21,7 @@ import com.bwsw.cloudstack.storage.kv.entity.{Operation, SortField}
 
 case class KvHistoryGetRequest(
     storageUuid: String,
-    secretKey: Array[Char],
+    secretKey: String,
     keys: Set[String],
     operations: Set[Operation],
     start: Option[Long],
@@ -29,22 +29,4 @@ case class KvHistoryGetRequest(
     sort: Set[SortField],
     page: Option[Int],
     size: Option[Int],
-    scroll: Option[Long]) {
-
-  /** @inheritdoc */
-  override def equals(o: scala.Any): Boolean = o match {
-    case request: KvHistoryGetRequest =>
-      request.storageUuid == this.storageUuid &&
-        (request.secretKey == null && this.secretKey == null || request.secretKey != null && this
-          .secretKey != null && request.secretKey.sameElements(this.secretKey)) &&
-        request.keys == this.keys &&
-        request.operations == this.operations &&
-        request.start == this.start &&
-        request.end == this.end &&
-        request.sort == this.sort &&
-        request.page == this.page &&
-        request.size == this.size &&
-        request.scroll == this.scroll
-    case _ => false
-  }
-}
+    scroll: Option[Long])

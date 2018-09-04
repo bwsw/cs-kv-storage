@@ -38,7 +38,7 @@ class ElasticsearchStorageLoader(client: HttpClient) extends StorageLoader {
               success.result.id,
               getValue(success.result.source, RegistryFields.Type),
               getValue(success.result.source, RegistryFields.HistoryEnabled),
-              getValue[String](success.result.source, RegistryFields.SecretKey).toCharArray))
+              getValue(success.result.source, RegistryFields.SecretKey)))
           }
           else None
       }

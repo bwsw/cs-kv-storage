@@ -50,7 +50,7 @@ class KvStorageManagerServletSuite
 
     describe("(update temp storage ttl)") {
       def testProvidesError(error: StorageError, status: Int) = {
-        (manager.updateTempStorageTtl(_: String, _: Array[Char], _: Long)).expects(storageUuid, *, ttl)
+        (manager.updateTempStorageTtl(_: String, _: String, _: Long)).expects(storageUuid, *, ttl)
           .returning(Future(Left(error))).once
 
         put(path, ttlParams, headers) {
@@ -59,7 +59,7 @@ class KvStorageManagerServletSuite
       }
 
       it("should update the value of ttl field in storage registry") {
-        (manager.updateTempStorageTtl(_: String, _: Array[Char], _: Long)).expects(storageUuid, *, ttl)
+        (manager.updateTempStorageTtl(_: String, _: String, _: Long)).expects(storageUuid, *, ttl)
           .returning(Future(Right(()))).once
         put(path, ttlParams, headers) {
           status should equal(200)
@@ -67,14 +67,14 @@ class KvStorageManagerServletSuite
       }
 
       it("should return 400 BadRequest if no ttl is specified") {
-        (manager.updateTempStorageTtl(_: String, _: Array[Char], _: Long)).expects(storageUuid, *, ttl).never
+        (manager.updateTempStorageTtl(_: String, _: String, _: Long)).expects(storageUuid, *, ttl).never
         put(path, Seq(), headers) {
           status should equal(400)
         }
       }
 
       it("should return 400 BadRequest if ttl can not be converted to Long") {
-        (manager.updateTempStorageTtl(_: String, _: Array[Char], _: Long)).expects(storageUuid, *, ttl).never
+        (manager.updateTempStorageTtl(_: String, _: String, _: Long)).expects(storageUuid, *, ttl).never
         put(path, badTtlParams, headers) {
           status should equal(400)
         }
@@ -102,7 +102,7 @@ class KvStorageManagerServletSuite
 
   describe("(delete temp storage)") {
     def testProvidesError(error: StorageError, status: Int) = {
-      (manager.deleteTempStorage(_: String, _: Array[Char])).expects(storageUuid, *)
+      (manager.deleteTempStorage(_: String, _: String)).expects(storageUuid, *)
         .returning(Future(Left(error))).once
 
       delete(path, Seq(), headers) {
@@ -111,7 +111,7 @@ class KvStorageManagerServletSuite
     }
 
     it("should delete the storage") {
-      (manager.deleteTempStorage(_: String, _: Array[Char])).expects(storageUuid, *)
+      (manager.deleteTempStorage(_: String, _: String)).expects(storageUuid, *)
         .returning(Future(Right(()))).once
       delete(path, Seq(), headers) {
         status should equal(200)

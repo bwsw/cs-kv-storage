@@ -44,8 +44,8 @@ class ElasticsearchCacheUpdateActorSpec
   private val scrollPageSize = 1000
   private val scrollId = Some("DXF1ZXJ5QW5kRmV0Y2gBAAAAAAAAAAcWVDBqc3Vkb3lUeDZOYXk4bWczTHowUQ==")
 
-  private val storage1 = Storage("storage-1", StorageType.Account, historyEnabled = true, "secret".toCharArray)
-  private val storage2 = Storage("storage-2", StorageType.Temporary, historyEnabled = false, "secret".toCharArray)
+  private val storage1 = Storage("storage-1", StorageType.Account, historyEnabled = true, "secret")
+  private val storage2 = Storage("storage-2", StorageType.Temporary, historyEnabled = false, "secret")
 
   describe("an ElasticsearchCacheUpdateActor") {
     implicit val testModule: Injector = new Module {

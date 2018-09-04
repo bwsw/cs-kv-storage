@@ -54,7 +54,7 @@ class KvHistoryServlet(
     new AsyncResult() {
       val is: Future[_] =
         if (request.header(SecretKeyHeader).nonEmpty) {
-          parse(params, request.getHeader(SecretKeyHeader).toCharArray) match {
+          parse(params, request.getHeader(SecretKeyHeader)) match {
             case Some(getHistoryRequest) =>
               (historyRequestActor ? getHistoryRequest)
                 .map {
@@ -104,7 +104,7 @@ class KvHistoryServlet(
   }
 
 
-  protected def parse(params: Params, secretKey: Array[Char]): Option[KvHistoryGetRequest] = {
+  protected def parse(params: Params, secretKey: String): Option[KvHistoryGetRequest] = {
     try {
       val storage = params("storage_uuid")
       val keys = params.getOrElse("keys", "").split(",").filter(_.nonEmpty).toSet

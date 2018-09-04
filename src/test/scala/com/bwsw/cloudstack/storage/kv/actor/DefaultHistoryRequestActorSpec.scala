@@ -47,7 +47,7 @@ class DefaultHistoryRequestActorSpec
 
   private val scrollTimeout = Some(1000.asInstanceOf[Long])
   private val scrollId = "DXF1ZXJ5QW5kRmV0Y2gBAAAAAAAAAAcWVDBqc3Vkb3lUeDZOYXk4bWczTHowUQ=="
-  private val storage = Storage("id", StorageType.Account, historyEnabled = true, "secret".toCharArray)
+  private val storage = Storage("id", StorageType.Account, historyEnabled = true, "secret")
   private val getHistoryRequest =
     KvHistoryGetRequest(
       storage.uuid,
@@ -105,7 +105,7 @@ class DefaultHistoryRequestActorSpec
 
       it("should return UnauthorizedError if given secret key is invalid") {
         (storageCache.get _).expects(getHistoryRequest.storageUuid)
-          .returning(Future(Some(storage.copy(secretKey = "anotherSecret".toCharArray))))
+          .returning(Future(Some(storage.copy(secretKey = "anotherSecret"))))
         defaultHistoryRequestActor ! getHistoryRequest
         expectMsg(Left(UnauthorizedError()))
       }

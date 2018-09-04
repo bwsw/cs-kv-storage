@@ -45,7 +45,7 @@ class KvStorageServletSuite extends ScalatraSuite with FunSpecLike with MockFact
   private val jsonNullValues = "{\"key1\":null,\"key2\":null,\"key3\":null}"
   private val jsonKeyResult = "{\"key1\":true,\"key2\":true,\"key3\":true}"
   private val storageUuid = "someStorage"
-  private val secretKey = "secret".toCharArray
+  private val secretKey = "secret"
   private val internalError = Left(InternalError("some reason"))
   private val notFoundError = Left(NotFoundError())
   private val commonHeaders = Map(SecretKeyHeader -> secretKey.mkString)

@@ -18,7 +18,8 @@
 package com.bwsw.cloudstack.storage.kv.manager
 
 import com.bwsw.cloudstack.storage.kv.cache.StorageCache
-import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError, StorageError, UnauthorizedError}
+import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError, StorageError,
+  UnauthorizedError}
 import com.bwsw.cloudstack.storage.kv.util.Clock
 import com.bwsw.cloudstack.storage.kv.util.elasticsearch.RegistryFields._
 import com.bwsw.cloudstack.storage.kv.util.elasticsearch.ScriptOperations._
@@ -42,11 +43,11 @@ class ElasticsearchKvStorageManager(client: HttpClient, cache: StorageCache, clo
 
   def updateTempStorageTtl(
       storageUuid: String,
-      secretKey: Array[Char],
+      secretKey: String,
       ttl: Long): Future[Either[StorageError, Unit]] = {
     val scriptCode = s"ctx._source.$ExpirationTimestamp = ctx._source" +
       s".$ExpirationTimestamp - ctx._source.$Ttl + $ttl; ctx._source.$Ttl = $ttl;" +
-      s" ctx._source.$LastUpdated = ${clock.currentTimeMillis}"
+      s" ctx._source.$LastUpdated = ctx._now"
     val updateDefinition = update(storageUuid) in RegistryIndex / DocumentType script scriptCode
     process(
       storageUuid,
@@ -55,9 +56,9 @@ class ElasticsearchKvStorageManager(client: HttpClient, cache: StorageCache, clo
       delete = false)
   }
 
-  def deleteTempStorage(storageUuid: String, secretKey: Array[Char]): Future[Either[StorageError, Unit]] = {
-    val updateDefinition = update(storageUuid) in RegistryIndex / DocumentType doc
-      (Deleted -> true, LastUpdated -> clock.currentTimeMillis)
+  def deleteTempStorage(storageUuid: String, secretKey: String): Future[Either[StorageError, Unit]] = {
+    val scriptCode = s"ctx._source.$Deleted = true; ctx._source.$LastUpdated = ctx._now"
+    val updateDefinition = update(storageUuid) in RegistryIndex / DocumentType script scriptCode
     process(
       storageUuid,
       secretKey,
@@ -67,12 +68,12 @@ class ElasticsearchKvStorageManager(client: HttpClient, cache: StorageCache, clo
 
   private def process(
       storageUuid: String,
-      secretKey: Array[Char],
+      secretKey: String,
       updateDefinition: UpdateDefinition,
       delete: Boolean) = {
     cache.get(storageUuid).flatMap {
       case Some(storage) =>
-        if (secretKey.sameElements(storage.secretKey))
+        if (secretKey == storage.secretKey)
           if (storage.storageType == StorageType.Temporary)
             client.execute(updateDefinition).map {
               case Left(failure) => failure.status match {

@@ -18,15 +18,4 @@
 package com.bwsw.cloudstack.storage.kv.entity
 
 /** Basic storage data **/
-case class Storage(uuid: String, storageType: String, historyEnabled: Boolean, secretKey: Array[Char]) {
-  /** @inheritdoc*/
-  override def equals(o: scala.Any): Boolean = o match {
-    case storage: Storage =>
-      storage.uuid == this.uuid &&
-        storage.storageType == this.storageType &&
-        storage.historyEnabled == this.historyEnabled &&
-        (storage.secretKey == null && this.secretKey == null || storage.secretKey != null && this
-          .secretKey != null && storage.secretKey.sameElements(this.secretKey))
-    case _ => false
-  }
-}
+case class Storage(uuid: String, storageType: String, historyEnabled: Boolean, secretKey: String)
