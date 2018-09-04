@@ -69,7 +69,7 @@ class ElasticsearchCacheUpdateActorSpec
             updateTimestamp.success(true)
             ()
         }
-        eventually(timeout(scaled(updateTimeout * 1.4))) {
+        eventually(timeout(scaled(updateTimeout * 1.9))) {
           updateTimestamp.isCompleted should be(true)
         }
         system.stop(elasticsearchCacheUpdateActor)
