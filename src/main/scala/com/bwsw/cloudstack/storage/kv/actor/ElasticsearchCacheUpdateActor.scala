@@ -1,3 +1,20 @@
+// Licensed to the Apache Software Foundation (ASF) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
 package com.bwsw.cloudstack.storage.kv.actor
 
 import akka.actor.Timers
@@ -14,6 +31,7 @@ import scaldi.akka.AkkaInjectable.inject
 
 import scala.concurrent.Future
 
+/** Actor responsible for continual cache update from Elasticsearch **/
 class ElasticsearchCacheUpdateActor(implicit inj: Injector)
   extends CacheUpdateActor
   with Timers
@@ -28,10 +46,9 @@ class ElasticsearchCacheUpdateActor(implicit inj: Injector)
   private val clock = inject[Clock]
   private val elasticsearchConfig = inject[ElasticsearchConfig]
 
-  private var lastUpdateTimestamp = 0L
+  private var lastUpdateTimestamp = clock.currentTimeMillis
 
   timers.startPeriodicTimer(UpdateTimer, UpdateTimeout, appConfig.getCacheUpdateTime)
-
 
   override def receive: Receive = {
     case UpdateTimeout =>
@@ -40,27 +57,26 @@ class ElasticsearchCacheUpdateActor(implicit inj: Injector)
   }
 
   private def update(): Unit = {
-    if (lastUpdateTimestamp == 0) {
-      lastUpdateTimestamp = clock.currentTimeMillis
-    } else {
-      val keepAlive = elasticsearchConfig.getScrollKeepAlive
-      client.execute {
-        search(RegistryIndex).query(rangeQuery(RegistryFields.LastUpdated).gte(lastUpdateTimestamp))
-          .size(elasticsearchConfig.getScrollPageSize)
-          .scroll(keepAlive)
-      }.map {
-        case Left(failure) =>
-          log.info("Elasticsearch storage update request failure: {}", failure.error)
-          cache.invalidateAll()
-          lastUpdateTimestamp = clock.currentTimeMillis
-        case Right(success) =>
-          updateValues(success.result.hits)
-          if (success.result.scrollId.nonEmpty)
-            scrollAll(success.result.scrollId.get, keepAlive).onComplete(_ =>
-              lastUpdateTimestamp = clock.currentTimeMillis)
-          else
-            lastUpdateTimestamp = clock.currentTimeMillis
-      }
+    val updateStartTimestamp = clock.currentTimeMillis
+    val keepAlive = elasticsearchConfig.getScrollKeepAlive
+    client.execute {
+      search(RegistryIndex).query(rangeQuery(RegistryFields.LastUpdated)
+        .gte(lastUpdateTimestamp - appConfig.getRequestTimeout.toMillis))
+        .size(elasticsearchConfig.getScrollPageSize)
+        .scroll(keepAlive)
+        .fetchSource(false)
+    }.map {
+      case Left(failure) =>
+        log.error("Elasticsearch storage search request failed during cache update: {}", failure.error)
+        cache.invalidateAll()
+        lastUpdateTimestamp = updateStartTimestamp
+      case Right(success) =>
+        updateValues(success.result.hits)
+        if (success.result.scrollId.nonEmpty)
+          scrollAll(success.result.scrollId.get, keepAlive).onComplete(_ =>
+            lastUpdateTimestamp = updateStartTimestamp)
+        else
+          lastUpdateTimestamp = updateStartTimestamp
     }
   }
 
@@ -91,21 +107,7 @@ class ElasticsearchCacheUpdateActor(implicit inj: Injector)
   }
 
   private def updateValues(searchHits: SearchHits): Unit = {
-    val map = searchHits.hits.map {
-      hit =>
-        val id = hit.id
-        val source = hit.sourceAsMap
-        if (!getValue[Boolean](source, RegistryFields.Deleted)) {
-          id -> Some(Storage(
-            id,
-            getValue(source, RegistryFields.Type),
-            getValue(source, RegistryFields.HistoryEnabled),
-            getValue[String](source, RegistryFields.SecretKey).toCharArray))
-        } else {
-          id -> None
-        }
-    }.toMap
-    cache.updateAll(map)
+    cache.invalidateAll(searchHits.hits.map(_.id))
   }
 
   private def getValue[T](source: Map[String, Any], key: String): T = source.get(key) match {

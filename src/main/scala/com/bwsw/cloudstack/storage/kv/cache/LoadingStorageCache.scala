@@ -42,13 +42,8 @@ class LoadingStorageCache(conf: AppConfig, loader: StorageLoader) extends Storag
     cache.synchronous.invalidateAll()
   }
 
-  def updateAll(values: Map[String, Option[Storage]]): Unit = {
-    values.foreach { case(key, value) =>
-      cache.getIfPresent(key) match {
-        case Some(_) => cache.put(key, Future(value))
-        case None =>
-      }
-    }
+  def invalidateAll(keys: Iterable[String]): Unit = {
+    cache.synchronous.invalidateAll(keys)
   }
 
   def delete(storageUuid: String): Unit = {

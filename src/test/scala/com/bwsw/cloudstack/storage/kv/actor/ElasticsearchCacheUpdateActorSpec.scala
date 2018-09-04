@@ -6,9 +6,9 @@ import com.bwsw.cloudstack.storage.kv.cache.StorageCache
 import com.bwsw.cloudstack.storage.kv.configuration.{AppConfig, ElasticsearchConfig}
 import com.bwsw.cloudstack.storage.kv.entity.Storage
 import com.bwsw.cloudstack.storage.kv.util.Clock
-import com.bwsw.cloudstack.storage.kv.util.elasticsearch.{DocumentType, RegistryFields, RegistryIndex, StorageType}
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch.{DocumentType, RegistryIndex, StorageType}
 import com.bwsw.cloudstack.storage.kv.util.test._
-import com.sksamuel.elastic4s.http.ElasticDsl.{rangeQuery, search, _}
+import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.search.{ClearScrollResponse, SearchHit, SearchHits, SearchResponse}
 import com.sksamuel.elastic4s.http.{HttpClient, HttpExecutable, Shards}
 import com.sksamuel.elastic4s.searches.{ClearScrollDefinition, SearchDefinition, SearchScrollDefinition}
@@ -39,26 +39,13 @@ class ElasticsearchCacheUpdateActorSpec
 
   private val updateTimeout = 500.millis
   private val timestamp = System.currentTimeMillis()
+  private val timeout = 3.seconds
   private val scrollKeepAlive = "1m"
   private val scrollPageSize = 1000
   private val scrollId = Some("DXF1ZXJ5QW5kRmV0Y2gBAAAAAAAAAAcWVDBqc3Vkb3lUeDZOYXk4bWczTHowUQ==")
 
   private val storage1 = Storage("storage-1", StorageType.Account, historyEnabled = true, "secret".toCharArray)
-  private val storage1Map = Map[String, AnyRef](
-    RegistryFields.SecretKey -> storage1.secretKey.mkString,
-    RegistryFields.LastUpdated -> timestamp.asInstanceOf[AnyRef],
-    RegistryFields.Deleted -> false.asInstanceOf[AnyRef],
-    RegistryFields.Type -> storage1.storageType,
-    RegistryFields.HistoryEnabled -> storage1.historyEnabled.asInstanceOf[AnyRef]
-  )
   private val storage2 = Storage("storage-2", StorageType.Temporary, historyEnabled = false, "secret".toCharArray)
-  private val storage2Map = Map[String, AnyRef](
-    RegistryFields.SecretKey -> storage2.secretKey.mkString,
-    RegistryFields.LastUpdated -> timestamp.asInstanceOf[AnyRef],
-    RegistryFields.Deleted -> false.asInstanceOf[AnyRef],
-    RegistryFields.Type -> storage2.storageType,
-    RegistryFields.HistoryEnabled -> storage2.historyEnabled.asInstanceOf[AnyRef]
-  )
 
   describe("an ElasticsearchCacheUpdateActor") {
     implicit val testModule: Injector = new Module {
@@ -69,47 +56,18 @@ class ElasticsearchCacheUpdateActorSpec
       bind[StorageCache] to storageCache
     }
 
-
-    describe("initial tick of the timer") {
-      it("should only update lastUpdateTimestamp on first tick") {
-        (appConfig.getCacheUpdateTime _).expects().returning(updateTimeout)
-        val promise = Promise[Boolean]
-        (clock.currentTimeMillis _).expects().onCall { () =>
-          promise.success(true)
-          timestamp
-        }
-        val elasticsearchCacheUpdateActor = system.actorOf(Props(new ElasticsearchCacheUpdateActor))
-        eventually(timeout(scaled(updateTimeout * 1.9))) {
-          promise.isCompleted should be(true)
-        }
-        system.stop(elasticsearchCacheUpdateActor)
-      }
-
-    }
-
     describe("timed cache update") {
       it("should update cache in one request") {
         (appConfig.getCacheUpdateTime _).expects().returning(updateTimeout)
-        val initTimestamp = Promise[Boolean]
-        (clock.currentTimeMillis _).expects().onCall { () =>
-          initTimestamp.success(true)
-          timestamp
-        }
+        (clock.currentTimeMillis _).expects().returning(timestamp)
         val elasticsearchCacheUpdateActor = system.actorOf(Props(new ElasticsearchCacheUpdateActor))
-        eventually(timeout(scaled(updateTimeout * 1.4))) {
-          initTimestamp.isCompleted should be(true)
-        }
+
         val updateTimestamp = Promise[Boolean]
-        (elasticsearchConfig.getScrollKeepAlive _).expects().returning(scrollKeepAlive)
-        (elasticsearchConfig.getScrollPageSize _).expects().returning(scrollPageSize)
-        expectSearch(search(RegistryIndex).query(rangeQuery(RegistryFields.LastUpdated).gte(timestamp))
-                       .size(scrollPageSize)
-                       .scroll(scrollKeepAlive))
-          .returning(getRequestSuccessFuture(getSearchResponse(Map(storage1.uuid -> storage1Map), 1)))
-        (storageCache.updateAll _).expects(Map(storage1.uuid -> Some(storage1)))
-        (clock.currentTimeMillis _).expects().onCall { () =>
-          updateTimestamp.success(true)
-          timestamp
+        expectSearch().returning(getRequestSuccessFuture(getSearchResponse(List(storage1.uuid), 1)))
+        (storageCache.invalidateAll(_: Iterable[String])).expects(Seq(storage1.uuid)).onCall {
+          _: Iterable[String] =>
+            updateTimestamp.success(true)
+            ()
         }
         eventually(timeout(scaled(updateTimeout * 1.4))) {
           updateTimestamp.isCompleted should be(true)
@@ -119,33 +77,23 @@ class ElasticsearchCacheUpdateActorSpec
 
       it("should update cache using scroll") {
         (appConfig.getCacheUpdateTime _).expects().returning(updateTimeout)
-        val initTimestamp = Promise[Boolean]
-        (clock.currentTimeMillis _).expects().onCall { () =>
-          initTimestamp.success(true)
-          timestamp
-        }
+        (clock.currentTimeMillis _).expects().returning(timestamp)
         val elasticsearchCacheUpdateActor = system.actorOf(Props(new ElasticsearchCacheUpdateActor))
-        eventually(timeout(scaled(updateTimeout * 1.4))) {
-          initTimestamp.isCompleted should be(true)
-        }
+
         val updateTimestamp = Promise[Boolean]
-        (elasticsearchConfig.getScrollKeepAlive _).expects().returning(scrollKeepAlive)
-        (elasticsearchConfig.getScrollPageSize _).expects().returning(scrollPageSize)
-        expectSearch(search(RegistryIndex).query(rangeQuery(RegistryFields.LastUpdated).gte(timestamp))
-                       .size(scrollPageSize)
-                       .scroll(scrollKeepAlive))
-          .returning(getRequestSuccessFuture(getSearchResponse(Map(storage1.uuid -> storage1Map), 2, scrollId)))
-        (storageCache.updateAll _).expects(Map(storage1.uuid -> Some(storage1)))
+        expectSearch()
+          .returning(getRequestSuccessFuture(getSearchResponse(List(storage1.uuid), 2, scrollId)))
+        (storageCache.invalidateAll(_: Iterable[String])).expects(List(storage1.uuid))
 
         val scrollDefinition = searchScroll(scrollId.get, scrollKeepAlive)
         expectScroll(scrollDefinition)
-          .returning(getRequestSuccessFuture(getSearchResponse(Map(storage2.uuid -> storage2Map), 2, scrollId)))
-        (storageCache.updateAll _).expects(Map(storage2.uuid -> Some(storage2)))
-        expectScroll(scrollDefinition).returning(getRequestSuccessFuture(getSearchResponse(Map(), 2, scrollId)))
+          .returning(getRequestSuccessFuture(getSearchResponse(List(storage2.uuid), 2, scrollId)))
+        expectScroll(scrollDefinition).returning(getRequestSuccessFuture(getSearchResponse(List(), 2, scrollId)))
         expectClearScroll(scrollId.get)
-        (clock.currentTimeMillis _).expects().onCall { () =>
-          updateTimestamp.success(true)
-          timestamp
+        (storageCache.invalidateAll(_: Iterable[String])).expects(List(storage2.uuid)).onCall {
+          _: Iterable[String] =>
+            updateTimestamp.success(true)
+            ()
         }
         eventually(timeout(scaled(updateTimeout * 1.4))) {
           updateTimestamp.isCompleted should be(true)
@@ -155,25 +103,13 @@ class ElasticsearchCacheUpdateActorSpec
 
       it("should invalidate cache if update failed") {
         (appConfig.getCacheUpdateTime _).expects().returning(updateTimeout)
-        val initTimestamp = Promise[Boolean]
-        (clock.currentTimeMillis _).expects().onCall { () =>
-          initTimestamp.success(true)
-          timestamp
-        }
+        (clock.currentTimeMillis _).expects().returning(timestamp)
         val elasticsearchCacheUpdateActor = system.actorOf(Props(new ElasticsearchCacheUpdateActor))
-        eventually(timeout(scaled(updateTimeout * 1.4))) {
-          initTimestamp.isCompleted should be(true)
-        }
+
         val updateTimestamp = Promise[Boolean]
-        (elasticsearchConfig.getScrollKeepAlive _).expects().returning(scrollKeepAlive)
-        (elasticsearchConfig.getScrollPageSize _).expects().returning(scrollPageSize)
-        expectSearch(search(RegistryIndex).query(rangeQuery(RegistryFields.LastUpdated).gte(timestamp))
-                       .size(scrollPageSize)
-                       .scroll(scrollKeepAlive)).returning(getRequestFailureFuture(500))
-        (storageCache.invalidateAll _).expects()
-        (clock.currentTimeMillis _).expects().onCall { () =>
+        expectSearch().returning(getRequestFailureFuture())
+        (storageCache.invalidateAll: () => Unit).expects().onCall { () =>
           updateTimestamp.success(true)
-          timestamp
         }
         eventually(timeout(scaled(updateTimeout * 1.4))) {
           updateTimestamp.isCompleted should be(true)
@@ -183,76 +119,38 @@ class ElasticsearchCacheUpdateActorSpec
 
       it("should invalidate cache if update failed on scroll") {
         (appConfig.getCacheUpdateTime _).expects().returning(updateTimeout)
-        val initTimestamp = Promise[Boolean]
-        (clock.currentTimeMillis _).expects().onCall { () =>
-          initTimestamp.success(true)
-          timestamp
-        }
+        (clock.currentTimeMillis _).expects().returning(timestamp)
         val elasticsearchCacheUpdateActor = system.actorOf(Props(new ElasticsearchCacheUpdateActor))
-        eventually(timeout(scaled(updateTimeout * 1.4))) {
-          initTimestamp.isCompleted should be(true)
-        }
-        val updateTimestamp = Promise[Boolean]
-        (elasticsearchConfig.getScrollKeepAlive _).expects().returning(scrollKeepAlive)
-        (elasticsearchConfig.getScrollPageSize _).expects().returning(scrollPageSize)
-        expectSearch(search(RegistryIndex).query(rangeQuery(RegistryFields.LastUpdated).gte(timestamp))
-                       .size(scrollPageSize)
-                       .scroll(scrollKeepAlive))
-          .returning(getRequestSuccessFuture(getSearchResponse(Map(storage1.uuid -> storage1Map), 2, scrollId)))
-        (storageCache.updateAll _).expects(Map(storage1.uuid -> Some(storage1)))
 
-        (storageCache.invalidateAll _).expects()
+        val updateTimestamp = Promise[Boolean]
+        expectSearch()
+          .returning(getRequestSuccessFuture(getSearchResponse(List(storage1.uuid), 2, scrollId)))
+        (storageCache.invalidateAll(_: Iterable[String])).expects(List(storage1.uuid))
+
         val scrollDefinition = searchScroll(scrollId.get, scrollKeepAlive)
         expectScroll(scrollDefinition)
-          .returning(getRequestFailureFuture(500))
-        (clock.currentTimeMillis _).expects().onCall { () =>
+          .returning(getRequestFailureFuture())
+        (storageCache.invalidateAll: () => Unit).expects().onCall { () =>
           updateTimestamp.success(true)
-          timestamp
         }
         eventually(timeout(scaled(updateTimeout * 1.4))) {
           updateTimestamp.isCompleted should be(true)
         }
         system.stop(elasticsearchCacheUpdateActor)
       }
-
-      it("should invalidate cache if response is invalid") {
-        (appConfig.getCacheUpdateTime _).expects().returning(updateTimeout)
-        val initTimestamp = Promise[Boolean]
-        (clock.currentTimeMillis _).expects().onCall { () =>
-          initTimestamp.success(true)
-          timestamp
-        }
-        val elasticsearchCacheUpdateActor = system.actorOf(Props(new ElasticsearchCacheUpdateActor))
-        eventually(timeout(scaled(updateTimeout * 1.4))) {
-          initTimestamp.isCompleted should be(true)
-        }
-
-        val invalidation = Promise[Boolean]
-        (elasticsearchConfig.getScrollKeepAlive _).expects().returning(scrollKeepAlive)
-        (elasticsearchConfig.getScrollPageSize _).expects().returning(scrollPageSize)
-        expectSearch(search(RegistryIndex).query(rangeQuery(RegistryFields.LastUpdated).gte(timestamp))
-                       .size(scrollPageSize)
-                       .scroll(scrollKeepAlive))
-          .returning(getRequestSuccessFuture(getSearchResponse(
-            Map(storage1.uuid -> Map()), 1)))
-        (storageCache.invalidateAll _).expects().onCall {
-          _ => invalidation.success(true)
-        }
-        eventually(timeout(scaled(updateTimeout * 1.4))) {
-          invalidation.isCompleted should be(true)
-        }
-
-        system.stop(elasticsearchCacheUpdateActor)
-      }
     }
 
   }
 
-  private def expectSearch(searchDefinition: SearchDefinition)(implicit client: HttpClient) = {
+  private def expectSearch()(implicit client: HttpClient) = {
+    (clock.currentTimeMillis _).expects().returning(timestamp)
+    (appConfig.getRequestTimeout _).expects().returning(timeout)
+    (elasticsearchConfig.getScrollKeepAlive _).expects().returning(scrollKeepAlive)
+    (elasticsearchConfig.getScrollPageSize _).expects().returning(scrollPageSize)
     (client.execute[SearchDefinition, SearchResponse](_: SearchDefinition)(
       _: HttpExecutable[SearchDefinition, SearchResponse],
       _: ExecutionContext))
-      .expects(searchDefinition, SearchHttpExecutable, *)
+      .expects(*, SearchHttpExecutable, *)
   }
 
   private def expectScroll(searchScrollDefinition: SearchScrollDefinition)(implicit client: HttpClient) =
@@ -269,7 +167,7 @@ class ElasticsearchCacheUpdateActorSpec
 
 
   private def getSearchResponse(
-      registry: Map[String, Map[String, AnyRef]],
+      registry: List[String],
       total: Int,
       scrollId: Option[String] = None) = SearchResponse(
     1,
@@ -282,9 +180,9 @@ class ElasticsearchCacheUpdateActorSpec
     SearchHits(
       total,
       1,
-      registry.map { case (uuid, source) => getSearchHit(uuid, source) }.toArray))
+      registry.map(getSearchHit).toArray))
 
-  private def getSearchHit(id: String, source: Map[String, AnyRef]) = {
+  private def getSearchHit(id: String) =
     SearchHit(
       id,
       RegistryIndex,
@@ -297,10 +195,9 @@ class ElasticsearchCacheUpdateActorSpec
       None,
       None,
       None,
-      source,
+      Map.empty,
       Map.empty,
       Map.empty,
       Map.empty)
-  }
 
 }

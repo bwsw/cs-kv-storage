@@ -18,8 +18,8 @@
 package com.bwsw.cloudstack.storage.kv.manager
 
 import com.bwsw.cloudstack.storage.kv.cache.StorageCache
-import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError, StorageError,
-  UnauthorizedError}
+import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError, StorageError, UnauthorizedError}
+import com.bwsw.cloudstack.storage.kv.util.Clock
 import com.bwsw.cloudstack.storage.kv.util.elasticsearch.RegistryFields._
 import com.bwsw.cloudstack.storage.kv.util.elasticsearch.ScriptOperations._
 import com.bwsw.cloudstack.storage.kv.util.elasticsearch.{DocumentType, RegistryIndex, StorageType, getError}
@@ -34,7 +34,7 @@ import scala.concurrent.Future
   *
   * @param client the client to send requests to Elasticsearch
   */
-class ElasticsearchKvStorageManager(client: HttpClient, cache: StorageCache) extends KvStorageManager {
+class ElasticsearchKvStorageManager(client: HttpClient, cache: StorageCache, clock: Clock) extends KvStorageManager {
 
   import ElasticsearchKvStorageManager._
 
@@ -45,7 +45,8 @@ class ElasticsearchKvStorageManager(client: HttpClient, cache: StorageCache) ext
       secretKey: Array[Char],
       ttl: Long): Future[Either[StorageError, Unit]] = {
     val scriptCode = s"ctx._source.$ExpirationTimestamp = ctx._source" +
-      s".$ExpirationTimestamp - ctx._source.$Ttl + $ttl; ctx._source.$Ttl = $ttl"
+      s".$ExpirationTimestamp - ctx._source.$Ttl + $ttl; ctx._source.$Ttl = $ttl;" +
+      s" ctx._source.$LastUpdated = ${clock.currentTimeMillis}"
     val updateDefinition = update(storageUuid) in RegistryIndex / DocumentType script scriptCode
     process(
       storageUuid,
@@ -55,7 +56,8 @@ class ElasticsearchKvStorageManager(client: HttpClient, cache: StorageCache) ext
   }
 
   def deleteTempStorage(storageUuid: String, secretKey: Array[Char]): Future[Either[StorageError, Unit]] = {
-    val updateDefinition = update(storageUuid) in RegistryIndex / DocumentType doc Deleted -> true
+    val updateDefinition = update(storageUuid) in RegistryIndex / DocumentType doc
+      (Deleted -> true, LastUpdated -> clock.currentTimeMillis)
     process(
       storageUuid,
       secretKey,

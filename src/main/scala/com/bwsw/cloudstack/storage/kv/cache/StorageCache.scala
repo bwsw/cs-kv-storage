@@ -27,7 +27,7 @@ trait StorageCache {
 
   def invalidateAll(): Unit
 
-  def updateAll(values: Map[String, Option[Storage]]): Unit
+  def invalidateAll(keys: Iterable[String]): Unit
 
   def delete(storageUuid: String): Unit
 }

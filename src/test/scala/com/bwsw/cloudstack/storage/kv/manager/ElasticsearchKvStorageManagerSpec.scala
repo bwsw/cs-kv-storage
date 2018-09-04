@@ -20,6 +20,7 @@ package com.bwsw.cloudstack.storage.kv.manager
 import com.bwsw.cloudstack.storage.kv.cache.StorageCache
 import com.bwsw.cloudstack.storage.kv.entity.Storage
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError, UnauthorizedError}
+import com.bwsw.cloudstack.storage.kv.util.Clock
 import com.bwsw.cloudstack.storage.kv.util.elasticsearch.RegistryFields._
 import com.bwsw.cloudstack.storage.kv.util.elasticsearch.ScriptOperations.Updated
 import com.bwsw.cloudstack.storage.kv.util.elasticsearch.{DocumentType, RegistryIndex, StorageType}
@@ -36,16 +37,18 @@ import scala.concurrent.{ExecutionContext, Future}
 class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFactory {
 
   private val cache = mock[StorageCache]
+  private val clock = mock[Clock]
 
   private val storageUuid = "someStorage"
   private val secretKey = "secret".toCharArray
-  private val storage = Storage(storageUuid, StorageType.Temporary, historyEnabled = true, secretKey)
+  private val storage = Storage(storageUuid, StorageType.Temporary, historyEnabled = false, secretKey)
   private val ttl = 300000
   private val exception = new RuntimeException("test exception")
+  private val timestamp = System.currentTimeMillis()
 
   describe("An ElasticsearchStorageManager") {
     implicit val fakeClient: HttpClient = mock[HttpClient]
-    val manager = new ElasticsearchKvStorageManager(fakeClient, cache)
+    val manager = new ElasticsearchKvStorageManager(fakeClient, cache, clock)
 
     describe("(update temp storage ttl)") {
 
@@ -61,6 +64,7 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
           Shards(2, 1, 0),
           None)
         expectUpdateRequest(fakeClient).returning(getRequestSuccessFuture(updateResponse))
+        (clock.currentTimeMillis _).expects().returning(timestamp)
         manager.updateTempStorageTtl(storageUuid, secretKey, ttl).map {
           case Right(_) => succeed
           case _ => fail
@@ -69,6 +73,7 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
 
       it("should return BadRequestError if type of the storage isn't TEMP") {
         expectNotTemporaryStorage
+        (clock.currentTimeMillis _).expects().returning(timestamp)
         manager.updateTempStorageTtl(storageUuid, secretKey, ttl).map {
           case Left(_: BadRequestError) => succeed
           case _ => fail
@@ -77,6 +82,7 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
 
       it("should return NotFoundError if there is no such storage") {
         expectNotFoundStorage
+        (clock.currentTimeMillis _).expects().returning(timestamp)
         manager.updateTempStorageTtl(storageUuid, secretKey, ttl).map {
           case Left(_: NotFoundError) => succeed
           case _ => fail
@@ -87,6 +93,7 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
         expectExistingStorage
         expectUpdateRequest(fakeClient).returning(getRequestFailureFuture(404))
         expectStorageDeletion
+        (clock.currentTimeMillis _).expects().returning(timestamp)
         manager.updateTempStorageTtl(storageUuid, secretKey, ttl).map {
           case Left(_: NotFoundError) => succeed
           case _ => fail
@@ -95,6 +102,7 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
 
       it("should return InternalError if storage retrieval fails") {
         expectStorageCacheFailure
+        (clock.currentTimeMillis _).expects().returning(timestamp)
         manager.updateTempStorageTtl(storageUuid, secretKey, ttl).map {
           case Left(_: InternalError) => succeed
           case _ => fail
@@ -103,16 +111,18 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
 
       it("should return InternalError if the request fails") {
         expectExistingStorage
-        expectUpdateRequest.returning(getRequestFailureFuture(500))
+        expectUpdateRequest.returning(getRequestFailureFuture())
 
+        (clock.currentTimeMillis _).expects().returning(timestamp)
         manager.updateTempStorageTtl(storageUuid, secretKey, ttl).map {
           case Left(_: InternalError) => succeed
           case _ => fail
         }
       }
 
-      it("should return UnauthorizedError if the request fails") {
+      it("should return UnauthorizedError if invalid secret key is provided") {
         expectDifferentSecretKeyStorage
+        (clock.currentTimeMillis _).expects().returning(timestamp)
         manager.updateTempStorageTtl(storageUuid, secretKey, ttl).map {
           case Left(_: UnauthorizedError) => succeed
           case _ => fail
@@ -136,6 +146,7 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
         expectDeleteRequest.returning(getRequestSuccessFuture(updateResponse))
         expectStorageDeletion
 
+        (clock.currentTimeMillis _).expects().returning(timestamp)
         manager.deleteTempStorage(storageUuid, secretKey).map {
           case Right(_) => succeed
           case _ => fail
@@ -144,6 +155,7 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
 
       it("should return BadRequestError if type of the storage isn't TEMP") {
         expectNotTemporaryStorage
+        (clock.currentTimeMillis _).expects().returning(timestamp)
         manager.deleteTempStorage(storageUuid, secretKey).map {
           case Left(_: BadRequestError) => succeed
           case _ => fail
@@ -152,6 +164,7 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
 
       it("should return NotFoundError if there is no such storage in cache") {
         expectNotFoundStorage
+        (clock.currentTimeMillis _).expects().returning(timestamp)
         manager.deleteTempStorage(storageUuid, secretKey).map {
           case Left(_: NotFoundError) => succeed
           case _ => fail
@@ -162,6 +175,7 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
         expectExistingStorage
         expectDeleteRequest.returning(getRequestFailureFuture(404))
         expectStorageDeletion
+        (clock.currentTimeMillis _).expects().returning(timestamp)
         manager.deleteTempStorage(storageUuid, secretKey).map {
           case Left(_: NotFoundError) => succeed
           case _ => fail
@@ -170,8 +184,9 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
 
       it("should return InternalError if the request fails") {
         expectExistingStorage
-        expectDeleteRequest.returning(getRequestFailureFuture(500))
+        expectDeleteRequest.returning(getRequestFailureFuture())
 
+        (clock.currentTimeMillis _).expects().returning(timestamp)
         manager.deleteTempStorage(storageUuid, secretKey).map {
           case Left(_: InternalError) => succeed
           case _ => fail
@@ -180,14 +195,16 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
 
       it("should return InternalError if storage retrieval failed") {
         expectStorageCacheFailure
+        (clock.currentTimeMillis _).expects().returning(timestamp)
         manager.deleteTempStorage(storageUuid, secretKey).map {
           case Left(_: InternalError) => succeed
           case _ => fail
         }
       }
 
-      it("should return UnauthorizedError if the request fails") {
+      it("should return UnauthorizedError if invalid secret key is provided") {
         expectDifferentSecretKeyStorage
+        (clock.currentTimeMillis _).expects().returning(timestamp)
         manager.deleteTempStorage(storageUuid, secretKey).map {
           case Left(_: UnauthorizedError) => succeed
           case _ => fail
@@ -203,7 +220,8 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
       .expects(
         update(storageUuid) in RegistryIndex / DocumentType script
           s"ctx._source.$ExpirationTimestamp = ctx._source" +
-            s".$ExpirationTimestamp - ctx._source.$Ttl + $ttl; ctx._source.$Ttl = $ttl",
+            s".$ExpirationTimestamp - ctx._source.$Ttl + $ttl; ctx._source.$Ttl = $ttl; " +
+            s"ctx._source.$LastUpdated = $timestamp",
         UpdateHttpExecutable,
         *)
   }
@@ -213,7 +231,7 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
       _: HttpExecutable[UpdateDefinition, UpdateResponse],
       _: ExecutionContext))
       .expects(
-        update(storageUuid) in RegistryIndex / DocumentType doc Deleted -> true,
+        update(storageUuid) in RegistryIndex / DocumentType doc (Deleted -> true, LastUpdated -> timestamp),
         UpdateHttpExecutable,
         *)
   }
