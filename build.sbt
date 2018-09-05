@@ -17,7 +17,7 @@
 
 name := "cs-kv-storage"
 
-version := "1.0.1-SNAPSHOT"
+version := "1.0.2-SNAPSHOT"
 
 organization := "com.bwsw"
 organizationName := "Bitworks Software, Ltd."
