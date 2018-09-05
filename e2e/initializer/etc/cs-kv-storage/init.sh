@@ -96,6 +96,11 @@ put "$1/storage-data-temp"
 put "$1/storage-registry/_doc/temp" \
     '{"type": "TEMP", "deleted": false, "history_enabled": false, "ttl": 10000, "expiration_timestamp": 1010000, "secret_key": "secret", "last_updated": 0}'
 
+put "$1/storage-data-temp-deletable"
+
+put "$1/storage-registry/_doc/temp-deletable" \
+    '{"type": "TEMP", "deleted": false, "history_enabled": false, "ttl": 10000, "expiration_timestamp": 1010000, "secret_key": "secret", "last_updated": 0}'
+
 put "$1/storage-data-account"
 
 put "$1/storage-registry/_doc/account" \

@@ -2115,7 +2115,7 @@
 											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"deletable_storage\") + \"/_doc/\" + pm.variables.get(\"some_key\"),",
 											"        method: 'GET'},",
 											"    function (err, res) {",
-											"        pm.test(\"Document is actually deleted\", function () {",
+											"        pm.test(\"Document is not deleted\", function () {",
 											"            pm.expect(res.json().found).to.eql(true);",
 											"        });",
 											"    }",
@@ -2181,7 +2181,7 @@
 											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"deletable_storage\") + \"/_doc/\" + pm.variables.get(\"some_key\"),",
 											"        method: 'GET'},",
 											"    function (err, res) {",
-											"        pm.test(\"Document is actually deleted\", function () {",
+											"        pm.test(\"Document is not deleted\", function () {",
 											"            pm.expect(res.json().found).to.eql(true);",
 											"        });",
 											"    }",
@@ -3818,7 +3818,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "e3acffed-9504-4475-942d-8df377c4ee1a",
+										"id": "c61b0093-be6f-47b2-9046-342cc2de00ae",
 										"type": "text/javascript",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
@@ -3831,7 +3831,7 @@
 											"",
 											"",
 											"pm.sendRequest({",
-											"        url: pm.variables.get(\"es_url\") + \"/storage-registry/_doc/\" + pm.variables.get(\"temp_storage\"),",
+											"        url: pm.variables.get(\"es_url\") + \"/storage-registry/_doc/\" + pm.variables.get(\"temp_deletable_storage\"),",
 											"        method: 'GET'},",
 											"    function (err, res) {",
 											"        pm.test(\"Storage is deleted\", function () {",
@@ -3860,13 +3860,13 @@
 									"raw": ""
 								},
 								"url": {
-									"raw": "{{url}}/storage/{{temp_storage}}",
+									"raw": "{{url}}/storage/{{temp_deletable_storage}}",
 									"host": [
 										"{{url}}"
 									],
 									"path": [
 										"storage",
-										"{{temp_storage}}"
+										"{{temp_deletable_storage}}"
 									]
 								}
 							},
@@ -6487,6 +6487,12 @@
 			"id": "8de4de84-f9c5-475d-8710-d80059b0eb84",
 			"key": "temp_storage",
 			"value": "temp",
+			"type": "string"
+		},
+		{
+			"id": "18d975a3-9ea2-401a-b951-44d762639077",
+			"key": "temp_deletable_storage",
+			"value": "temp-deletable",
 			"type": "string"
 		},
 		{
