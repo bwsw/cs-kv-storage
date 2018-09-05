@@ -59,8 +59,8 @@ class ElasticsearchCacheUpdateActor(implicit inj: Injector)
     val updateStartTimestamp = clock.currentTimeMillis
     val keepAlive = elasticsearchConfig.getScrollKeepAlive
     client.execute {
-      search(RegistryIndex).query(rangeQuery(RegistryFields.LastUpdated)
-                                    .gte(lastUpdateTimestamp - appConfig.getRequestTimeout.toMillis))
+      search(RegistryIndex)
+        .query(rangeQuery(RegistryFields.LastUpdated).gte(lastUpdateTimestamp - appConfig.getRequestTimeout.toMillis))
         .size(elasticsearchConfig.getScrollPageSize)
         .scroll(keepAlive)
         .fetchSource(false)
@@ -72,8 +72,7 @@ class ElasticsearchCacheUpdateActor(implicit inj: Injector)
       case Right(success) =>
         updateValues(success.result.hits)
         if (success.result.scrollId.nonEmpty)
-          scrollAll(success.result.scrollId.get, keepAlive).onComplete(_ =>
-                                                                         lastUpdateTimestamp = updateStartTimestamp)
+          scrollAll(success.result.scrollId.get, keepAlive).onComplete(_ => lastUpdateTimestamp = updateStartTimestamp)
         else
           lastUpdateTimestamp = updateStartTimestamp
     }
@@ -85,7 +84,7 @@ class ElasticsearchCacheUpdateActor(implicit inj: Injector)
     client.execute(searchScroll(scrollId).keepAlive(keepAlive))
       .flatMap {
         case Left(failure) =>
-          log.info("Elasticsearch scroll request failure: {}", failure.error)
+          log.info("Elasticsearch scroll request failure during cache update: {}", failure.error)
           cache.invalidateAll()
           Future()
         case Right(success) =>
@@ -94,7 +93,7 @@ class ElasticsearchCacheUpdateActor(implicit inj: Injector)
               clearScroll(success.result.scrollId.get)
             }.map {
               case Left(failure) =>
-                log.info("Elasticsearch clear scroll request failure: {}", failure.error)
+                log.info("Elasticsearch clear scroll request failure during cache update: {}", failure.error)
                 Future()
               case _ =>
             }
@@ -107,13 +106,6 @@ class ElasticsearchCacheUpdateActor(implicit inj: Injector)
 
   private def updateValues(searchHits: SearchHits): Unit = {
     cache.invalidateAll(searchHits.hits.map(_.id))
-  }
-
-  private def getValue[T](source: Map[String, Any], key: String): T = source.get(key) match {
-    case Some(s) => s.asInstanceOf[T]
-    case None =>
-      cache.invalidateAll()
-      throw new RuntimeException("Invalid result")
   }
 }
 

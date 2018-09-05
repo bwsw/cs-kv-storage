@@ -21,7 +21,7 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.util.Timeout
 import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, ConflictError, NotFoundError, UnauthorizedError}
-import com.bwsw.cloudstack.storage.kv.message.request.KvMultiGetRequest
+import com.bwsw.cloudstack.storage.kv.message.request.{KvMultiGetRequest, _}
 import com.bwsw.cloudstack.storage.kv.processor.KvProcessor
 import com.bwsw.cloudstack.storage.kv.util.elasticsearch.SecretKeyHeader
 import org.json4s.JsonAST.JArray
@@ -31,7 +31,6 @@ import org.scalatra.json.JacksonJsonSupport
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
-import com.bwsw.cloudstack.storage.kv.message.request._
 
 class KvStorageServlet(system: ActorSystem, requestTimeout: FiniteDuration, kvProcessor: KvProcessor, kvActor: ActorRef)
   extends ScalatraServlet

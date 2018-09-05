@@ -44,7 +44,7 @@ class DefaultHistoryRequestActor(implicit inj: Injector)
     case request: KvHistoryGetRequest =>
       storageCache.get(request.storageUuid).flatMap {
         case Some(storage) =>
-          if (request.secretKey.sameElements(storage.secretKey)) {
+          if (request.secretKey == storage.secretKey) {
             if (storage.historyEnabled && storage.storageType != Temporary) {
               historyProcessor.get(
                 request.storageUuid,

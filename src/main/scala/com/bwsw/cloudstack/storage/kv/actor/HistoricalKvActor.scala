@@ -115,7 +115,7 @@ class HistoricalKvActor(implicit inj: Injector)
   protected def process[S <: KvRequest](r: S, producer: (S, Storage) => Future[KvResponse]): Future[KvResponse] = {
     storageCache.get(r.storage).flatMap {
       case Some(storage) =>
-        if (r.secretKey.sameElements(storage.secretKey))
+        if (r.secretKey == storage.secretKey)
           producer.apply(r, storage)
         else
           Future(KvErrorResponse(UnauthorizedError()))

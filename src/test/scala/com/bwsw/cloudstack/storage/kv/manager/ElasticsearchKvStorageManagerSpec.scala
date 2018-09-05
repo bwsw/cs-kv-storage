@@ -86,7 +86,7 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
         }
       }
 
-      it("should return NotFoundError if update request failed with 404 NotFound") {
+      it("should return NotFoundError if update request fails with 404 NotFound") {
         expectExistingStorage
         expectUpdateRequest(fakeClient).returning(getRequestFailureFuture(404))
         expectStorageDeletion
@@ -161,7 +161,7 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
         }
       }
 
-      it("should return NotFoundError if update request failed with 404 NotFound") {
+      it("should return NotFoundError if update request fails with 404 NotFound") {
         expectExistingStorage
         expectDeleteRequest.returning(getRequestFailureFuture(404))
         expectStorageDeletion
@@ -181,7 +181,7 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
         }
       }
 
-      it("should return InternalError if storage retrieval failed") {
+      it("should return InternalError if storage retrieval fails") {
         expectStorageCacheFailure
         manager.deleteTempStorage(storageUuid, secretKey).map {
           case Left(_: InternalError) => succeed
@@ -204,10 +204,9 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
       _: HttpExecutable[UpdateDefinition, UpdateResponse],
       _: ExecutionContext))
       .expects(
-        update(storageUuid) in RegistryIndex / DocumentType script
-          s"ctx._source.$ExpirationTimestamp = ctx._source" +
-            s".$ExpirationTimestamp - ctx._source.$Ttl + $ttl; ctx._source.$Ttl = $ttl; " +
-            s"ctx._source.$LastUpdated = ctx._now",
+        update(storageUuid) in RegistryIndex / DocumentType script {
+          script(ElasticsearchKvStorageManager.UpdateTtlScript).params(Map(Ttl -> ttl))
+        },
         UpdateHttpExecutable,
         *)
   }
@@ -217,8 +216,7 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
       _: HttpExecutable[UpdateDefinition, UpdateResponse],
       _: ExecutionContext))
       .expects(
-        update(storageUuid) in RegistryIndex / DocumentType script
-          s"ctx._source.$Deleted = true; ctx._source.$LastUpdated = ctx._now",
+        update(storageUuid) in RegistryIndex / DocumentType script ElasticsearchKvStorageManager.DeleteScript,
         UpdateHttpExecutable,
         *)
   }

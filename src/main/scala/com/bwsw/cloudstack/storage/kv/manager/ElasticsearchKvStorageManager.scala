@@ -45,25 +45,15 @@ class ElasticsearchKvStorageManager(client: HttpClient, cache: StorageCache, clo
       storageUuid: String,
       secretKey: String,
       ttl: Long): Future[Either[StorageError, Unit]] = {
-    val scriptCode = s"ctx._source.$ExpirationTimestamp = ctx._source" +
-      s".$ExpirationTimestamp - ctx._source.$Ttl + $ttl; ctx._source.$Ttl = $ttl;" +
-      s" ctx._source.$LastUpdated = ctx._now"
-    val updateDefinition = update(storageUuid) in RegistryIndex / DocumentType script scriptCode
-    process(
-      storageUuid,
-      secretKey,
-      updateDefinition,
-      delete = false)
+    val updateDefinition = update(storageUuid) in RegistryIndex / DocumentType script {
+      script(UpdateTtlScript).params(Map(Ttl -> ttl))
+    }
+    process(storageUuid, secretKey, updateDefinition, delete = false)
   }
 
   def deleteTempStorage(storageUuid: String, secretKey: String): Future[Either[StorageError, Unit]] = {
-    val scriptCode = s"ctx._source.$Deleted = true; ctx._source.$LastUpdated = ctx._now"
-    val updateDefinition = update(storageUuid) in RegistryIndex / DocumentType script scriptCode
-    process(
-      storageUuid,
-      secretKey,
-      updateDefinition,
-      delete = true)
+    val updateDefinition = update(storageUuid) in RegistryIndex / DocumentType script DeleteScript
+    process(storageUuid, secretKey, updateDefinition, delete = true)
   }
 
   private def process(
@@ -107,5 +97,11 @@ class ElasticsearchKvStorageManager(client: HttpClient, cache: StorageCache, clo
 
 /** ElasticsearchKvStorageManager companion object. **/
 object ElasticsearchKvStorageManager {
+
   private val logger = LoggerFactory.getLogger(getClass)
+
+  val UpdateTtlScript: String = s"ctx._source.$ExpirationTimestamp = ctx._source.$ExpirationTimestamp - ctx._source" +
+    s".$Ttl + params.$Ttl; ctx._source.$Ttl = params.$Ttl; ctx._source.$LastUpdated = ctx._now"
+
+  val DeleteScript = s"ctx._source.$Deleted = true; ctx._source.$LastUpdated = ctx._now"
 }

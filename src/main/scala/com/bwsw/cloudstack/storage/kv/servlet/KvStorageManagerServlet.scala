@@ -18,7 +18,7 @@
 package com.bwsw.cloudstack.storage.kv.servlet
 
 import akka.actor.ActorSystem
-import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError, UnauthorizedError}
+import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, NotFoundError, UnauthorizedError}
 import com.bwsw.cloudstack.storage.kv.manager.KvStorageManager
 import com.bwsw.cloudstack.storage.kv.util.elasticsearch.SecretKeyHeader
 import org.scalatra._

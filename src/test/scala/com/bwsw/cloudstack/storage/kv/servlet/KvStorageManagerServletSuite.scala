@@ -18,7 +18,8 @@
 package com.bwsw.cloudstack.storage.kv.servlet
 
 import akka.actor.ActorSystem
-import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError, StorageError}
+import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError, StorageError,
+  UnauthorizedError}
 import com.bwsw.cloudstack.storage.kv.manager.KvStorageManager
 import com.bwsw.cloudstack.storage.kv.util.elasticsearch.SecretKeyHeader
 import org.scalamock.scalatest.MockFactory
@@ -37,8 +38,8 @@ class KvStorageManagerServletSuite
   private val system = ActorSystem()
   private val manager = mock[KvStorageManager]
   private val storageUuid = "somestorage"
-  private val secretKey = "secret".toCharArray
-  private val headers = Map(SecretKeyHeader -> secretKey.mkString)
+  private val secretKey = "secret"
+  private val headers = Map(SecretKeyHeader -> secretKey)
   private val path = "/storage/" + storageUuid
   private val ttl = 300000
   private val ttlParams = Seq(("ttl", ttl.toString))
@@ -50,7 +51,7 @@ class KvStorageManagerServletSuite
 
     describe("(update temp storage ttl)") {
       def testProvidesError(error: StorageError, status: Int) = {
-        (manager.updateTempStorageTtl(_: String, _: String, _: Long)).expects(storageUuid, *, ttl)
+        (manager.updateTempStorageTtl(_: String, _: String, _: Long)).expects(storageUuid, secretKey, ttl)
           .returning(Future(Left(error))).once
 
         put(path, ttlParams, headers) {
@@ -59,7 +60,7 @@ class KvStorageManagerServletSuite
       }
 
       it("should update the value of ttl field in storage registry") {
-        (manager.updateTempStorageTtl(_: String, _: String, _: Long)).expects(storageUuid, *, ttl)
+        (manager.updateTempStorageTtl(_: String, _: String, _: Long)).expects(storageUuid, secretKey, ttl)
           .returning(Future(Right(()))).once
         put(path, ttlParams, headers) {
           status should equal(200)
@@ -84,6 +85,10 @@ class KvStorageManagerServletSuite
         testProvidesError(BadRequestError(), 400)
       }
 
+      it("should return 401 Unauthorized if the manager returns UnauthorizedError") {
+        testProvidesError(UnauthorizedError(), 401)
+      }
+
       it("should return 404 NotFound if the manager returns NotFoundError") {
         testProvidesError(NotFoundError(), 404)
       }
@@ -102,7 +107,7 @@ class KvStorageManagerServletSuite
 
   describe("(delete temp storage)") {
     def testProvidesError(error: StorageError, status: Int) = {
-      (manager.deleteTempStorage(_: String, _: String)).expects(storageUuid, *)
+      (manager.deleteTempStorage(_: String, _: String)).expects(storageUuid, secretKey)
         .returning(Future(Left(error))).once
 
       delete(path, Seq(), headers) {
@@ -111,7 +116,7 @@ class KvStorageManagerServletSuite
     }
 
     it("should delete the storage") {
-      (manager.deleteTempStorage(_: String, _: String)).expects(storageUuid, *)
+      (manager.deleteTempStorage(_: String, _: String)).expects(storageUuid, secretKey)
         .returning(Future(Right(()))).once
       delete(path, Seq(), headers) {
         status should equal(200)
@@ -120,6 +125,10 @@ class KvStorageManagerServletSuite
 
     it("should return 400 BadRequest if the manager returns BadRequestError") {
       testProvidesError(BadRequestError(), 400)
+    }
+
+    it("should return 401 Unauthorized if the manager returns UnauthorizedError") {
+      testProvidesError(UnauthorizedError(), 401)
     }
 
     it("should return 404 NotFound if the manager returns NotFoundError") {

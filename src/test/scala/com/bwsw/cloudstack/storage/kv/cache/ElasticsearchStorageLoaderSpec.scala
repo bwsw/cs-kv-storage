@@ -37,14 +37,14 @@ class ElasticsearchStorageLoaderSpec extends AsyncFunSpec with AsyncMockFactory 
     RegistryFields.Type -> storage.storageType,
     RegistryFields.HistoryEnabled -> storage.historyEnabled,
     RegistryFields.Deleted -> false,
-    RegistryFields.SecretKey -> storage.secretKey.mkString
+    RegistryFields.SecretKey -> storage.secretKey
   ).asInstanceOf[Map[String, AnyRef]]
 
   private val deletedSource = Map(
     RegistryFields.Type -> storage.storageType,
     RegistryFields.HistoryEnabled -> storage.historyEnabled,
     RegistryFields.Deleted -> true,
-    RegistryFields.SecretKey -> storage.secretKey.mkString
+    RegistryFields.SecretKey -> storage.secretKey
   ).asInstanceOf[Map[String, AnyRef]]
 
   describe("An ElasticsearchStorageLoader") {
