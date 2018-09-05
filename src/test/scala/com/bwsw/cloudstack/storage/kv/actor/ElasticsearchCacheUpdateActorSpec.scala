@@ -54,7 +54,8 @@ class ElasticsearchCacheUpdateActorSpec
   private implicit val httpClient: HttpClient = mock[HttpClient]
   private val storageCache = mock[StorageCache]
 
-  private val updateTimeout = 500.millis
+  private val updateTimeout = 1000.millis
+  private val updateTimeoutScale = 1.9
   private val timestamp = System.currentTimeMillis()
   private val timeout = 3.seconds
   private val scrollKeepAlive = "1m"
@@ -77,7 +78,6 @@ class ElasticsearchCacheUpdateActorSpec
       it("should update cache in one request") {
         (appConfig.getCacheUpdateTime _).expects().returning(updateTimeout)
         (clock.currentTimeMillis _).expects().returning(timestamp)
-        val elasticsearchCacheUpdateActor = system.actorOf(Props(new ElasticsearchCacheUpdateActor))
 
         val updateTimestamp = Promise[Boolean]
         expectSearch().returning(getRequestSuccessFuture(getSearchResponse(List(storage1.uuid), 1)))
@@ -86,7 +86,9 @@ class ElasticsearchCacheUpdateActorSpec
             updateTimestamp.success(true)
             ()
         }
-        eventually(timeout(scaled(updateTimeout * 1.9))) {
+
+        val elasticsearchCacheUpdateActor = system.actorOf(Props(new ElasticsearchCacheUpdateActor))
+        eventually(timeout(scaled(updateTimeout * updateTimeoutScale))) {
           updateTimestamp.isCompleted should be(true)
         }
         system.stop(elasticsearchCacheUpdateActor)
@@ -95,7 +97,6 @@ class ElasticsearchCacheUpdateActorSpec
       it("should update cache using scroll") {
         (appConfig.getCacheUpdateTime _).expects().returning(updateTimeout)
         (clock.currentTimeMillis _).expects().returning(timestamp)
-        val elasticsearchCacheUpdateActor = system.actorOf(Props(new ElasticsearchCacheUpdateActor))
 
         val updateTimestamp = Promise[Boolean]
         expectSearch()
@@ -112,7 +113,9 @@ class ElasticsearchCacheUpdateActorSpec
             updateTimestamp.success(true)
             ()
         }
-        eventually(timeout(scaled(updateTimeout * 1.4))) {
+
+        val elasticsearchCacheUpdateActor = system.actorOf(Props(new ElasticsearchCacheUpdateActor))
+        eventually(timeout(scaled(updateTimeout * updateTimeoutScale))) {
           updateTimestamp.isCompleted should be(true)
         }
         system.stop(elasticsearchCacheUpdateActor)
@@ -121,14 +124,15 @@ class ElasticsearchCacheUpdateActorSpec
       it("should invalidate cache if update fails") {
         (appConfig.getCacheUpdateTime _).expects().returning(updateTimeout)
         (clock.currentTimeMillis _).expects().returning(timestamp)
-        val elasticsearchCacheUpdateActor = system.actorOf(Props(new ElasticsearchCacheUpdateActor))
 
         val updateTimestamp = Promise[Boolean]
         expectSearch().returning(getRequestFailureFuture())
         (storageCache.invalidateAll: () => Unit).expects().onCall { () =>
           updateTimestamp.success(true)
         }
-        eventually(timeout(scaled(updateTimeout * 1.4))) {
+
+        val elasticsearchCacheUpdateActor = system.actorOf(Props(new ElasticsearchCacheUpdateActor))
+        eventually(timeout(scaled(updateTimeout * updateTimeoutScale))) {
           updateTimestamp.isCompleted should be(true)
         }
         system.stop(elasticsearchCacheUpdateActor)
@@ -137,7 +141,6 @@ class ElasticsearchCacheUpdateActorSpec
       it("should invalidate cache if update fails on scroll") {
         (appConfig.getCacheUpdateTime _).expects().returning(updateTimeout)
         (clock.currentTimeMillis _).expects().returning(timestamp)
-        val elasticsearchCacheUpdateActor = system.actorOf(Props(new ElasticsearchCacheUpdateActor))
 
         val updateTimestamp = Promise[Boolean]
         expectSearch()
@@ -149,7 +152,9 @@ class ElasticsearchCacheUpdateActorSpec
         (storageCache.invalidateAll: () => Unit).expects().onCall { () =>
           updateTimestamp.success(true)
         }
-        eventually(timeout(scaled(updateTimeout * 1.4))) {
+
+        val elasticsearchCacheUpdateActor = system.actorOf(Props(new ElasticsearchCacheUpdateActor))
+        eventually(timeout(scaled(updateTimeout * updateTimeoutScale))) {
           updateTimestamp.isCompleted should be(true)
         }
         system.stop(elasticsearchCacheUpdateActor)
