@@ -106,6 +106,8 @@ where `<tag>`, `<path to jar with dependencies>`, `<port>` and `<config.path>` s
 
 ## Storage operations
 
+All operations require a valid `Secret-Key` header.
+
 * [Get the value by the key](#get-the-value-by-the-key)
 * [Get values by keys](#get-values-by-keys)
 * [Set the value for the key](#set-the-value-for-the-key)
@@ -322,6 +324,8 @@ POST /clear/<storage UUID>
 
 ### Search and list history records
 
+`Secret-Key` header is mandatory.
+
 #### Request
 
 ```
@@ -413,6 +417,8 @@ Content-Type: application/json
 | 500 | The request can not be processed because of an internal error. |
 
 ## Storage management
+
+All operations require a valid `Secret-Key` header.
 
 * [Update storage TTL](#update-storage-ttl)
 * [Delete the storage](#delete-the-storage)
