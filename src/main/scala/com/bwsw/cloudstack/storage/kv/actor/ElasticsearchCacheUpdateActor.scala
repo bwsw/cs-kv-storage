@@ -51,7 +51,7 @@ class ElasticsearchCacheUpdateActor(implicit inj: Injector)
 
   override def receive: Receive = {
     case UpdateTimeout =>
-      log.info("{}: update storage cache by timeout.", getClass.getName)
+      log.info("{}: update storage cache by timeout", getClass.getName)
       update()
   }
 
