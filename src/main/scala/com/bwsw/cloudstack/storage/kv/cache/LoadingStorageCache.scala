@@ -19,7 +19,6 @@ package com.bwsw.cloudstack.storage.kv.cache
 
 import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
 import com.bwsw.cloudstack.storage.kv.entity.Storage
-import com.bwsw.cloudstack.storage.kv.util.elasticsearch.StorageType.Temporary
 import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -35,15 +34,16 @@ class LoadingStorageCache(conf: AppConfig, loader: StorageLoader) extends Storag
       .maximumSize(conf.getMaxCacheSize)
       .buildAsyncFuture(loader.load)
 
-  def isHistoryEnabled(storageUuid: String): Future[Option[Boolean]] = {
-    cache.get(storageUuid).map {
-      case Some(storage) => Some(storage.historyEnabled && storage.storageType != Temporary)
-      case None => None
-    }
-  }
-
   def get(storageUuid: String): Future[Option[Storage]] = {
     cache.get(storageUuid)
+  }
+
+  def invalidateAll(): Unit = {
+    cache.synchronous.invalidateAll()
+  }
+
+  def invalidateAll(keys: Iterable[String]): Unit = {
+    cache.synchronous.invalidateAll(keys)
   }
 
   def delete(storageUuid: String): Unit = {

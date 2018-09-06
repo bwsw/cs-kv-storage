@@ -45,7 +45,7 @@ class BufferedHistoryKvActorSpec
 
   private val historyProcessor = mock[HistoryProcessor]
   private val appConf = mock[AppConfig]
-  private val storage = Storage("someStorage", StorageType.Account, historyEnabled = true)
+  private val storage = Storage("someStorage", StorageType.Account, historyEnabled = true, "secret")
   private val someKey = "someKey"
   private val someValue = "someValue"
   private val timestamp = System.currentTimeMillis()
@@ -65,7 +65,7 @@ class BufferedHistoryKvActorSpec
 
     describe("(KvHistory)") {
 
-      def test(flushSize: Int, verifyTimeoutFactor: Double) = {
+      def test(flushSize: Int, verifyTimeoutFactor: Double): Unit = {
         (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout).anyNumberOfTimes
         (appConf.getFlushHistorySize _).expects().returning(flushSize).anyNumberOfTimes
         val historyLogged = Promise[Boolean]
@@ -78,7 +78,7 @@ class BufferedHistoryKvActorSpec
         system.stop(bufferedHistoryKvActor)
       }
 
-      def testRetry(flushSize: Int) = {
+      def testRetry(flushSize: Int): Unit = {
         (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout).anyNumberOfTimes
         (appConf.getFlushHistorySize _).expects().returning(flushSize).anyNumberOfTimes
         (appConf.getHistoryRetryLimit _).expects().returning(1)
@@ -119,7 +119,7 @@ class BufferedHistoryKvActorSpec
 
     describe("(KvHistoryBulk)") {
 
-      def test(flushSizeFactor: Int, verifyTimeoutFactor: Double) = {
+      def test(flushSizeFactor: Int, verifyTimeoutFactor: Double): Unit = {
         (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout).anyNumberOfTimes
         (appConf.getFlushHistorySize _).expects().returning(historyBulk.values.size * flushSizeFactor).anyNumberOfTimes
         val historyLogged = Promise[Boolean]
@@ -132,7 +132,7 @@ class BufferedHistoryKvActorSpec
         system.stop(bufferedHistoryKvActor)
       }
 
-      def testRetry(flushSizeFactor: Int) = {
+      def testRetry(flushSizeFactor: Int): Unit = {
         (appConf.getFlushHistoryTimeout _).expects().returning(flushTimeout).anyNumberOfTimes
         (appConf.getFlushHistorySize _).expects().returning(historyBulk.values.size * flushSizeFactor).anyNumberOfTimes
 

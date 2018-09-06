@@ -32,17 +32,19 @@ import scala.concurrent.ExecutionContext
 class ElasticsearchStorageLoaderSpec extends AsyncFunSpec with AsyncMockFactory {
 
   private val storageUuid = "someStorage"
-  private val storage = Storage(storageUuid, StorageType.Account, historyEnabled = true)
+  private val storage = Storage(storageUuid, StorageType.Account, historyEnabled = true, "secret")
   private val source = Map(
     RegistryFields.Type -> storage.storageType,
     RegistryFields.HistoryEnabled -> storage.historyEnabled,
-    RegistryFields.Deleted -> false
+    RegistryFields.Deleted -> false,
+    RegistryFields.SecretKey -> storage.secretKey
   ).asInstanceOf[Map[String, AnyRef]]
 
   private val deletedSource = Map(
     RegistryFields.Type -> storage.storageType,
     RegistryFields.HistoryEnabled -> storage.historyEnabled,
-    RegistryFields.Deleted -> true
+    RegistryFields.Deleted -> true,
+    RegistryFields.SecretKey -> storage.secretKey
   ).asInstanceOf[Map[String, AnyRef]]
 
   describe("An ElasticsearchStorageLoader") {

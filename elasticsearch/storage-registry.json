@@ -37,6 +37,13 @@
         },
         "expiration_timestamp": {
           "type": "long"
+        },
+        "last_updated": {
+          "type": "long"
+        },
+        "secret_key": {
+          "type": "keyword",
+          "index": false
         }
       }
     }

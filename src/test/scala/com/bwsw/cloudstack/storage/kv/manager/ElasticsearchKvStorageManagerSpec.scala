@@ -18,11 +18,12 @@
 package com.bwsw.cloudstack.storage.kv.manager
 
 import com.bwsw.cloudstack.storage.kv.cache.StorageCache
-import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError}
+import com.bwsw.cloudstack.storage.kv.entity.Storage
+import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError, UnauthorizedError}
+import com.bwsw.cloudstack.storage.kv.util.Clock
 import com.bwsw.cloudstack.storage.kv.util.elasticsearch.RegistryFields._
-import com.bwsw.cloudstack.storage.kv.util.elasticsearch.ScriptOperations.{NoOp, Updated}
-import com.bwsw.cloudstack.storage.kv.util.elasticsearch.StorageType.Temporary
-import com.bwsw.cloudstack.storage.kv.util.elasticsearch.{DocumentType, RegistryIndex}
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch.ScriptOperations.Updated
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch.{DocumentType, RegistryIndex, StorageType}
 import com.bwsw.cloudstack.storage.kv.util.test.{getRequestFailureFuture, getRequestSuccessFuture}
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.update.UpdateResponse
@@ -31,66 +32,92 @@ import com.sksamuel.elastic4s.update.UpdateDefinition
 import org.scalamock.scalatest.AsyncMockFactory
 import org.scalatest.AsyncFunSpec
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFactory {
 
-  private val storage = "someStorage"
+  private val cache = mock[StorageCache]
+  private val clock = mock[Clock]
+
+  private val storageUuid = "someStorage"
+  private val secretKey = "secret"
+  private val storage = Storage(storageUuid, StorageType.Temporary, historyEnabled = false, secretKey)
   private val ttl = 300000
+  private val exception = new RuntimeException("test exception")
+  private val timestamp = System.currentTimeMillis()
 
   describe("An ElasticsearchStorageManager") {
     implicit val fakeClient: HttpClient = mock[HttpClient]
-    val cache = mock[StorageCache]
-    val manager = new ElasticsearchKvStorageManager(fakeClient, cache)
+    val manager = new ElasticsearchKvStorageManager(fakeClient, cache, clock)
 
     describe("(update temp storage ttl)") {
 
       it("should update the value of ttl field in storage registry") {
+        expectExistingStorage
         val updateResponse = UpdateResponse(
           RegistryIndex,
           DocumentType,
-          storage,
+          storageUuid,
           2,
           Updated,
           forcedRefresh = false,
           Shards(2, 1, 0),
           None)
         expectUpdateRequest(fakeClient).returning(getRequestSuccessFuture(updateResponse))
-        manager.updateTempStorageTtl(storage, ttl).map {
+        manager.updateTempStorageTtl(storageUuid, secretKey, ttl).map {
           case Right(_) => succeed
           case _ => fail
         }
       }
 
       it("should return BadRequestError if type of the storage isn't TEMP") {
-        val updateResponse = UpdateResponse(
-          RegistryIndex,
-          DocumentType,
-          storage,
-          2,
-          NoOp,
-          forcedRefresh = false,
-          Shards(2, 1, 0),
-          None)
-        expectUpdateRequest(fakeClient).returning(getRequestSuccessFuture(updateResponse))
-        manager.updateTempStorageTtl(storage, ttl).map {
+        expectNotTemporaryStorage
+        manager.updateTempStorageTtl(storageUuid, secretKey, ttl).map {
           case Left(_: BadRequestError) => succeed
           case _ => fail
         }
       }
 
       it("should return NotFoundError if there is no such storage") {
-        expectUpdateRequest.returning(getRequestFailureFuture(404))
-        manager.updateTempStorageTtl(storage, ttl).map {
+        expectNotFoundStorage
+        manager.updateTempStorageTtl(storageUuid, secretKey, ttl).map {
           case Left(_: NotFoundError) => succeed
           case _ => fail
         }
       }
 
-      it("should return InternalError if the request fails") {
-        expectUpdateRequest.returning(getRequestFailureFuture(500))
-        manager.updateTempStorageTtl(storage, ttl).map {
+      it("should return NotFoundError if update request fails with 404 NotFound") {
+        expectExistingStorage
+        expectUpdateRequest(fakeClient).returning(getRequestFailureFuture(404))
+        expectStorageDeletion
+        manager.updateTempStorageTtl(storageUuid, secretKey, ttl).map {
+          case Left(_: NotFoundError) => succeed
+          case _ => fail
+        }
+      }
+
+      it("should return InternalError if storage retrieval fails") {
+        expectStorageCacheFailure
+        manager.updateTempStorageTtl(storageUuid, secretKey, ttl).map {
           case Left(_: InternalError) => succeed
+          case _ => fail
+        }
+      }
+
+      it("should return InternalError if the request fails") {
+        expectExistingStorage
+        expectUpdateRequest.returning(getRequestFailureFuture())
+
+        manager.updateTempStorageTtl(storageUuid, secretKey, ttl).map {
+          case Left(_: InternalError) => succeed
+          case _ => fail
+        }
+      }
+
+      it("should return UnauthorizedError if invalid secret key is provided") {
+        expectDifferentSecretKeyStorage
+        manager.updateTempStorageTtl(storageUuid, secretKey, ttl).map {
+          case Left(_: UnauthorizedError) => succeed
           case _ => fail
         }
       }
@@ -99,57 +126,73 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
     describe("(delete temp storage)") {
 
       it("should mark the storage as deleted in a registry") {
+        expectExistingStorage
         val updateResponse = UpdateResponse(
           RegistryIndex,
           DocumentType,
-          storage,
+          storageUuid,
           2,
           Updated,
           forcedRefresh = false,
           Shards(2, 1, 0),
           None)
-
         expectDeleteRequest.returning(getRequestSuccessFuture(updateResponse))
-        (cache.delete _).expects(storage).returning(())
+        expectStorageDeletion
 
-        manager.deleteTempStorage(storage).map {
+        manager.deleteTempStorage(storageUuid, secretKey).map {
           case Right(_) => succeed
           case _ => fail
         }
       }
 
       it("should return BadRequestError if type of the storage isn't TEMP") {
-        val updateResponse = UpdateResponse(
-          RegistryIndex,
-          DocumentType,
-          storage,
-          2,
-          NoOp,
-          forcedRefresh = false,
-          Shards(2, 1, 0),
-          None)
-
-        expectDeleteRequest.returning(getRequestSuccessFuture(updateResponse))
-
-        manager.deleteTempStorage(storage).map {
+        expectNotTemporaryStorage
+        manager.deleteTempStorage(storageUuid, secretKey).map {
           case Left(_: BadRequestError) => succeed
           case _ => fail
         }
       }
 
-      it("should return NotFoundError if there is no such storage in registry") {
+      it("should return NotFoundError if there is no such storage in cache") {
+        expectNotFoundStorage
+        manager.deleteTempStorage(storageUuid, secretKey).map {
+          case Left(_: NotFoundError) => succeed
+          case _ => fail
+        }
+      }
+
+      it("should return NotFoundError if update request fails with 404 NotFound") {
+        expectExistingStorage
         expectDeleteRequest.returning(getRequestFailureFuture(404))
-        manager.deleteTempStorage(storage).map {
+        expectStorageDeletion
+        manager.deleteTempStorage(storageUuid, secretKey).map {
           case Left(_: NotFoundError) => succeed
           case _ => fail
         }
       }
 
       it("should return InternalError if the request fails") {
-        expectDeleteRequest.returning(getRequestFailureFuture(500))
+        expectExistingStorage
+        expectDeleteRequest.returning(getRequestFailureFuture())
 
-        manager.deleteTempStorage(storage).map {
+        manager.deleteTempStorage(storageUuid, secretKey).map {
           case Left(_: InternalError) => succeed
+          case _ => fail
+        }
+      }
+
+      it("should return InternalError if storage retrieval fails") {
+        expectStorageCacheFailure
+        manager.deleteTempStorage(storageUuid, secretKey).map {
+          case Left(_: InternalError) => succeed
+          case _ => fail
+        }
+      }
+
+      it("should return UnauthorizedError if invalid secret key is provided") {
+        expectDifferentSecretKeyStorage
+        manager.deleteTempStorage(storageUuid, secretKey).map {
+          case Left(_: UnauthorizedError) => succeed
           case _ => fail
         }
       }
@@ -161,10 +204,9 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
       _: HttpExecutable[UpdateDefinition, UpdateResponse],
       _: ExecutionContext))
       .expects(
-        update(storage) in RegistryIndex / DocumentType script
-          s"if (ctx._source.$Type == '$Temporary') " +
-            s"{ ctx._source.$ExpirationTimestamp = ctx._source.$ExpirationTimestamp - ctx._source.$Ttl + " +
-            s"$ttl; ctx._source.$Ttl = $ttl } else { ctx.op='$NoOp' }",
+        update(storageUuid) in RegistryIndex / DocumentType script {
+          script(ElasticsearchKvStorageManager.UpdateTtlScript).params(Map(Ttl -> ttl))
+        },
         UpdateHttpExecutable,
         *)
   }
@@ -174,10 +216,32 @@ class ElasticsearchKvStorageManagerSpec extends AsyncFunSpec with AsyncMockFacto
       _: HttpExecutable[UpdateDefinition, UpdateResponse],
       _: ExecutionContext))
       .expects(
-        update(storage) in RegistryIndex / DocumentType script
-          s"if (ctx._source.$Type == '$Temporary') " +
-            s"{ ctx._source.$Deleted = true } else { ctx.op='$NoOp' }",
+        update(storageUuid) in RegistryIndex / DocumentType script ElasticsearchKvStorageManager.DeleteScript,
         UpdateHttpExecutable,
         *)
+  }
+
+  private def expectExistingStorage = {
+    (cache.get _).expects(storageUuid).returning(Future(Some(storage)))
+  }
+
+  private def expectNotTemporaryStorage = {
+    (cache.get _).expects(storageUuid).returning(Future(Some(storage.copy(storageType = StorageType.Account))))
+  }
+
+  private def expectNotFoundStorage = {
+    (cache.get _).expects(storageUuid).returning(Future(None))
+  }
+
+  private def expectStorageCacheFailure = {
+    (cache.get _).expects(storageUuid).returning(Future.failed(exception))
+  }
+
+  private def expectDifferentSecretKeyStorage = {
+    (cache.get _).expects(storageUuid).returning(Future(Some(storage.copy(secretKey = "anotherSecret"))))
+  }
+
+  private def expectStorageDeletion = {
+    (cache.delete _).expects(storageUuid)
   }
 }

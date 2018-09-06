@@ -17,4 +17,4 @@
 
 package com.bwsw.cloudstack.storage.kv.message.request
 
-case class KvDeleteRequest(storage: String, key: String) extends KvRequest
+case class KvDeleteRequest(storage: String, secretKey: String, key: String) extends KvRequest

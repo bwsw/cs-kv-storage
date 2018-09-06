@@ -17,7 +17,7 @@
 
 package com.bwsw.cloudstack.storage.kv.app
 
-import akka.actor.ActorSystem
+import akka.actor.{ActorRef, ActorSystem}
 import com.bwsw.cloudstack.storage.kv.actor.{HealthActor, HistoryRequestActor, KvActor}
 import com.bwsw.cloudstack.storage.kv.configuration.AppConfig
 import com.bwsw.cloudstack.storage.kv.manager.KvStorageManager
@@ -39,6 +39,8 @@ class ScalatraBootstrap extends LifeCycle {
   private val kvActor = injectActorRef[KvActor]
   private val appConfig = inject[AppConfig]
   private val historyRequestActor = injectActorRef[HistoryRequestActor]
+  // to init an actor to update the cache
+  private val cacheUpdateActor = inject[ActorRef]('cacheUpdateActor)
 
   override def init(context: ServletContext) {
     context.mount(new KvStorageManagerServlet(system, kvManager), "/storage/*")

@@ -24,6 +24,7 @@ import com.bwsw.cloudstack.storage.kv.message.request._
 import com.bwsw.cloudstack.storage.kv.mock.MockActor
 import com.bwsw.cloudstack.storage.kv.mock.MockActor.ResponsiveExpectation
 import com.bwsw.cloudstack.storage.kv.processor.KvProcessor
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch.SecretKeyHeader
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.FunSpecLike
 import org.scalatra.test.scalatest._
@@ -43,51 +44,70 @@ class KvStorageServletSuite extends ScalatraSuite with FunSpecLike with MockFact
   private val jsonKeyValues = "{\"key1\":\"value1\",\"key2\":\"value2\",\"key3\":\"value3\"}"
   private val jsonNullValues = "{\"key1\":null,\"key2\":null,\"key3\":null}"
   private val jsonKeyResult = "{\"key1\":true,\"key2\":true,\"key3\":true}"
-  private val storage = "someStorage"
+  private val storageUuid = "someStorage"
+  private val secretKey = "secret"
   private val internalError = Left(InternalError("some reason"))
   private val notFoundError = Left(NotFoundError())
-  private val jsonHeaders = Map("Content-Type" -> "application/json")
-  private val textHeaders = Map("Content-Type" -> "text/plain")
+  private val unathorizedError = Left(UnauthorizedError())
+  private val commonHeaders = Map(SecretKeyHeader -> secretKey)
+  private val jsonHeaders = Map("Content-Type" -> "application/json") ++ commonHeaders
+  private val textHeaders = Map("Content-Type" -> "text/plain") ++ commonHeaders
 
   describe("a KvStorageServlet") {
     addServlet(new KvStorageServlet(system, 1.second, processor, kvActor), "/*")
 
     describe("(get by key)") {
-      val path = s"/get/$storage/$someKey"
+      val path = s"/get/$storageUuid/$someKey"
 
       it("should return the value if the key exists") {
         kvActor.underlyingActor
-          .clearAndExpect(ResponsiveExpectation(KvGetRequest(storage, someKey), () => Right(someValue)))
-        get(path, Seq(), Map()) {
+          .clearAndExpect(ResponsiveExpectation(KvGetRequest(storageUuid, secretKey, someKey), () => Right(someValue)))
+        get(path, Seq(), commonHeaders) {
           status should equal(200)
           body should equal(someValue)
           response.getContentType should include("text/plain")
         }
       }
 
+      it("should return 401 Unauthorized if no Secret-Key header provided") {
+        get(path, Seq(), Map()) {
+          status should equal(401)
+          body should equal("")
+        }
+      }
+
+      it("should return 401 Unauthorized if the secret key is invalid") {
+        kvActor.underlyingActor
+          .clearAndExpect(ResponsiveExpectation(KvGetRequest(storageUuid, secretKey, someKey), () => unathorizedError))
+        get(path, Seq(), commonHeaders) {
+          status should equal(401)
+          body should equal("")
+        }
+      }
+
       it("should return 404 Not Found if key or storage does not exist") {
         kvActor.underlyingActor
-          .clearAndExpect(ResponsiveExpectation(KvGetRequest(storage, someKey), () => notFoundError))
-        get(path, Seq(), Map()) {
+          .clearAndExpect(ResponsiveExpectation(KvGetRequest(storageUuid, secretKey, someKey), () => notFoundError))
+        get(path, Seq(), commonHeaders) {
           status should equal(404)
         }
       }
 
       it("should return 500 Internal Server Error if request processing fails") {
         kvActor.underlyingActor
-          .clearAndExpect(ResponsiveExpectation(KvGetRequest(storage, someKey), () => internalError))
-        get(path, Seq(), Map()) {
+          .clearAndExpect(ResponsiveExpectation(KvGetRequest(storageUuid, secretKey, someKey), () => internalError))
+        get(path, Seq(), commonHeaders) {
           status should equal(500)
         }
       }
     }
 
     describe("(get by keys)") {
-      val path = s"/get/$storage"
+      val path = s"/get/$storageUuid"
 
       def testSuccess(result: Map[String, Option[String]], expectedBody: String) = {
         kvActor.underlyingActor
-          .clearAndExpect(ResponsiveExpectation(KvMultiGetRequest(storage, keys), () => Right(result)))
+          .clearAndExpect(ResponsiveExpectation(KvMultiGetRequest(storageUuid, secretKey, keys), () => Right(result)))
         post(path, jsonKeys, jsonHeaders) {
           status should equal(200)
           body should equal(expectedBody)
@@ -121,9 +141,27 @@ class KvStorageServletSuite extends ScalatraSuite with FunSpecLike with MockFact
         testBadRequest("{\"field\":\"value\"}", jsonHeaders)
       }
 
+      it("should return 401 Unauthorized if no Secret-Key header provided") {
+        post(path, jsonKeys, jsonHeaders - SecretKeyHeader) {
+          status should equal(401)
+          body should equal("")
+        }
+      }
+
+      it("should return 401 Unauthorized if the secret key is invalid") {
+        kvActor.underlyingActor
+          .clearAndExpect(ResponsiveExpectation(
+            KvMultiGetRequest(storageUuid, secretKey, keys),
+            () => unathorizedError))
+        post(path, jsonKeys, jsonHeaders) {
+          status should equal(401)
+          body should equal("")
+        }
+      }
+
       it("should return 404 Not Found if storage does not exist") {
         kvActor.underlyingActor
-          .clearAndExpect(ResponsiveExpectation(KvMultiGetRequest(storage, keys), () => notFoundError))
+          .clearAndExpect(ResponsiveExpectation(KvMultiGetRequest(storageUuid, secretKey, keys), () => notFoundError))
         post(path, jsonKeys, jsonHeaders) {
           status should equal(404)
         }
@@ -131,7 +169,7 @@ class KvStorageServletSuite extends ScalatraSuite with FunSpecLike with MockFact
 
       it("should return 500 Internal Server Error if request processing fails") {
         kvActor.underlyingActor
-          .clearAndExpect(ResponsiveExpectation(KvMultiGetRequest(storage, keys), () => internalError))
+          .clearAndExpect(ResponsiveExpectation(KvMultiGetRequest(storageUuid, secretKey, keys), () => internalError))
         post(path, jsonKeys, jsonHeaders) {
           status should equal(500)
         }
@@ -139,14 +177,34 @@ class KvStorageServletSuite extends ScalatraSuite with FunSpecLike with MockFact
     }
 
     describe("(set the key/value)") {
-      val path = s"/set/$storage/$someKey"
+      val path = s"/set/$storageUuid/$someKey"
 
       it("should set the value by the key") {
         kvActor.underlyingActor
-          .clearAndExpect(ResponsiveExpectation(KvSetRequest(storage, someKey, someValue), () => Right(())))
+          .clearAndExpect(ResponsiveExpectation(
+            KvSetRequest(storageUuid, secretKey, someKey, someValue),
+            () => Right(())))
         put(path, someValue, textHeaders) {
           status should equal(200)
           response.getContentType should include("text/plain")
+        }
+      }
+
+      it("should return 401 Unauthorized if no Secret-Key header provided") {
+        put(path, someValue, textHeaders - SecretKeyHeader) {
+          status should equal(401)
+          body should equal("")
+        }
+      }
+
+      it("should return 401 Unauthorized if the secret key is invalid") {
+        kvActor.underlyingActor
+          .clearAndExpect(ResponsiveExpectation(
+            KvSetRequest(storageUuid, secretKey, someKey, someValue),
+            () => unathorizedError))
+        put(path, someValue, textHeaders) {
+          status should equal(401)
+          body should equal("")
         }
       }
 
@@ -158,7 +216,7 @@ class KvStorageServletSuite extends ScalatraSuite with FunSpecLike with MockFact
 
       it("should return 400 Bad Request Error if the key or value are invalid") {
         kvActor.underlyingActor.clearAndExpect(ResponsiveExpectation(
-          KvSetRequest(storage, someKey, someValue),
+          KvSetRequest(storageUuid, secretKey, someKey, someValue),
           () => Left(BadRequestError())))
         put(path, someValue, textHeaders) {
           status should equal(400)
@@ -167,7 +225,9 @@ class KvStorageServletSuite extends ScalatraSuite with FunSpecLike with MockFact
 
       it("should return 404 Not Found if storage does not exist") {
         kvActor.underlyingActor
-          .clearAndExpect(ResponsiveExpectation(KvSetRequest(storage, someKey, someValue), () => notFoundError))
+          .clearAndExpect(ResponsiveExpectation(
+            KvSetRequest(storageUuid, secretKey, someKey, someValue),
+            () => notFoundError))
         put(path, someValue, textHeaders) {
           status should equal(404)
         }
@@ -175,7 +235,9 @@ class KvStorageServletSuite extends ScalatraSuite with FunSpecLike with MockFact
 
       it("should return 500 Internal Server Error if request processing fails") {
         kvActor.underlyingActor
-          .clearAndExpect(ResponsiveExpectation(KvSetRequest(storage, someKey, someValue), () => internalError))
+          .clearAndExpect(ResponsiveExpectation(
+            KvSetRequest(storageUuid, secretKey, someKey, someValue),
+            () => internalError))
         put(path, someValue, textHeaders) {
           status should equal(500)
         }
@@ -183,11 +245,13 @@ class KvStorageServletSuite extends ScalatraSuite with FunSpecLike with MockFact
     }
 
     describe("(set key/value pairs)") {
-      val path = s"/set/$storage"
+      val path = s"/set/$storageUuid"
 
       def testSuccess(result: Map[String, Boolean], expectedBody: String) = {
         kvActor.underlyingActor
-          .clearAndExpect(ResponsiveExpectation(KvMultiSetRequest(storage, keyValues), () => Right(result)))
+          .clearAndExpect(ResponsiveExpectation(
+            KvMultiSetRequest(storageUuid, secretKey, keyValues),
+            () => Right(result)))
         put(path, jsonKeyValues, jsonHeaders) {
           status should equal(200)
           body should equal(expectedBody)
@@ -221,9 +285,29 @@ class KvStorageServletSuite extends ScalatraSuite with FunSpecLike with MockFact
         testBadRequest("{\"field\":[]}", jsonHeaders)
       }
 
+      it("should return 401 Unauthorized if no Secret-Key header provided") {
+        put(path, jsonKeyValues, jsonHeaders - SecretKeyHeader) {
+          status should equal(401)
+          body should equal("")
+        }
+      }
+
+      it("should return 401 Unauthorized if the secret key is invalid") {
+        kvActor.underlyingActor
+          .clearAndExpect(ResponsiveExpectation(
+            KvMultiSetRequest(storageUuid, secretKey, keyValues),
+            () => unathorizedError))
+        put(path, jsonKeyValues, jsonHeaders) {
+          status should equal(401)
+          body should equal("")
+        }
+      }
+
       it("should return 404 Not Found if storage does not exist") {
         kvActor.underlyingActor
-          .clearAndExpect(ResponsiveExpectation(KvMultiSetRequest(storage, keyValues), () => notFoundError))
+          .clearAndExpect(ResponsiveExpectation(
+            KvMultiSetRequest(storageUuid, secretKey, keyValues),
+            () => notFoundError))
         put(path, jsonKeyValues, jsonHeaders) {
           status should equal(404)
         }
@@ -231,7 +315,9 @@ class KvStorageServletSuite extends ScalatraSuite with FunSpecLike with MockFact
 
       it("should return 500 Internal Server Error if request processing fails") {
         kvActor.underlyingActor
-          .clearAndExpect(ResponsiveExpectation(KvMultiSetRequest(storage, keyValues), () => internalError))
+          .clearAndExpect(ResponsiveExpectation(
+            KvMultiSetRequest(storageUuid, secretKey, keyValues),
+            () => internalError))
         put(path, jsonKeyValues, jsonHeaders) {
           status should equal(500)
         }
@@ -239,12 +325,13 @@ class KvStorageServletSuite extends ScalatraSuite with FunSpecLike with MockFact
     }
 
     describe("(delete by the key)") {
-      val path = s"/delete/$storage/$someKey"
+      val path = s"/delete/$storageUuid/$someKey"
 
-      def test(result: Either[StorageError, Unit], status: Int) = {
-        kvActor.underlyingActor.clearAndExpect(ResponsiveExpectation(KvDeleteRequest(storage, someKey), () => result))
-        delete(path, Seq(), Map()) {
-          status should equal(status)
+      def test(result: Either[StorageError, Unit], statusCode: Int) = {
+        kvActor.underlyingActor
+          .clearAndExpect(ResponsiveExpectation(KvDeleteRequest(storageUuid, secretKey, someKey), () => result))
+        delete(path, Seq(), commonHeaders) {
+          status should equal(statusCode)
         }
       }
 
@@ -252,17 +339,34 @@ class KvStorageServletSuite extends ScalatraSuite with FunSpecLike with MockFact
         test(Right(()), 200)
       }
 
+      it("should return 404 Not Found if storage does not exist") {
+        test(notFoundError, 404)
+      }
+
       it("should return 500 Internal Server Error if request processing fails") {
         test(internalError, 500)
+      }
+
+      it("should return 401 Unauthorized if no Secret-Key header provided") {
+        delete(path, Seq(), Map()) {
+          status should equal(401)
+          body should equal("")
+        }
+      }
+
+      it("should return 401 Unauthorized if the secret key is invalid") {
+        test(unathorizedError, 401)
       }
     }
 
     describe("(delete by keys)") {
-      val path = s"/delete/$storage"
+      val path = s"/delete/$storageUuid"
 
       def testSuccess(result: Map[String, Boolean], expectedBody: String) = {
         kvActor.underlyingActor
-          .clearAndExpect(ResponsiveExpectation(KvMultiDeleteRequest(storage, keys), () => Right(result)))
+          .clearAndExpect(ResponsiveExpectation(
+            KvMultiDeleteRequest(storageUuid, secretKey, keys),
+            () => Right(result)))
         post(path, jsonKeys, jsonHeaders) {
           status should equal(200)
           body should equal(expectedBody)
@@ -296,9 +400,29 @@ class KvStorageServletSuite extends ScalatraSuite with FunSpecLike with MockFact
         testBadRequest("{\"key\":null}", jsonHeaders)
       }
 
+      it("should return 401 Unauthorized if no Secret-Key header provided") {
+        post(path, jsonKeys, jsonHeaders - SecretKeyHeader) {
+          status should equal(401)
+          body should equal("")
+        }
+      }
+
+      it("should return 401 Unauthorized if the secret key is invalid") {
+        kvActor.underlyingActor
+          .clearAndExpect(ResponsiveExpectation(
+            KvMultiDeleteRequest(storageUuid, secretKey, keys),
+            () => unathorizedError))
+        post(path, jsonKeys, jsonHeaders) {
+          status should equal(401)
+          body should equal("")
+        }
+      }
+
       it("should return 404 Not Found if storage does not exist") {
         kvActor.underlyingActor
-          .clearAndExpect(ResponsiveExpectation(KvMultiDeleteRequest(storage, keys), () => notFoundError))
+          .clearAndExpect(ResponsiveExpectation(
+            KvMultiDeleteRequest(storageUuid, secretKey, keys),
+            () => notFoundError))
         post(path, jsonKeys, jsonHeaders) {
           status should equal(404)
         }
@@ -306,7 +430,9 @@ class KvStorageServletSuite extends ScalatraSuite with FunSpecLike with MockFact
 
       it("should return 500 Internal Server Error if request processing fails") {
         kvActor.underlyingActor
-          .clearAndExpect(ResponsiveExpectation(KvMultiDeleteRequest(storage, keys), () => internalError))
+          .clearAndExpect(ResponsiveExpectation(
+            KvMultiDeleteRequest(storageUuid, secretKey, keys),
+            () => internalError))
         post(path, jsonKeys, jsonHeaders) {
           status should equal(500)
         }
@@ -314,27 +440,45 @@ class KvStorageServletSuite extends ScalatraSuite with FunSpecLike with MockFact
     }
 
     describe("(list)") {
-      val path = s"/list/$storage"
+      val path = s"/list/$storageUuid"
 
       it("should returns keys") {
-        kvActor.underlyingActor.clearAndExpect(ResponsiveExpectation(KvListRequest(storage), () => Right(keys)))
-        get(path, Seq(), Map()) {
+        kvActor.underlyingActor
+          .clearAndExpect(ResponsiveExpectation(KvListRequest(storageUuid, secretKey), () => Right(keys)))
+        get(path, Seq(), commonHeaders) {
           status should equal(200)
           body should equal(jsonKeys)
           response.getContentType should include("application/json")
         }
       }
 
+      it("should return 401 Unauthorized if no Secret-Key header provided") {
+        get(path, Seq(), Map()) {
+          status should equal(401)
+          body should equal("")
+        }
+      }
+
+      it("should return 401 Unauthorized if the secret key is invalid") {
+        kvActor.underlyingActor
+          .clearAndExpect(ResponsiveExpectation(KvListRequest(storageUuid, secretKey), () => unathorizedError))
+        get(path, Seq(), commonHeaders) {
+          status should equal(401)
+          body should equal("")
+        }
+      }
+
       it("should return 404 Not Found if storage does not exist") {
         kvActor.underlyingActor
-          .clearAndExpect(ResponsiveExpectation(KvListRequest(storage), () => notFoundError))
+          .clearAndExpect(ResponsiveExpectation(KvListRequest(storageUuid, secretKey), () => notFoundError))
         get(path, Seq(), textHeaders) {
           status should equal(404)
         }
       }
 
       it("should return 500 Internal Server Error if request processing fails") {
-        kvActor.underlyingActor.clearAndExpect(ResponsiveExpectation(KvListRequest(storage), () => internalError))
+        kvActor.underlyingActor
+          .clearAndExpect(ResponsiveExpectation(KvListRequest(storageUuid, secretKey), () => internalError))
         get(path, Seq(), textHeaders) {
           status should equal(500)
         }
@@ -342,12 +486,13 @@ class KvStorageServletSuite extends ScalatraSuite with FunSpecLike with MockFact
     }
 
     describe("(clear)") {
-      val path = s"/clear/$storage"
+      val path = s"/clear/$storageUuid"
 
-      def test(result: Either[StorageError, Unit], status: Int) = {
-        kvActor.underlyingActor.clearAndExpect(ResponsiveExpectation(KvClearRequest(storage), () => result))
-        post(path, Array[Byte](), Map()) {
-          status should equal(status)
+      def test(result: Either[StorageError, Unit], statusCode: Int) = {
+        kvActor.underlyingActor
+          .clearAndExpect(ResponsiveExpectation(KvClearRequest(storageUuid, secretKey), () => result))
+        post(path, Seq(), commonHeaders) {
+          status should equal(statusCode)
         }
       }
 
@@ -355,9 +500,22 @@ class KvStorageServletSuite extends ScalatraSuite with FunSpecLike with MockFact
         test(Right(()), 200)
       }
 
+      it("should return 401 Unauthorized if no Secret-Key header provided") {
+        post(path, Seq(), Map()) {
+          status should equal(401)
+          body should equal("")
+        }
+      }
+
+      it("should return 401 Unauthorized if the secret key is invalid") {
+        kvActor.underlyingActor
+          .clearAndExpect(ResponsiveExpectation(KvClearRequest(storageUuid, secretKey), () => unathorizedError))
+        test(unathorizedError, 401)
+      }
+
       it("should return 404 Not Found if storage does not exist") {
         kvActor.underlyingActor
-          .clearAndExpect(ResponsiveExpectation(KvListRequest(storage), () => notFoundError))
+          .clearAndExpect(ResponsiveExpectation(KvClearRequest(storageUuid, secretKey), () => notFoundError))
         test(notFoundError, 404)
       }
 

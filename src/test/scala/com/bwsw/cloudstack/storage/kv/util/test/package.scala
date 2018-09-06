@@ -22,7 +22,6 @@ import com.sksamuel.elastic4s.http.{ElasticError, RequestFailure, RequestSuccess
 import scala.concurrent.{ExecutionContext, Future}
 
 package object test {
-
   def getRequestSuccessFuture[T](response: T)
     (implicit executionContext: ExecutionContext): Future[Right[RequestFailure, RequestSuccess[T]]] = Future(Right(
     RequestSuccess(200, Option.empty, Map.empty, response)))
