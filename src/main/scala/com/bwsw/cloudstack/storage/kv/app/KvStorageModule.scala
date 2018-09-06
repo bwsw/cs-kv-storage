@@ -34,6 +34,7 @@ import org.apache.http.client.config.RequestConfig
 import org.apache.http.impl.client.BasicCredentialsProvider
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder
 import scaldi.Module
+import scaldi.akka.AkkaInjectable
 
 class KvStorageModule extends Module {
 
@@ -83,4 +84,9 @@ class KvStorageModule extends Module {
   bind[StorageCache] to injected[LoadingStorageCache]
   bind[HealthActor] to injected[ElasticsearchHealthActor]
   bind[TemplateCheckActor] to injected[ElasticsearchTemplateCheckActor]
+
+  bind[CacheUpdateActor] toProvider new ElasticsearchCacheUpdateActor
+  binding identifiedBy 'cacheUpdateActor to {
+    AkkaInjectable.injectActorRef[CacheUpdateActor]
+  }
 }

@@ -56,9 +56,9 @@ shift $((OPTIND -1))
 check_status() {
     if [ -z "$2" ]
     then
-        CODE=$(curl -s -o /dev/null -w "%{http_code}" -I "$1")
+        CODE=$(curl -s -o /dev/null -w "%{http_code}" "$1")
     else
-        CODE=$(curl -s -o /dev/null -w "%{http_code}" -u "$2" -I "$1")
+        CODE=$(curl -s -o /dev/null -w "%{http_code}" -u "$2" "$1")
     fi
     echo "$CODE"
 }
@@ -76,6 +76,7 @@ REGISTRY_PATH="$1/storage-registry"
 REGISTRY_LOCK_PATH="$1/storage-registry-lock"
 DATA_TEMPLATE_PATH="$1/_template/storage-data"
 HISTORY_TEMPLATE_PATH="$1/_template/storage-history"
+LAST_UPDATED_PIPELINE_PATH="$1/_ingest/pipeline/storage-registry-last-updated"
 
 DIR=$(dirname "$0")
 
@@ -83,6 +84,7 @@ REGISTRY_CODE=`check_status "${REGISTRY_PATH}" "${TOKEN}"`
 REGISTRY_LOCK_CODE=`check_status "${REGISTRY_LOCK_PATH}" "${TOKEN}"`
 DATA_TEMPLATE_CODE=`check_status "${DATA_TEMPLATE_PATH}" "${TOKEN}"`
 HISTORY_TEMPLATE_CODE=`check_status "${HISTORY_TEMPLATE_PATH}" "${TOKEN}"`
+LAST_UPDATED_PIPELINE_CODE=`check_status "${LAST_UPDATED_PIPELINE_PATH}" "${TOKEN}"`
 
 if [ ! $REGISTRY_CODE -eq 200 ]
 then
@@ -118,4 +120,13 @@ then
         echo "storage-history template created" || exit 1
 else
     echo "storage-history template exists"
+fi
+
+if [ ! $LAST_UPDATED_PIPELINE_CODE -eq 200 ]
+then
+    echo "storage-registry-last-updated pipeline to be created"
+    create "${LAST_UPDATED_PIPELINE_PATH}" "@$DIR/storage-registry-last-updated-pipeline.json" "${TOKEN}" && \
+        echo "storage-registry-last-updated pipeline created" || exit 1
+else
+    echo "storage-registry-last-updated pipeline exists"
 fi

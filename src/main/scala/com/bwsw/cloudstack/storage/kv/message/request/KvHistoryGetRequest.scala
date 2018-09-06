@@ -21,6 +21,7 @@ import com.bwsw.cloudstack.storage.kv.entity.{Operation, SortField}
 
 case class KvHistoryGetRequest(
     storageUuid: String,
+    secretKey: String,
     keys: Set[String],
     operations: Set[Operation],
     start: Option[Long],

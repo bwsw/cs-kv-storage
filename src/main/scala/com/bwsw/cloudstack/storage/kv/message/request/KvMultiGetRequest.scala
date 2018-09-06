@@ -17,4 +17,4 @@
 
 package com.bwsw.cloudstack.storage.kv.message.request
 
-case class KvMultiGetRequest(storage: String, keys: Iterable[String]) extends KvRequest
+case class KvMultiGetRequest(storage: String, secretKey: String, keys: Iterable[String]) extends KvRequest

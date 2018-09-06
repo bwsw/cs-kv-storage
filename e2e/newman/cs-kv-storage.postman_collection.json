@@ -1,7 +1,7 @@
 {
 	"info": {
+		"_postman_id": "cb9805c5-cd29-4acf-81df-54f86c241154",
 		"name": "cs-kv-storage",
-		"_postman_id": "69b79478-6112-3bd6-0155-881bfc672beb",
 		"description": "E2E tests for cs-kv-storage",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -34,6 +34,96 @@
 											"    pm.expect(jsonData).to.eql(['key1', 'key2', 'key3', 'key4', 'key5']);",
 											"});",
 											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/list/{{read_only_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"list",
+										"{{read_only_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "List with wrong Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "dd438ae3-c029-47c9-9da1-b6d7f6bf2a7f",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function() {",
+											"  pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{wrong_secret}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/list/{{read_only_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"list",
+										"{{read_only_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "List without Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "6fac08d4-9812-4f85-8e9f-798b08418ebd",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function() {",
+											"  pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});"
 										]
 									}
 								}
@@ -96,7 +186,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -146,7 +241,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -220,6 +320,100 @@
 							],
 							"request": {
 								"method": "GET",
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/get/{{read_only_storage}}/{{some_key}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"get",
+										"{{read_only_storage}}",
+										"{{some_key}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get with wrong Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "f9ae26d6-5cd0-4706-b01a-9aa56649325c",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function() {",
+											"  pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{wrong_secret}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/get/{{read_only_storage}}/{{some_key}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"get",
+										"{{read_only_storage}}",
+										"{{some_key}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get without Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "6d945e25-21bc-415e-bc00-995cef8acb39",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function() {",
+											"  pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
 								"header": [],
 								"body": {
 									"mode": "raw",
@@ -263,7 +457,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -315,7 +514,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -363,7 +567,7 @@
 					"name": "Get multiple values",
 					"item": [
 						{
-							"name": "Get values",
+							"name": "Get multiple values",
 							"event": [
 								{
 									"listen": "test",
@@ -386,6 +590,106 @@
 											"        \"key3\": \"value3\"",
 											"    }",
 											"    pm.expect(pm.response.json()).to.eql(example);",
+											"});",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "[\"key1\", \"key2\", \"key3\"]"
+								},
+								"url": {
+									"raw": "{{url}}/get/{{read_only_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"get",
+										"{{read_only_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get with wrong Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "26ff9642-16d1-405c-99a4-a806e1cb00a6",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{wrong_secret}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "[\"key1\", \"key2\", \"key3\"]"
+								},
+								"url": {
+									"raw": "{{url}}/get/{{read_only_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"get",
+										"{{read_only_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get without Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "26ff9642-16d1-405c-99a4-a806e1cb00a6",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
 											"});",
 											""
 										]
@@ -444,6 +748,10 @@
 									{
 										"key": "Content-Type",
 										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -486,7 +794,12 @@
 							],
 							"request": {
 								"method": "POST",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": "[\"key1\", \"key2\", \"key3\"]"
@@ -531,6 +844,10 @@
 									{
 										"key": "Content-Type",
 										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -577,6 +894,10 @@
 									{
 										"key": "Content-Type",
 										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -633,6 +954,10 @@
 									{
 										"key": "Content-Type",
 										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -658,6 +983,140 @@
 				{
 					"name": "Set value",
 					"item": [
+						{
+							"name": "Set with wrong Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "01cd35f7-fe03-4508-ae87-2f9747b41992",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"editable_storage\") + \"/_doc/\" + pm.variables.get(\"some_key\"),",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Document is not changed\", function () {",
+											"        pm.expect(res.json()._source.value).to.eql(pm.variables.get(\"some_value\"));",
+											"    });",
+											"});"
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "546e693f-cf78-42ad-b416-ffdc2737ffc6",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "text/plain"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{wrong_secret}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "newValue"
+								},
+								"url": {
+									"raw": "{{url}}/set/{{editable_storage}}/{{some_key}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"set",
+										"{{editable_storage}}",
+										"{{some_key}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Set without Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "01cd35f7-fe03-4508-ae87-2f9747b41992",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"editable_storage\") + \"/_doc/\" + pm.variables.get(\"some_key\"),",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Document is not changed\", function () {",
+											"        pm.expect(res.json()._source.value).to.eql(pm.variables.get(\"some_value\"));",
+											"    });",
+											"});"
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "546e693f-cf78-42ad-b416-ffdc2737ffc6",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "text/plain"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "newValue"
+								},
+								"url": {
+									"raw": "{{url}}/set/{{editable_storage}}/{{some_key}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"set",
+										"{{editable_storage}}",
+										"{{some_key}}"
+									]
+								}
+							},
+							"response": []
+						},
 						{
 							"name": "Set with wrong Content-Type",
 							"event": [
@@ -703,6 +1162,10 @@
 									{
 										"key": "Content-Type",
 										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -764,6 +1227,10 @@
 									{
 										"key": "Content-Type",
 										"value": "text/plain"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -821,6 +1288,10 @@
 									{
 										"key": "Content-Type",
 										"value": "text/plain"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -877,6 +1348,10 @@
 									{
 										"key": "Content-Type",
 										"value": "text/plain"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -933,6 +1408,10 @@
 									{
 										"key": "Content-Type",
 										"value": "text/plain"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "secret"
 									}
 								],
 								"body": {
@@ -959,6 +1438,142 @@
 				{
 					"name": "Set multiple values",
 					"item": [
+						{
+							"name": "Set with wrong Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "d1ef7dd3-ad10-45d5-a4b2-b4053af94f25",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"const source = JSON.stringify({\"ids\": [\"key1\",\"key2\",\"key3\",\"key4\"]})",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"multieditable_storage\") + \"/_doc/_mget?source=\" + source + \"&source_content_type=application/json\",",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Documents are not changed\", function () {",
+											"            const result = res.json()[\"docs\"].map(function callback(c, i, a){",
+											"                return {",
+											"                    key: c._id,",
+											"                    value: c._source.value",
+											"                };",
+											"            })",
+											"            const example = [",
+											"                {key: \"key1\", value: \"value1\"},",
+											"                {key: \"key2\", value: \"value2\"},",
+											"                {key: \"key3\", value: \"value3\"},",
+											"                {key: \"key4\", value: \"value4\"}];",
+											"            pm.expect(result).to.eql(example);",
+											"    });",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{wrong_secret}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"key1\": \"newValue1\",\n\t\"key2\": \"newValue2\",\n\t\"key3\": \"newValue3\",\n\t\"key4\": \"newValue4\"\n}"
+								},
+								"url": {
+									"raw": "{{url}}/set/{{multieditable_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"set",
+										"{{multieditable_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Set without Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "d1ef7dd3-ad10-45d5-a4b2-b4053af94f25",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"const source = JSON.stringify({\"ids\": [\"key1\",\"key2\",\"key3\",\"key4\"]})",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"multieditable_storage\") + \"/_doc/_mget?source=\" + source + \"&source_content_type=application/json\",",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Documents are not changed\", function () {",
+											"            const result = res.json()[\"docs\"].map(function callback(c, i, a){",
+											"                return {",
+											"                    key: c._id,",
+											"                    value: c._source.value",
+											"                };",
+											"            })",
+											"            const example = [",
+											"                {key: \"key1\", value: \"value1\"},",
+											"                {key: \"key2\", value: \"value2\"},",
+											"                {key: \"key3\", value: \"value3\"},",
+											"                {key: \"key4\", value: \"value4\"}];",
+											"            pm.expect(result).to.eql(example);",
+											"    });",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"key1\": \"newValue1\",\n\t\"key2\": \"newValue2\",\n\t\"key3\": \"newValue3\",\n\t\"key4\": \"newValue4\"\n}"
+								},
+								"url": {
+									"raw": "{{url}}/set/{{multieditable_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"set",
+										"{{multieditable_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
 						{
 							"name": "Set with wrong Content-Type",
 							"event": [
@@ -1006,6 +1621,10 @@
 									{
 										"key": "Content-Type",
 										"value": "text/plain"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -1072,6 +1691,10 @@
 									{
 										"key": "Content-Type",
 										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -1138,6 +1761,10 @@
 									{
 										"key": "Content-Type",
 										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -1214,6 +1841,10 @@
 									{
 										"key": "Content-Type",
 										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -1297,6 +1928,10 @@
 									{
 										"key": "Content-Type",
 										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -1343,6 +1978,10 @@
 									{
 										"key": "Content-Type",
 										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -1426,6 +2065,10 @@
 									{
 										"key": "Content-Type",
 										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -1451,6 +2094,133 @@
 				{
 					"name": "Delete value",
 					"item": [
+						{
+							"name": "Delete with wrong Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "de26911e-b68f-4b96-9c30-daeb487b2ce2",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"deletable_storage\") + \"/_doc/\" + pm.variables.get(\"some_key\"),",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Document is not deleted\", function () {",
+											"            pm.expect(res.json().found).to.eql(true);",
+											"        });",
+											"    }",
+											");"
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "530b5c22-7ca1-49dd-955e-ff22d92f122d",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{wrong_secret}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/delete/{{deletable_storage}}/{{some_key}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"delete",
+										"{{deletable_storage}}",
+										"{{some_key}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete without Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "c3662831-b567-49e4-9958-428fc1a6975c",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"deletable_storage\") + \"/_doc/\" + pm.variables.get(\"some_key\"),",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Document is not deleted\", function () {",
+											"            pm.expect(res.json().found).to.eql(true);",
+											"        });",
+											"    }",
+											");"
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "530b5c22-7ca1-49dd-955e-ff22d92f122d",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/delete/{{deletable_storage}}/{{some_key}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"delete",
+										"{{deletable_storage}}",
+										"{{some_key}}"
+									]
+								}
+							},
+							"response": []
+						},
 						{
 							"name": "Delete from nonexistent storage",
 							"event": [
@@ -1483,7 +2253,12 @@
 							],
 							"request": {
 								"method": "DELETE",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -1545,7 +2320,12 @@
 							],
 							"request": {
 								"method": "DELETE",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -1596,7 +2376,12 @@
 							],
 							"request": {
 								"method": "DELETE",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -1621,6 +2406,126 @@
 				{
 					"name": "Delete multiple values",
 					"item": [
+						{
+							"name": "Delete with wrong Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "821e3da5-8cba-4728-8c36-1e31cd223e9a",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"const source = JSON.stringify({\"ids\": [\"key1\",\"key2\",\"key3\"]})",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"multideletable_storage\") + \"/_doc/_mget?source=\" + source + \"&source_content_type=application/json\",",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Documents are not deleted\", function () {",
+											"            const result = res.json().docs.every(function callback(c){",
+											"                return c.found;",
+											"            });",
+											"            pm.expect(result).to.eql(true);",
+											"        });",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{wrong_secret}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "[\"key1\", \"key2\", \"key3\"]"
+								},
+								"url": {
+									"raw": "{{url}}/delete/{{multideletable_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"delete",
+										"{{multideletable_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete without Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "821e3da5-8cba-4728-8c36-1e31cd223e9a",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"const source = JSON.stringify({\"ids\": [\"key1\",\"key2\",\"key3\"]})",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"multideletable_storage\") + \"/_doc/_mget?source=\" + source + \"&source_content_type=application/json\",",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Documents are not deleted\", function () {",
+											"            const result = res.json().docs.every(function callback(c){",
+											"                return c.found;",
+											"            });",
+											"            pm.expect(result).to.eql(true);",
+											"        });",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "[\"key1\", \"key2\", \"key3\"]"
+								},
+								"url": {
+									"raw": "{{url}}/delete/{{multideletable_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"delete",
+										"{{multideletable_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
 						{
 							"name": "Delete with wrong Content-Type",
 							"event": [
@@ -1660,6 +2565,10 @@
 									{
 										"key": "Content-Type",
 										"value": "text/plain"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -1718,6 +2627,10 @@
 									{
 										"key": "Content-Type",
 										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -1776,6 +2689,10 @@
 									{
 										"key": "Content-Type",
 										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -1844,6 +2761,10 @@
 									{
 										"key": "Content-Type",
 										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -1889,6 +2810,10 @@
 									{
 										"key": "Content-Type",
 										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -1943,6 +2868,10 @@
 									{
 										"key": "Content-Type",
 										"value": "application/json"
+									},
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
 									}
 								],
 								"body": {
@@ -1968,6 +2897,137 @@
 				{
 					"name": "Clear storage",
 					"item": [
+						{
+							"name": "Clear with wrong Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "18925691-b9e4-43af-8ff1-b9b52e17ae26",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"const source = JSON.stringify({\"ids\": [\"key1\",\"key2\",\"key3\",\"key4\",\"key5\"]})",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"cleanable_storage\") + \"/_doc/_mget?source=\" + source + \"&source_content_type=application/json\",",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Documents are not deleted\", function () {",
+											"            const result = res.json().docs.every(function callback(c){",
+											"                return c.found;",
+											"            });",
+											"            pm.expect(result).to.eql(true);",
+											"        });",
+											"});"
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "3f04a838-3537-4dd5-83cd-e97ba1a13787",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{wrong_secret}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/clear/{{cleanable_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"clear",
+										"{{cleanable_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Clear without Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "eedabbe0-acbf-483a-860d-fc6fbf1d72ac",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"const source = JSON.stringify({\"ids\": [\"key1\",\"key2\",\"key3\",\"key4\",\"key5\"]})",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/\" + pm.variables.get(\"storage_data_template\") + \"-\" + pm.variables.get(\"cleanable_storage\") + \"/_doc/_mget?source=\" + source + \"&source_content_type=application/json\",",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Documents are not deleted\", function () {",
+											"            const result = res.json().docs.every(function callback(c){",
+											"                return c.found;",
+											"            });",
+											"            pm.expect(result).to.eql(true);",
+											"        });",
+											"});"
+										]
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "3f04a838-3537-4dd5-83cd-e97ba1a13787",
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/clear/{{cleanable_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"clear",
+										"{{cleanable_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
 						{
 							"name": "Clear storage",
 							"event": [
@@ -2018,7 +3078,12 @@
 							],
 							"request": {
 								"method": "POST",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -2068,7 +3133,12 @@
 							],
 							"request": {
 								"method": "POST",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -2120,6 +3190,121 @@
 					"name": "Set temporary storage ttl",
 					"item": [
 						{
+							"name": "Set with wrong Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "62d7b29e-0ce3-47f0-8304-bac664566f59",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"})",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/storage-registry/_doc/\" + pm.variables.get(\"temp_storage\"),",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"TTL is not changed\", function () {",
+											"            pm.expect(res.json()._source.ttl).to.eql(10000);",
+											"    });",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{wrong_secret}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/storage/{{temp_storage}}?ttl=565656",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"storage",
+										"{{temp_storage}}"
+									],
+									"query": [
+										{
+											"key": "ttl",
+											"value": "565656"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Set without Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "387b4653-f5ba-4747-a5e7-2b954cdfb46f",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"})",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/storage-registry/_doc/\" + pm.variables.get(\"temp_storage\"),",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"TTL is not changed\", function () {",
+											"            pm.expect(res.json()._source.ttl).to.eql(10000);",
+											"    });",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/storage/{{temp_storage}}?ttl=565656",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"storage",
+										"{{temp_storage}}"
+									],
+									"query": [
+										{
+											"key": "ttl",
+											"value": "565656"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
 							"name": "Set TTL of nonexistent storage",
 							"event": [
 								{
@@ -2142,7 +3327,12 @@
 							],
 							"request": {
 								"method": "PUT",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -2197,7 +3387,12 @@
 							],
 							"request": {
 								"method": "PUT",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -2252,7 +3447,12 @@
 							],
 							"request": {
 								"method": "PUT",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -2307,7 +3507,12 @@
 							],
 							"request": {
 								"method": "PUT",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -2331,7 +3536,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "29760974-f725-40bb-b399-367d69190275",
+										"id": "0d7b92ab-fa51-48d8-a393-e950a669ac10",
 										"type": "text/javascript",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
@@ -2349,6 +3554,7 @@
 											"        pm.test(\"TTL and expiration timestamp actually changed\", function () {",
 											"            pm.expect(res.json()._source.ttl).to.eql(565656);",
 											"            pm.expect(res.json()._source.expiration_timestamp).to.eql(1565656);",
+											"            pm.expect(res.json()._source.last_updated).not.to.eql(0);",
 											"    });",
 											"});"
 										]
@@ -2357,7 +3563,12 @@
 							],
 							"request": {
 								"method": "PUT",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -2387,6 +3598,117 @@
 				{
 					"name": "Delete temporary storage",
 					"item": [
+						{
+							"name": "Delete with wrong Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "06415630-4d33-4ed6-8819-52cfe5645aca",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/storage-registry/_doc/\" + pm.variables.get(\"acc_storage\"),",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Storage is not deleted\", function () {",
+											"            pm.expect(res).to.have.property('code', 200);",
+											"            pm.expect(res).to.have.property('status', 'OK');",
+											"            pm.expect(res.json()._source.deleted).to.eql(false);",
+											"        });",
+											"",
+											"    }",
+											");"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{wrong_secret}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/storage/{{temp_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"storage",
+										"{{temp_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete without Secret-Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "bfc97efa-6610-4a85-92fe-2881d88bdb3d",
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body is empty\", function () {",
+											"    pm.response.to.have.body(\"\");",
+											"});",
+											"",
+											"pm.sendRequest({",
+											"        url: pm.variables.get(\"es_url\") + \"/storage-registry/_doc/\" + pm.variables.get(\"acc_storage\"),",
+											"        method: 'GET'},",
+											"    function (err, res) {",
+											"        pm.test(\"Storage is not deleted\", function () {",
+											"            pm.expect(res).to.have.property('code', 200);",
+											"            pm.expect(res).to.have.property('status', 'OK');",
+											"            pm.expect(res.json()._source.deleted).to.eql(false);",
+											"        });",
+											"",
+											"    }",
+											");"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{url}}/storage/{{temp_storage}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"storage",
+										"{{temp_storage}}"
+									]
+								}
+							},
+							"response": []
+						},
 						{
 							"name": "Delete persistent storage",
 							"event": [
@@ -2422,7 +3744,12 @@
 							],
 							"request": {
 								"method": "DELETE",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -2462,7 +3789,12 @@
 							],
 							"request": {
 								"method": "DELETE",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -2486,7 +3818,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "122029a7-7015-4c37-9bd6-4f92b620fef8",
+										"id": "c61b0093-be6f-47b2-9046-342cc2de00ae",
 										"type": "text/javascript",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
@@ -2499,13 +3831,14 @@
 											"",
 											"",
 											"pm.sendRequest({",
-											"        url: pm.variables.get(\"es_url\") + \"/storage-registry/_doc/\" + pm.variables.get(\"temp_storage\"),",
+											"        url: pm.variables.get(\"es_url\") + \"/storage-registry/_doc/\" + pm.variables.get(\"temp_deletable_storage\"),",
 											"        method: 'GET'},",
 											"    function (err, res) {",
 											"        pm.test(\"Storage is deleted\", function () {",
 											"            pm.expect(res).to.have.property('code', 200);",
 											"            pm.expect(res).to.have.property('status', 'OK');",
 											"            pm.expect(res.json()._source.deleted).to.eql(true);",
+											"            pm.expect(res.json()._source.last_updated).not.to.eql(0);",
 											"        });",
 											"    }",
 											");",
@@ -2516,19 +3849,24 @@
 							],
 							"request": {
 								"method": "DELETE",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
 								},
 								"url": {
-									"raw": "{{url}}/storage/{{temp_storage}}",
+									"raw": "{{url}}/storage/{{temp_deletable_storage}}",
 									"host": [
 										"{{url}}"
 									],
 									"path": [
 										"storage",
-										"{{temp_storage}}"
+										"{{temp_deletable_storage}}"
 									]
 								}
 							},
@@ -2545,6 +3883,121 @@
 				{
 					"name": "Search and list history",
 					"item": [
+						{
+							"name": "authentication",
+							"item": [
+								{
+									"name": "Search without Secret-Key",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "f028cc27-f634-4e20-a368-f3bc8d9fd2df",
+												"type": "text/javascript",
+												"exec": [
+													"pm.test(\"Status code is 401\", function() {",
+													"  pm.response.to.have.status(401);",
+													"});",
+													"",
+													"pm.test(\"Body is empty\", function () {",
+													"    pm.response.to.have.body(\"\");",
+													"});",
+													"",
+													""
+												]
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{url}}/history/{{read_only_storage}}?size=2&page=3",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"history",
+												"{{read_only_storage}}"
+											],
+											"query": [
+												{
+													"key": "size",
+													"value": "2"
+												},
+												{
+													"key": "page",
+													"value": "3"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Search with wrong Secret-Key",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "f92736c8-9097-4a4d-be7f-fec1a82dd3b1",
+												"type": "text/javascript",
+												"exec": [
+													"pm.test(\"Status code is 401\", function() {",
+													"  pm.response.to.have.status(401);",
+													"});",
+													"",
+													"pm.test(\"Body is empty\", function () {",
+													"    pm.response.to.have.body(\"\");",
+													"});",
+													"",
+													""
+												]
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Secret-Key",
+												"value": "{{wrong_secret}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{url}}/history/{{read_only_storage}}?scroll=30000&size=3",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"history",
+												"{{read_only_storage}}"
+											],
+											"query": [
+												{
+													"key": "scroll",
+													"value": "30000"
+												},
+												{
+													"key": "size",
+													"value": "3"
+												}
+											]
+										}
+									},
+									"response": []
+								}
+							],
+							"_postman_isSubFolder": true
+						},
 						{
 							"name": "validation",
 							"item": [
@@ -2572,7 +4025,12 @@
 									],
 									"request": {
 										"method": "GET",
-										"header": [],
+										"header": [
+											{
+												"key": "Secret-Key",
+												"value": "{{secret}}"
+											}
+										],
 										"body": {
 											"mode": "raw",
 											"raw": ""
@@ -2620,7 +4078,12 @@
 									],
 									"request": {
 										"method": "GET",
-										"header": [],
+										"header": [
+											{
+												"key": "Secret-Key",
+												"value": "{{secret}}"
+											}
+										],
 										"body": {
 											"mode": "raw",
 											"raw": ""
@@ -2668,7 +4131,12 @@
 									],
 									"request": {
 										"method": "GET",
-										"header": [],
+										"header": [
+											{
+												"key": "Secret-Key",
+												"value": "{{secret}}"
+											}
+										],
 										"body": {
 											"mode": "raw",
 											"raw": ""
@@ -2716,7 +4184,12 @@
 									],
 									"request": {
 										"method": "GET",
-										"header": [],
+										"header": [
+											{
+												"key": "Secret-Key",
+												"value": "{{secret}}"
+											}
+										],
 										"body": {
 											"mode": "raw",
 											"raw": ""
@@ -2764,7 +4237,12 @@
 									],
 									"request": {
 										"method": "GET",
-										"header": [],
+										"header": [
+											{
+												"key": "Secret-Key",
+												"value": "{{secret}}"
+											}
+										],
 										"body": {
 											"mode": "raw",
 											"raw": ""
@@ -2812,7 +4290,12 @@
 									],
 									"request": {
 										"method": "GET",
-										"header": [],
+										"header": [
+											{
+												"key": "Secret-Key",
+												"value": "{{secret}}"
+											}
+										],
 										"body": {
 											"mode": "raw",
 											"raw": ""
@@ -2864,7 +4347,12 @@
 									],
 									"request": {
 										"method": "GET",
-										"header": [],
+										"header": [
+											{
+												"key": "Secret-Key",
+												"value": "{{secret}}"
+											}
+										],
 										"body": {
 											"mode": "raw",
 											"raw": ""
@@ -2912,7 +4400,12 @@
 									],
 									"request": {
 										"method": "GET",
-										"header": [],
+										"header": [
+											{
+												"key": "Secret-Key",
+												"value": "{{secret}}"
+											}
+										],
 										"body": {
 											"mode": "raw",
 											"raw": ""
@@ -2960,7 +4453,12 @@
 									],
 									"request": {
 										"method": "GET",
-										"header": [],
+										"header": [
+											{
+												"key": "Secret-Key",
+												"value": "{{secret}}"
+											}
+										],
 										"body": {
 											"mode": "raw",
 											"raw": ""
@@ -3008,7 +4506,12 @@
 									],
 									"request": {
 										"method": "GET",
-										"header": [],
+										"header": [
+											{
+												"key": "Secret-Key",
+												"value": "{{secret}}"
+											}
+										],
 										"body": {
 											"mode": "raw",
 											"raw": ""
@@ -3056,7 +4559,12 @@
 									],
 									"request": {
 										"method": "GET",
-										"header": [],
+										"header": [
+											{
+												"key": "Secret-Key",
+												"value": "{{secret}}"
+											}
+										],
 										"body": {
 											"mode": "raw",
 											"raw": ""
@@ -3104,7 +4612,12 @@
 									],
 									"request": {
 										"method": "GET",
-										"header": [],
+										"header": [
+											{
+												"key": "Secret-Key",
+												"value": "{{secret}}"
+											}
+										],
 										"body": {
 											"mode": "raw",
 											"raw": ""
@@ -3152,7 +4665,12 @@
 									],
 									"request": {
 										"method": "GET",
-										"header": [],
+										"header": [
+											{
+												"key": "Secret-Key",
+												"value": "{{secret}}"
+											}
+										],
 										"body": {
 											"mode": "raw",
 											"raw": ""
@@ -3200,7 +4718,12 @@
 									],
 									"request": {
 										"method": "GET",
-										"header": [],
+										"header": [
+											{
+												"key": "Secret-Key",
+												"value": "{{secret}}"
+											}
+										],
 										"body": {
 											"mode": "raw",
 											"raw": ""
@@ -3255,7 +4778,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -3307,7 +4835,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -3359,7 +4892,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -3411,7 +4949,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -3476,7 +5019,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -3541,7 +5089,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -3606,7 +5159,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -3658,7 +5216,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -3710,7 +5273,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -3764,7 +5332,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -3822,7 +5395,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -3880,7 +5458,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -3936,7 +5519,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -3978,7 +5566,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -4020,7 +5613,12 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "Secret-Key",
+										"value": "{{secret}}"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": ""
@@ -4081,12 +5679,13 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "b6634035-57df-4cce-b603-b9d975442a53",
+										"id": "2f25f6b6-7a29-4e7f-a005-273b3a007239",
 										"type": "text/javascript",
 										"exec": [
 											"pm.sendRequest({",
 											"        url: pm.variables.get(\"url\") + \"/history/\" + pm.variables.get(\"read_only_storage\") + \"?scroll=30000&size=3&sort=key\",",
-											"        method: 'GET'",
+											"        method: 'GET',",
+											"        header: 'Secret-Key:secret'",
 											"},",
 											"    function (err, res) {",
 											"        pm.environment.set(\"scrollId\", res.json().scrollId);",
@@ -4795,158 +6394,154 @@
 	],
 	"variable": [
 		{
-			"id": "4ff9ca4c-e936-47aa-b0dc-56362f8aa970",
+			"id": "aee5b738-840f-42e5-b244-da36a3232128",
 			"key": "url",
 			"value": "http://app:8080",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "85cf665e-3848-4fcc-8e66-7f1cae5589a5",
+			"id": "5af459bd-1122-4f2e-89f9-4f4a8b529913",
 			"key": "storage_uuid",
 			"value": "b3d1b2a6-bd5b-49d5-bd9e-86538fdc180d",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "9a1a5568-f46d-4042-80ff-ddcd3cd036df",
+			"id": "a4790982-39be-4df7-9379-cfcee2966246",
 			"key": "es_url",
 			"value": "http://elasticsearch:9200",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "5640d057-0c8f-4f0c-9b5a-6cbaa3937a5f",
+			"id": "d058395a-f481-40fe-a9e1-9c055d47d542",
 			"key": "some_key",
 			"value": "key1",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "abe421db-1bfc-4785-902f-4810963ce04b",
+			"id": "8653d7cf-395c-4dd5-841a-d0654b87112f",
 			"key": "empty_key",
 			"value": "empty_key",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "03307ae8-8c2c-4cbc-a3da-a21eb2243bb8",
+			"id": "be100f48-5b94-4417-970d-74b8a35ce53c",
 			"key": "long_key",
 			"value": "key123456789123456789",
-			"type": "text",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "c96161e8-d93d-49c7-90dc-b604b0c97f71",
+			"id": "51ef7315-55c1-4174-8725-c896a2d05948",
 			"key": "some_value",
 			"value": "value1",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "2103b845-c768-41f4-884b-65b2c4075e8f",
+			"id": "b45ff80e-b61e-4ae2-8540-ecdeda27e281",
 			"key": "long_value",
 			"value": "value123456789123456789",
-			"type": "text",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "1e7debe1-9a7c-44f4-a70a-ebe3fbad00dc",
+			"id": "186c75b2-5ed1-49ab-a215-cfb37aa2dbcd",
 			"key": "non_existent_storage",
 			"value": "nonexistent",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "6bfb826a-6608-4aff-ab89-7948a15db239",
+			"id": "a9139e22-d64c-4f8c-87bb-63fd1eda270f",
 			"key": "read_only_storage",
 			"value": "read-only",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "34ca7b93-445f-44b5-a4c6-d0da460510ee",
+			"id": "0283322e-3c8e-49f9-a3ae-1054ac3a4762",
 			"key": "editable_storage",
 			"value": "editable-single",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "8b270301-5b13-4ec0-b1a3-076e5c5d8fb9",
+			"id": "1a33ea6b-82d7-48f7-824b-3c58fa7a85b4",
 			"key": "multieditable_storage",
 			"value": "editable-multiple",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "d9ef7115-f8f5-4127-be59-84b8c4004ffa",
+			"id": "78ebb23b-5db5-4b58-a91e-5b23c6673839",
 			"key": "deletable_storage",
 			"value": "deletable-single",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "f38a1c73-42d6-4a9e-9bd4-93afab200eec",
+			"id": "1826d1c4-f05c-4853-a8b9-2540df301cae",
 			"key": "multideletable_storage",
 			"value": "deletable-multiple",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "b3de5d79-027f-486c-98c4-7a623d21361d",
+			"id": "24de665b-fbd6-4c9c-987d-6ae1c415ba1b",
 			"key": "cleanable_storage",
 			"value": "cleanable",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "b618889b-69a0-49b1-a2f9-6b79113b6d9d",
+			"id": "8de4de84-f9c5-475d-8710-d80059b0eb84",
 			"key": "temp_storage",
 			"value": "temp",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "011247f6-f755-4c0d-be94-78eb7490a2d8",
+			"id": "18d975a3-9ea2-401a-b951-44d762639077",
+			"key": "temp_deletable_storage",
+			"value": "temp-deletable",
+			"type": "string"
+		},
+		{
+			"id": "1707b39a-8a1f-4355-8b96-edf298fe8b22",
 			"key": "acc_storage",
 			"value": "account",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "6ca5ceff-0a4b-47e2-b28b-b3e32dc2ca63",
+			"id": "85fcc8f9-ced7-4626-b843-a77b22456b8e",
 			"key": "no_index_storage",
 			"value": "no-index",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "457c5ead-4409-4859-b0de-e4f6d1985b84",
+			"id": "eb0f9d6a-24c8-43d8-8176-e2f5a2f97987",
 			"key": "storage_registry",
 			"value": "storage-registry",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "21451c34-03f8-4e96-a9f4-599d56187712",
+			"id": "1fbfd585-a38d-4550-b02b-d69c9c4da802",
 			"key": "storage_data_template",
 			"value": "storage-data",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "a937b47b-3d5c-422d-b2f2-80b8a58b4d4c",
+			"id": "6bb71e07-dec7-4e0b-84f0-1f7c7c741318",
 			"key": "storage_history_template",
 			"value": "storage-history",
-			"type": "string",
-			"disabled": true
+			"type": "string"
 		},
 		{
-			"id": "b20cc0ff-fb61-4e46-99cd-6f0ae0d8eb9b",
+			"id": "594a8f4c-7a6f-4edb-ac3a-f16bee147db8",
 			"key": "no_history_storage",
 			"value": "no-history",
-			"type": "string",
-			"disabled": true
+			"type": "string"
+		},
+		{
+			"id": "540b321b-f0b4-4c56-9cfe-caa779df972b",
+			"key": "secret",
+			"value": "secret",
+			"type": "string"
+		},
+		{
+			"id": "4d0ea958-46b3-4b83-b4e9-0d773b7ab465",
+			"key": "wrong_secret",
+			"value": "wrong",
+			"type": "string"
 		}
 	]
 }

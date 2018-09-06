@@ -1,0 +1,18 @@
+{
+  "description": "Updates last_updated value to UNIX timestamp",
+  "processors": [
+    {
+      "set": {
+        "field": "ts",
+        "value": "{{_ingest.timestamp}}"
+      }
+    },
+    {
+      "script": {
+        "source": "ctx.last_updated = Instant.parse(ctx.ts).toEpochMilli(); ctx.remove('ts')",
+        "lang": "painless"
+      }
+    }
+  ]
+}
+

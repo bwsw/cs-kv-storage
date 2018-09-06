@@ -22,11 +22,11 @@ import akka.testkit.TestActorRef
 import com.bwsw.cloudstack.storage.kv.entity.Operation.{Clear, Delete, Set}
 import com.bwsw.cloudstack.storage.kv.entity.Sorting.Asc
 import com.bwsw.cloudstack.storage.kv.entity.{PageSearchResult, _}
-import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError}
+import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError, UnauthorizedError}
 import com.bwsw.cloudstack.storage.kv.message.request.{KvHistoryGetRequest, KvHistoryScrollRequest}
 import com.bwsw.cloudstack.storage.kv.mock.MockActor
 import com.bwsw.cloudstack.storage.kv.mock.MockActor.ResponsiveExpectation
-import com.bwsw.cloudstack.storage.kv.util.elasticsearch.HistoryFields
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch.{HistoryFields, SecretKeyHeader}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.FunSpecLike
 import org.scalatra.test.scalatest.ScalatraSuite
@@ -40,6 +40,7 @@ class KvHistoryServletSuite extends ScalatraSuite with FunSpecLike with MockFact
   private val historyRequestActor = TestActorRef(new MockActor())
 
   private val storageUuid = "id"
+  private val secretKey = "secret"
   private val someKey = "someKey"
   private val someValue = "someValue"
   private val timestamp = System.currentTimeMillis()
@@ -53,8 +54,9 @@ class KvHistoryServletSuite extends ScalatraSuite with FunSpecLike with MockFact
   private val pageResult = PageSearchResult(15, 3, page, historyList)
   private val scrollResult = ScrollSearchResult(20, 5, scrollId, historyList)
   private val scrollRequestBody: Array[Byte] = s"""{\"scrollId\":\"$scrollId\",\"timeout\":$scroll}"""
-  private val jsonContentType = Seq(("Content-Type", "application/json"))
-  private val textContentType = Seq(("Content-Type", "plain/text"))
+  private val commonHeaders = Map(SecretKeyHeader -> secretKey.mkString)
+  private val jsonContentType = Map("Content-Type" -> "application/json")
+  private val textContentType = Map("Content-Type" -> "plain/text")
 
   describe("a KvHistoryServlet") {
     addServlet(new KvHistoryServlet(system, 1.second, historyRequestActor), "/history/*")
@@ -67,7 +69,7 @@ class KvHistoryServletSuite extends ScalatraSuite with FunSpecLike with MockFact
         historyRequestActor.underlyingActor.clearAndExpect(ResponsiveExpectation(
           getRequest(page = Some(page)),
           () => Right(pageResult)))
-        get(path, Seq(("page", page.toString))) {
+        get(path, Seq(("page", page.toString)), commonHeaders) {
           status should equal(200)
           response.getContentType should include("application/json")
           body should equal(getJson(pageResult))
@@ -77,7 +79,7 @@ class KvHistoryServletSuite extends ScalatraSuite with FunSpecLike with MockFact
       it("should return results for requests with scroll parameter") {
         historyRequestActor.underlyingActor
           .clearAndExpect(ResponsiveExpectation(getRequest(scroll = Some(scroll)), () => Right(scrollResult)))
-        get(path, Seq(("scroll", scroll.toString))) {
+        get(path, Seq(("scroll", scroll.toString)), commonHeaders) {
           status should equal(200)
           response.getContentType should include("application/json")
           body should equal(getJson(scrollResult))
@@ -87,7 +89,7 @@ class KvHistoryServletSuite extends ScalatraSuite with FunSpecLike with MockFact
       it("should return results for scroll request if both page and scroll parameters are specified") {
         historyRequestActor.underlyingActor
           .clearAndExpect(ResponsiveExpectation(getRequest(scroll = Some(scroll)), () => Right(scrollResult)))
-        get(path, Seq(("page", page.toString), ("scroll", scroll.toString))) {
+        get(path, Seq(("page", page.toString), ("scroll", scroll.toString)), commonHeaders) {
           status should equal(200)
           response.getContentType should include("application/json")
           body should equal(getJson(scrollResult))
@@ -95,99 +97,109 @@ class KvHistoryServletSuite extends ScalatraSuite with FunSpecLike with MockFact
       }
 
       it("should return 400 Bad Request for requests with invalid operations") {
-        get(path, Seq(("operations", s"$Set,$Clear,invalid"))) {
+        get(path, Seq(("operations", s"$Set,$Clear,invalid")), commonHeaders) {
           status should equal(400)
           body should equal("")
         }
       }
 
       it("should return 400 Bad Request for requests with invalid start") {
-        get(path, Seq(("start", "today"))) {
+        get(path, Seq(("start", "today")), commonHeaders) {
           status should equal(400)
           body should equal("")
         }
       }
 
       it("should return 400 Bad Request for requests with negative start") {
-        get(path, Seq(("start", "-1000"))) {
+        get(path, Seq(("start", "-1000")), commonHeaders) {
           status should equal(400)
           body should equal("")
         }
       }
 
       it("should return 400 Bad Request for requests with invalid end") {
-        get(path, Seq(("end", "today"))) {
+        get(path, Seq(("end", "today")), commonHeaders) {
           status should equal(400)
           body should equal("")
         }
       }
 
       it("should return 400 Bad Request for requests with negative end") {
-        get(path, Seq(("end", "-1000"))) {
+        get(path, Seq(("end", "-1000")), commonHeaders) {
           status should equal(400)
           body should equal("")
         }
       }
 
       it("should return 400 Bad Request for requests with start > end") {
-        get(path, Seq(("start", "1000"), ("end", "500"))) {
+        get(path, Seq(("start", "1000"), ("end", "500")), commonHeaders) {
           status should equal(400)
           body should equal("")
         }
       }
 
       it("should return 400 Bad Request for requests with invalid size") {
-        get(path, Seq(("size", "large"))) {
+        get(path, Seq(("size", "large")), commonHeaders) {
           status should equal(400)
           body should equal("")
         }
       }
 
       it("should return 400 Bad Request for requests with negative size") {
-        get(path, Seq(("size", "-1000"))) {
+        get(path, Seq(("size", "-1000")), commonHeaders) {
           status should equal(400)
           body should equal("")
         }
       }
 
       it("should return 400 Bad Request for requests with invalid page") {
-        get(path, Seq(("page", "first"))) {
+        get(path, Seq(("page", "first")), commonHeaders) {
           status should equal(400)
           body should equal("")
         }
       }
 
       it("should return 400 Bad Request for requests with negative page") {
-        get(path, Seq(("page", "-1000"))) {
+        get(path, Seq(("page", "-1000")), commonHeaders) {
           status should equal(400)
           body should equal("")
         }
       }
 
       it("should return 400 Bad Request for requests with invalid scroll") {
-        get(path, Seq(("scroll", "1.day"))) {
+        get(path, Seq(("scroll", "1.day")), commonHeaders) {
           status should equal(400)
           body should equal("")
         }
       }
 
       it("should return 400 Bad Request for requests with negative scroll") {
-        get(path, Seq(("scroll", "-1000"))) {
+        get(path, Seq(("scroll", "-1000")), commonHeaders) {
           status should equal(400)
           body should equal("")
         }
       }
 
       it("should return 400 Bad Request for requests with invalid sort") {
-        get(path, Seq(("sort", "bubble"))) {
+        get(path, Seq(("sort", "bubble")), commonHeaders) {
           status should equal(400)
           body should equal("")
         }
       }
 
       it("should return 400 Bad Request for requests with opposite sort") {
-        get(path, Seq(("sort", s"${HistoryFields.Timestamp},${HistoryFields.Key},-${HistoryFields.Timestamp}"))) {
+        get(
+          path,
+          Seq(("sort", s"${HistoryFields.Timestamp},${HistoryFields.Key},-${HistoryFields.Timestamp}")),
+          commonHeaders) {
           status should equal(400)
+          body should equal("")
+        }
+      }
+
+      it("should return 401 Unauthorized if Secret-Key header is not provided") {
+        get(path, Seq(), Map()) {
+          status should equal(401)
           body should equal("")
         }
       }
@@ -198,7 +210,7 @@ class KvHistoryServletSuite extends ScalatraSuite with FunSpecLike with MockFact
           getRequest(
             scroll = Some(scroll),
             operations = immutable.Set(operation)), () => Right(scrollResult)))
-        get(path, Seq(("scroll", scroll.toString), ("operations", s"""$operation,$operation"""))) {
+        get(path, Seq(("scroll", scroll.toString), ("operations", s"""$operation,$operation""")), commonHeaders) {
           status should equal(200)
           response.getContentType should include("application/json")
           body should equal(getJson(scrollResult))
@@ -210,7 +222,7 @@ class KvHistoryServletSuite extends ScalatraSuite with FunSpecLike with MockFact
         historyRequestActor.underlyingActor.clearAndExpect(ResponsiveExpectation(
           getRequest(scroll = Some(scroll), keys = immutable.Set(key)),
           () => Right(scrollResult)))
-        get(path, Seq(("scroll", scroll.toString), ("keys", s"""$key,$key"""))) {
+        get(path, Seq(("scroll", scroll.toString), ("keys", s"""$key,$key""")), commonHeaders) {
           status should equal(200)
           response.getContentType should include("application/json")
           body should equal(getJson(scrollResult))
@@ -223,17 +235,26 @@ class KvHistoryServletSuite extends ScalatraSuite with FunSpecLike with MockFact
           .clearAndExpect(ResponsiveExpectation(
             getRequest(scroll = Some(scroll), sort = immutable.Set(SortField(key, Asc))),
             () => Right(scrollResult)))
-        get(path, Seq(("scroll", scroll.toString), ("sort", s"""$key,$key"""))) {
+        get(path, Seq(("scroll", scroll.toString), ("sort", s"""$key,$key""")), commonHeaders) {
           status should equal(200)
           response.getContentType should include("application/json")
           body should equal(getJson(scrollResult))
         }
       }
 
+      it("should return 401 Unauthorized if HistoryRequestActor returns UnauthorizedError") {
+        historyRequestActor.underlyingActor
+          .clearAndExpect(ResponsiveExpectation(getRequest(scroll = Some(scroll)), () => Left(UnauthorizedError())))
+        get(path, Seq(("scroll", scroll.toString)), commonHeaders) {
+          status should equal(401)
+          body should equal("")
+        }
+      }
+
       it("should return 400 Bad Request if HistoryRequestActor returns BadRequestError") {
         historyRequestActor.underlyingActor
           .clearAndExpect(ResponsiveExpectation(getRequest(scroll = Some(scroll)), () => Left(BadRequestError())))
-        get(path, Seq(("scroll", scroll.toString))) {
+        get(path, Seq(("scroll", scroll.toString)), commonHeaders) {
           status should equal(400)
           body should equal("")
         }
@@ -244,7 +265,7 @@ class KvHistoryServletSuite extends ScalatraSuite with FunSpecLike with MockFact
           .clearAndExpect(ResponsiveExpectation(
             getRequest(scroll = Some(scroll)),
             () => Left(InternalError("Error"))))
-        get(path, Seq(("scroll", scroll.toString))) {
+        get(path, Seq(("scroll", scroll.toString)), commonHeaders) {
           status should equal(500)
           body should equal("")
         }
@@ -253,7 +274,7 @@ class KvHistoryServletSuite extends ScalatraSuite with FunSpecLike with MockFact
       it("should return 404 Not Found if HistoryRequestActor returns NotFoundError") {
         historyRequestActor.underlyingActor
           .clearAndExpect(ResponsiveExpectation(getRequest(scroll = Some(scroll)), () => Left(NotFoundError())))
-        get(path, Seq(("scroll", scroll.toString))) {
+        get(path, Seq(("scroll", scroll.toString)), commonHeaders) {
           status should equal(404)
           body should equal("")
         }
@@ -327,6 +348,7 @@ class KvHistoryServletSuite extends ScalatraSuite with FunSpecLike with MockFact
       size: Option[Int] = None,
       scroll: Option[Long] = None) = KvHistoryGetRequest(
     storageUuid,
+    secretKey,
     keys,
     operations,
     start,

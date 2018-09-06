@@ -22,9 +22,11 @@ import akka.testkit.{ImplicitSender, TestKit}
 import com.bwsw.cloudstack.storage.kv.cache.StorageCache
 import com.bwsw.cloudstack.storage.kv.entity.Operation.Set
 import com.bwsw.cloudstack.storage.kv.entity._
-import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError, StorageError}
+import com.bwsw.cloudstack.storage.kv.error.{BadRequestError, InternalError, NotFoundError, StorageError,
+  UnauthorizedError}
 import com.bwsw.cloudstack.storage.kv.message.request.{KvHistoryGetRequest, KvHistoryScrollRequest}
 import com.bwsw.cloudstack.storage.kv.processor.HistoryProcessor
+import com.bwsw.cloudstack.storage.kv.util.elasticsearch.StorageType
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.FunSpecLike
 import scaldi.{Injector, Module}
@@ -45,9 +47,11 @@ class DefaultHistoryRequestActorSpec
 
   private val scrollTimeout = Some(1000.asInstanceOf[Long])
   private val scrollId = "DXF1ZXJ5QW5kRmV0Y2gBAAAAAAAAAAcWVDBqc3Vkb3lUeDZOYXk4bWczTHowUQ=="
+  private val storage = Storage("id", StorageType.Account, historyEnabled = true, "secret")
   private val getHistoryRequest =
     KvHistoryGetRequest(
-      "id",
+      storage.uuid,
+      storage.secretKey,
       immutable.Set.empty[String],
       immutable.Set.empty[Operation],
       Some(System.currentTimeMillis()),
@@ -70,9 +74,9 @@ class DefaultHistoryRequestActorSpec
 
     describe("(KvHistoryGetRequest)") {
 
-      def test(isHistoryEnabled: Option[Boolean], expect: Either[StorageError, SearchResult[History]]) = {
-        (storageCache.isHistoryEnabled _).expects(getHistoryRequest.storageUuid).returning(Future(isHistoryEnabled))
-        if (isHistoryEnabled.getOrElse(false))
+      def test(storage: Option[Storage], expect: Either[StorageError, SearchResult[History]]) = {
+        (storageCache.get _).expects(getHistoryRequest.storageUuid).returning(Future(storage))
+        if (storage.exists(storage => storage.historyEnabled && storage.storageType != StorageType.Temporary))
           (historyProcessor.get _).expects(
             getHistoryRequest.storageUuid,
             getHistoryRequest.keys,
@@ -88,19 +92,26 @@ class DefaultHistoryRequestActorSpec
       }
 
       it("should process a request if the storage exists and supports history") {
-        test(Some(true), Right(scrollResult))
+        test(Some(storage), Right(scrollResult))
       }
 
       it("should return BadRequestError if the storage does not support history") {
-        test(Some(false), Left(BadRequestError()))
+        test(Some(storage.copy(historyEnabled = false)), Left(BadRequestError()))
       }
 
       it("should return NotFoundError if the storage does not exist") {
         test(None, Left(NotFoundError()))
       }
 
+      it("should return UnauthorizedError if given secret key is invalid") {
+        (storageCache.get _).expects(getHistoryRequest.storageUuid)
+          .returning(Future(Some(storage.copy(secretKey = "anotherSecret"))))
+        defaultHistoryRequestActor ! getHistoryRequest
+        expectMsg(Left(UnauthorizedError()))
+      }
+
       it("should return InternalError if the processor returns InternalError") {
-        test(Some(true), Left(error))
+        test(Some(storage), Left(error))
       }
     }
 

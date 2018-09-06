@@ -32,6 +32,8 @@ package object elasticsearch {
 
   val ScrollTimeoutUnit = "ms"
 
+  val SecretKeyHeader = "Secret-Key"
+
   object StorageType {
     val Temporary = "TEMP"
     val VirtualMachine = "VM"
@@ -59,6 +61,8 @@ package object elasticsearch {
     val Description = "description"
     val Ttl = "ttl"
     val ExpirationTimestamp = "expiration_timestamp"
+    val LastUpdated = "last_updated"
+    val SecretKey = "secret_key"
   }
 
   object ScriptOperations {
@@ -75,4 +79,5 @@ package object elasticsearch {
       InternalError(DefaultError)
     else InternalError(requestFailure.error.reason)
   }
+
 }
