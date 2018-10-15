@@ -334,18 +334,23 @@ GET /history/<storage UUID>
 
 ##### Parameters
 
-All parameters are optional. If both page and scroll parameters are specified scroll is used.
+All parameters are optional.
 
 | Parameter  | Description |
 | ----- | ----------- |
 | keys  | Comma separated list of keys |
 | operations | Comma separated list of operations. Possible values are set, delete or clear. |
-| start | The start date/time as Unix timestamp |
-| end | The end date/time as Unix timestamp |
+| start | The start date/time as Unix timestamp to retrieve history records with dates &gt;= start |
+| end | The end date/time as Unix timestamp to retrieve history records with dates &lt;= end |
 | sort | Comma separated list of response fields optionally prefixed with - (minus) for descending order. |
 | page | A page number of results (1 by default) |
 | size | A number of results returned in the page/batch (default value is specified in the configuration file) |
 | scroll | A timeout in ms for subsequent [list requests](#list-history-records) |
+
+\* `start` and `end` parameters can be used separately. If both `start` and `end` parameters are specified history
+records with dates that are greater/equal to `start` and less/equal to `end` are returned.
+
+\** If both `page` and `scroll` parameters are specified `scroll` is used.
 
 #### Response
 
